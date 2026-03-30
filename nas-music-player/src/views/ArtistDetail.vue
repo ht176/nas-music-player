@@ -371,7 +371,8 @@ onMounted(() => {
 
 .album-card-cover {
   position: relative;
-  aspect-square;
+  width: 100%;
+  padding-top: 100%;
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 12px;

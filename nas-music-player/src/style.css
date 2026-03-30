@@ -1,96 +1,53 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-/* 自定义 CSS 变量 */
 :root {
-  /* 背景色 - 层次递进 */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #121212;
-  --bg-tertiary: #1a1a1a;
-  --bg-elevated: #242424;
-  
-  /* 主色 - 温暖琥珀 */
+  /* 主色调 */
   --primary: #f59e0b;
-  --primary-hover: #fbbf24;
-  --primary-active: #d97706;
+  --primary-hover: #d97706;
   --primary-soft: rgba(245, 158, 11, 0.1);
   
-  /* 功能色 */
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --bg-elevated: #ffffff;
+  
+  /* 文字颜色 */
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-inverse: #ffffff;
+  
+  /* 边框 */
+  --border-subtle: #e5e7eb;
+  --border-default: #d1d5db;
+  --border-strong: #9ca3af;
+  
+  /* 语义色 */
   --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.1);
   --error: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-  
-  /* 文字色 */
-  --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-tertiary: #737373;
-  --text-inverse: #0a0a0a;
-  
-  /* 边框与分割线 */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-default: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.2);
-  
-  /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+  --error-soft: rgba(239, 68, 68, 0.1);
   
   /* 毛玻璃效果 */
-  --glass-bg: rgba(18, 18, 18, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.8);
   --glass-blur: 12px;
 }
 
-/* 全局样式 */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html,
 body {
-  height: 100%;
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-primary);
   color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
 }
 
 #app {
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
-}
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
-}
-
-/* 触摸目标最小尺寸 */
-.touch-target {
-  min-width: 44px;
-  min-height: 44px;
-}
-
-/* 防止双击缩放 */
-* {
-  touch-action: manipulation;
 }
