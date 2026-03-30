@@ -1,10 +1,11 @@
 {
   "name": "nas-music-player",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "NAS 音乐播放器 - 轻量、快速、美观的自托管音乐播放器",
   "author": "Jarvis",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
@@ -14,7 +15,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "deploy": "npm run build && npx gh-pages -d dist"
   },
   "dependencies": {
     "@vueuse/core": "^13.0.0",
@@ -30,6 +32,7 @@
     "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.0.0",
+    "gh-pages": "^6.3.0",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.0",
     "prettier": "^3.5.0",
