@@ -5,8 +5,7 @@ import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // GitHub Pages 部署需要配置 base 为仓库名
-  base: '/nas-music-player/',
+  base: './',
   plugins: [
     vue(),
     tailwindcss(),
