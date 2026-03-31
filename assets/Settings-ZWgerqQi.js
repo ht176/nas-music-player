@@ -1,0 +1,2 @@
+import{h as e,s as t,t as n,u as r,x as i}from"./_plugin-vue_export-helper-B8iRHM3w.js";var a={class:`settings`},o=n(e({__name:`Settings`,setup(e){return(e,n)=>(i(),r(`div`,a,[...n[0]||=[t(`h1`,{class:`text-3xl font-bold mb-6`},`设置`,-1)]]))}}),[[`__scopeId`,`data-v-686bfcda`]]);export{o as default};
+//# sourceMappingURL=Settings-ZWgerqQi.js.map

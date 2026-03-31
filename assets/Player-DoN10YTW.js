@@ -1,0 +1,2 @@
+import{h as e,s as t,t as n,u as r,x as i}from"./_plugin-vue_export-helper-B8iRHM3w.js";var a={class:`player`},o=n(e({__name:`Player`,setup(e){return(e,n)=>(i(),r(`div`,a,[...n[0]||=[t(`h1`,{class:`text-3xl font-bold mb-6`},`播放器`,-1)]]))}}),[[`__scopeId`,`data-v-265ab88c`]]);export{o as default};
+//# sourceMappingURL=Player-DoN10YTW.js.map
