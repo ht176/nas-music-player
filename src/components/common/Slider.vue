@@ -86,7 +86,7 @@ const handleTrackClick = (event: MouseEvent) => {
 }
 
 // 处理拖拽开始
-const handleDragStart = (event: MouseEvent | TouchEvent) => {
+const handleDragStart = (_event: MouseEvent | TouchEvent) => {
   if (props.disabled) return
   
   isDragging.value = true

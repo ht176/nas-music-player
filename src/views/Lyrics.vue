@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { getLyrics, getCoverArtUrl } from '@/api/navidrome'
 import { parseLRC } from '@/utils/lyrics-parser'
@@ -63,7 +63,6 @@ import Button from '@/components/common/Button.vue'
 import type { ParsedLyricsLine } from '@/utils/lyrics-parser'
 
 const router = useRouter()
-const route = useRoute()
 const player = usePlayerStore()
 
 const lyrics = ref<ParsedLyricsLine[]>([])

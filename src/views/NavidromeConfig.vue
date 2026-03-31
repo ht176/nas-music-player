@@ -267,7 +267,6 @@ async function handleTestServer(server: Server) {
   
   try {
     // 临时切换配置进行测试
-    const originalConfig = localStorage.getItem('navidrome-config')
     localStorage.setItem('navidrome-config', JSON.stringify({
       url: server.url,
       username: server.username,

@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 interface LyricsLine {
   time: number
@@ -105,7 +105,7 @@ const scrollToLine = (index: number) => {
 }
 
 // 计算行偏移 (用于 3D 效果)
-const getLineOffset = (index: number): number => {
+const getLineOffset = (_index: number): number => {
   return 0 // 简化版本，可以添加视差效果
 }
 

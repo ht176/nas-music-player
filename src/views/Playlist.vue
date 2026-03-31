@@ -118,12 +118,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { getSong, getCoverArtUrl } from '@/api/navidrome'
 import Button from '@/components/common/Button.vue'
-import type { Song, Playlist as PlaylistType } from '@/api/navidrome'
+import type { Song } from '@/api/navidrome'
+
+interface PlaylistType {
+  id: string
+  name: string
+  songs: string[]
+  songCount: number
+  createdAt?: string
+  updatedAt?: string
+  description?: string
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -163,7 +173,7 @@ async function loadPlaylist() {
       
       // 加载歌曲详情
       if (playlist.value && playlist.value.songs.length > 0) {
-        const songPromises = playlist.value.songs.map(id => getSong(id))
+        const songPromises = playlist.value.songs.map((id: string) => getSong(id))
         playlistSongs.value = await Promise.all(songPromises)
       }
     } catch (e) {
@@ -196,7 +206,7 @@ async function handleRemoveSong(songId: string) {
   if (!playlist.value) return
   
   if (confirm('确定要从歌单中移除这首歌曲吗？')) {
-    playlist.value.songs = playlist.value.songs.filter(id => id !== songId)
+    playlist.value.songs = playlist.value.songs.filter((id: string) => id !== songId)
     playlist.value.songCount = playlist.value.songs.length
     
     // 保存到 localStorage

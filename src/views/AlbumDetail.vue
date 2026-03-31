@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { getAlbum, getCoverArtUrl, type Album, type Song } from '@/api/navidrome'

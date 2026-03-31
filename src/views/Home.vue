@@ -41,7 +41,7 @@
             :src="navidromeStore.getCoverArtUrl(album.coverArt)"
             :alt="album.name"
             class="aspect-square object-cover rounded-md mb-3 group-hover:shadow-lg transition-shadow"
-            @error="$event.target.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23333%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23666%22 x=%2250%22 y=%2250%22 text-anchor=%22middle%22%3ENo Cover%3C/text%3E%3C/svg%3E'"
+            @error="(e) => (e.target as HTMLImageElement).src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23333%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23666%22 x=%2250%22 y=%2250%22 text-anchor=%22middle%22%3ENo Cover%3C/text%3E%3C/svg%3E'"
           />
           <h3 class="font-medium truncate">{{ album.name }}</h3>
           <p class="text-sm text-tertiary truncate">{{ album.artist }}</p>
