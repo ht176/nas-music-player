@@ -1,6 +1,6 @@
 [package]
 name = "nas-music-player"
-version = "1.0.1"
+version = "1.0.2"
 description = "High-Fidelity Cross-Platform NAS Music Player Client"
 authors = ["you"]
 edition = "2021"
@@ -10,9 +10,9 @@ name = "nas_music_player_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0", features = ["tray-icon"] }
+tauri = { version = "2", features = ["tray-icon"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
