@@ -36,6 +36,11 @@ const onProgressChange = (e: Event) => {
   playerStore.seek(val)
 }
 
+const progressPercent = computed(() => {
+  const dur = playerStore.duration || 1
+  return Math.min(100, Math.max(0, (playerStore.currentTime / dur) * 100))
+})
+
 // 歌词滚动居中同步
 watch(
   () => playerStore.currentLyricIndex,
@@ -212,7 +217,10 @@ watch(
           :max="playerStore.duration || 100"
           :value="playerStore.currentTime"
           @input="onProgressChange"
-          class="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all"
+          class="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
+          :style="{
+            background: `linear-gradient(to right, #10b981 ${progressPercent}%, rgba(255, 255, 255, 0.15) ${progressPercent}%)`
+          }"
         />
         <span class="w-10">{{ formatTime(playerStore.duration) }}</span>
       </div>

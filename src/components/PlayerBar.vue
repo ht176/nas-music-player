@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
+import { isDesktopApp, enterMiniMode, exitMiniMode } from '../services/desktop'
 import {
   Play,
   Pause,
@@ -31,6 +32,18 @@ const formatTime = (sec: number) => {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+const progressPercent = computed(() => {
+  const dur = playerStore.duration || 1
+  return Math.min(100, Math.max(0, (playerStore.currentTime / dur) * 100))
+})
+
+const currentLyricText = computed(() => {
+  if (playerStore.lyrics.length && playerStore.currentLyricIndex >= 0) {
+    return playerStore.lyrics[playerStore.currentLyricIndex]?.text || ''
+  }
+  return ''
+})
+
 const onProgressChange = (e: Event) => {
   const val = Number((e.target as HTMLInputElement).value)
   playerStore.seek(val)
@@ -40,6 +53,20 @@ const onVolumeChange = (e: Event) => {
   const val = Number((e.target as HTMLInputElement).value)
   playerStore.setVolume(val)
 }
+
+async function toggleMiniPlayer() {
+  if (playerStore.showMiniPlayer) {
+    playerStore.showMiniPlayer = false
+    if (isDesktopApp()) {
+      await exitMiniMode()
+    }
+  } else {
+    playerStore.showMiniPlayer = true
+    if (isDesktopApp()) {
+      await enterMiniMode()
+    }
+  }
+}
 </script>
 
 <template>
@@ -47,7 +74,18 @@ const onVolumeChange = (e: Event) => {
     <!-- 顶部极细渐变微光线 -->
     <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
-    <!-- 左侧：当前歌曲信息 -->
+    <!-- 主界面浮动单行实时歌词胶囊 (点击直达沉浸全屏模式) -->
+    <div
+      v-if="currentLyricText"
+      class="absolute -top-7 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-neutral-900/90 border border-white/15 text-xs text-emerald-400 font-medium backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.5)] flex items-center gap-1.5 cursor-pointer hover:border-emerald-500/50 hover:bg-neutral-800 transition-all max-w-[85vw] truncate group animate-fade-in"
+      @click="playerStore.showFullscreen = true"
+      title="点击进入全屏沉浸歌词"
+    >
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+      <span class="truncate">{{ currentLyricText }}</span>
+    </div>
+
+    <!-- 左侧：当前歌曲信息与单行歌词 -->
     <div class="flex items-center gap-3.5 w-1/4 min-w-[200px]">
       <div
         class="h-12 w-12 rounded-xl overflow-hidden bg-neutral-800 shrink-0 cursor-pointer shadow-md group relative border border-white/10 transition-transform duration-300 hover:scale-105"
@@ -62,8 +100,9 @@ const onVolumeChange = (e: Event) => {
         <div class="text-sm font-semibold text-neutral-100 truncate cursor-pointer hover:text-emerald-400 transition-colors" @click="playerStore.showFullscreen = true">
           {{ playerStore.currentTrack.title }}
         </div>
-        <div class="text-xs text-neutral-400 truncate mt-0.5">
-          {{ playerStore.currentTrack.artist }}
+        <div class="text-xs text-neutral-400 truncate mt-0.5 flex items-center gap-1.5">
+          <span class="shrink-0">{{ playerStore.currentTrack.artist }}</span>
+          <span v-if="currentLyricText" class="text-emerald-400/90 truncate font-medium max-w-[180px]" :title="currentLyricText">· {{ currentLyricText }}</span>
         </div>
       </div>
       <button
@@ -76,7 +115,7 @@ const onVolumeChange = (e: Event) => {
       </button>
     </div>
 
-    <!-- 中间：核心控制与时间进度 -->
+    <!-- 中间：核心控制与区分已播/未播的进度条 -->
     <div class="flex flex-col items-center max-w-xl w-2/4">
       <div class="flex items-center gap-5 mb-1.5">
         <button
@@ -106,7 +145,7 @@ const onVolumeChange = (e: Event) => {
         </button>
       </div>
 
-      <!-- 进度条 -->
+      <!-- 进度条：清晰区分已播放与未播放轨道 -->
       <div class="flex items-center gap-2.5 w-full text-xs text-neutral-400 font-mono">
         <span class="w-9 text-right text-[11px]">{{ formatTime(playerStore.currentTime) }}</span>
         <input
@@ -115,7 +154,10 @@ const onVolumeChange = (e: Event) => {
           :max="playerStore.duration || 100"
           :value="playerStore.currentTime"
           @input="onProgressChange"
-          class="w-full h-1 bg-neutral-700/80 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-1.5 transition-all"
+          class="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
+          :style="{
+            background: `linear-gradient(to right, #10b981 ${progressPercent}%, rgba(255, 255, 255, 0.15) ${progressPercent}%)`
+          }"
         />
         <span class="w-9 text-[11px]">{{ formatTime(playerStore.duration) }}</span>
       </div>
@@ -126,7 +168,7 @@ const onVolumeChange = (e: Event) => {
       <button
         class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
         :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showMiniPlayer }"
-        @click="playerStore.showMiniPlayer = !playerStore.showMiniPlayer"
+        @click="toggleMiniPlayer"
         title="桌面迷你悬浮窗"
       >
         <PictureInPicture2 class="w-4 h-4" />
@@ -168,7 +210,10 @@ const onVolumeChange = (e: Event) => {
           step="0.01"
           :value="playerStore.volume"
           @input="onVolumeChange"
-          class="w-20 h-1 bg-neutral-700/80 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-1.5 transition-all"
+          class="w-20 h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
+          :style="{
+            background: `linear-gradient(to right, #10b981 ${playerStore.volume * 100}%, rgba(255, 255, 255, 0.15) ${playerStore.volume * 100}%)`
+          }"
         />
       </div>
     </div>
