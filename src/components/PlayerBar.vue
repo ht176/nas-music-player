@@ -1,0 +1,176 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { usePlayerStore } from '../stores/player'
+import { useServerStore } from '../stores/server'
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Repeat,
+  Shuffle,
+  Volume2,
+  Maximize2,
+  FileText,
+  Heart,
+  ListMusic,
+  Sliders,
+  PictureInPicture2,
+} from 'lucide-vue-next'
+
+const playerStore = usePlayerStore()
+const serverStore = useServerStore()
+
+const coverUrl = computed(() => {
+  return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 120) || ''
+})
+
+const formatTime = (sec: number) => {
+  const m = Math.floor(sec / 60)
+  const s = Math.floor(sec % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+const onProgressChange = (e: Event) => {
+  const val = Number((e.target as HTMLInputElement).value)
+  playerStore.seek(val)
+}
+
+const onVolumeChange = (e: Event) => {
+  const val = Number((e.target as HTMLInputElement).value)
+  playerStore.setVolume(val)
+}
+</script>
+
+<template>
+  <div v-if="playerStore.currentTrack" class="fixed bottom-0 left-0 right-0 h-20 glass-panel border-t border-white/10 px-5 flex items-center justify-between z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
+    <!-- 顶部极细渐变微光线 -->
+    <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
+
+    <!-- 左侧：当前歌曲信息 -->
+    <div class="flex items-center gap-3.5 w-1/4 min-w-[200px]">
+      <div
+        class="h-12 w-12 rounded-xl overflow-hidden bg-neutral-800 shrink-0 cursor-pointer shadow-md group relative border border-white/10 transition-transform duration-300 hover:scale-105"
+        @click="playerStore.showFullscreen = true"
+      >
+        <img v-if="coverUrl" :src="coverUrl" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-xs">
+          <Maximize2 class="w-4 h-4 text-white drop-shadow" />
+        </div>
+      </div>
+      <div class="truncate">
+        <div class="text-sm font-semibold text-neutral-100 truncate cursor-pointer hover:text-emerald-400 transition-colors" @click="playerStore.showFullscreen = true">
+          {{ playerStore.currentTrack.title }}
+        </div>
+        <div class="text-xs text-neutral-400 truncate mt-0.5">
+          {{ playerStore.currentTrack.artist }}
+        </div>
+      </div>
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-1.5 rounded-lg hover:bg-white/5 cursor-pointer shrink-0 ml-1"
+        :class="{ 'text-rose-500 hover:text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]': playerStore.currentTrack.starred }"
+        title="收藏"
+        @click="playerStore.toggleStar(playerStore.currentTrack)"
+      >
+        <Heart class="w-4 h-4" :class="{ 'fill-current': playerStore.currentTrack.starred }" />
+      </button>
+    </div>
+
+    <!-- 中间：核心控制与时间进度 -->
+    <div class="flex flex-col items-center max-w-xl w-2/4">
+      <div class="flex items-center gap-5 mb-1.5">
+        <button
+          class="text-neutral-400 hover:text-white transition-colors cursor-pointer p-1 rounded-md"
+          :class="{ 'text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]': playerStore.playMode === 'random' }"
+          @click="playerStore.togglePlayMode"
+          title="播放模式"
+        >
+          <Shuffle v-if="playerStore.playMode === 'random'" class="w-4 h-4" />
+          <Repeat v-else class="w-4 h-4" />
+        </button>
+
+        <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev">
+          <SkipBack class="w-5 h-5 fill-current" />
+        </button>
+
+        <button
+          class="h-10 w-10 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-neutral-950 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] hover:scale-105 active:scale-95 transition duration-200 cursor-pointer font-bold"
+          @click="playerStore.togglePlay"
+        >
+          <Pause v-if="playerStore.isPlaying" class="w-5 h-5 fill-current" />
+          <Play v-else class="w-5 h-5 fill-current ml-0.5" />
+        </button>
+
+        <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next">
+          <SkipForward class="w-5 h-5 fill-current" />
+        </button>
+      </div>
+
+      <!-- 进度条 -->
+      <div class="flex items-center gap-2.5 w-full text-xs text-neutral-400 font-mono">
+        <span class="w-9 text-right text-[11px]">{{ formatTime(playerStore.currentTime) }}</span>
+        <input
+          type="range"
+          min="0"
+          :max="playerStore.duration || 100"
+          :value="playerStore.currentTime"
+          @input="onProgressChange"
+          class="w-full h-1 bg-neutral-700/80 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-1.5 transition-all"
+        />
+        <span class="w-9 text-[11px]">{{ formatTime(playerStore.duration) }}</span>
+      </div>
+    </div>
+
+    <!-- 右侧：音量、EQ、播放列表与全屏歌词触发 -->
+    <div class="flex items-center justify-end gap-2 w-1/4">
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showMiniPlayer }"
+        @click="playerStore.showMiniPlayer = !playerStore.showMiniPlayer"
+        title="桌面迷你悬浮窗"
+      >
+        <PictureInPicture2 class="w-4 h-4" />
+      </button>
+
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showEQModal }"
+        @click="playerStore.showEQModal = !playerStore.showEQModal"
+        title="10段图形均衡器"
+      >
+        <Sliders class="w-4 h-4" />
+      </button>
+
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showQueueDrawer }"
+        @click="playerStore.showQueueDrawer = !playerStore.showQueueDrawer"
+        title="当前播放队列"
+      >
+        <ListMusic class="w-4 h-4" />
+      </button>
+
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showFullscreen }"
+        @click="playerStore.showFullscreen = !playerStore.showFullscreen"
+        title="歌词与全屏"
+      >
+        <FileText class="w-4 h-4" />
+      </button>
+
+      <div class="hidden sm:flex items-center gap-2 pl-2">
+        <Volume2 class="w-4 h-4 text-neutral-400" />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          :value="playerStore.volume"
+          @input="onVolumeChange"
+          class="w-20 h-1 bg-neutral-700/80 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-1.5 transition-all"
+        />
+      </div>
+    </div>
+  </div>
+</template>
