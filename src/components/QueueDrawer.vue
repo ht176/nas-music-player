@@ -73,8 +73,8 @@ const formatTime = (sec: number) => {
           <div class="flex items-center gap-2 shrink-0">
             <span class="font-mono text-neutral-500">{{ formatTime(track.duration) }}</span>
             <button
-              class="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-400 text-neutral-500 transition cursor-pointer"
-              title="移除"
+              class="opacity-60 hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 hover:text-rose-400 text-neutral-400 hover:bg-white/10 rounded transition cursor-pointer"
+              title="移出队列"
               @click.stop="playerStore.removeFromQueue(idx)"
             >
               <X class="w-3.5 h-3.5" />

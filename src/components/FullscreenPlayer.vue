@@ -17,6 +17,7 @@ import {
   Moon,
   Sparkles,
   Repeat,
+  Repeat1,
   Shuffle,
   FileSearch,
   Info,
@@ -342,11 +343,12 @@ watch(
       <div class="flex items-center justify-between px-2">
         <button
           class="text-neutral-400 hover:text-white transition-all cursor-pointer p-2 rounded-xl hover:bg-white/5"
-          :class="{ 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]': playerStore.playMode === 'random' }"
+          :class="{ 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]': playerStore.playMode !== 'sequence' }"
           @click="playerStore.togglePlayMode"
-          title="播放模式"
+          :title="playerStore.playMode === 'sequence' ? '列表循环' : (playerStore.playMode === 'single' ? '单曲循环' : '随机播放')"
         >
           <Shuffle v-if="playerStore.playMode === 'random'" class="w-5 h-5" />
+          <Repeat1 v-else-if="playerStore.playMode === 'single'" class="w-5 h-5 text-emerald-400" />
           <Repeat v-else class="w-5 h-5" />
         </button>
 

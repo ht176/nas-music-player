@@ -7,6 +7,7 @@ import { statsService } from '../services/stats'
 import { LyricsService } from '../services/lyrics'
 import { MediaSessionService } from '../services/media-session'
 import { useServerStore } from './server'
+import { toastService } from '../services/toast'
 import confetti from 'canvas-confetti'
 
 const STORAGE_PLAYER_STATE_KEY = 'aura_music_player_state'
@@ -205,8 +206,14 @@ export const usePlayerStore = defineStore('player', () => {
 
   async function downloadTrack(track: Track) {
     if (!serverStore.client) return
-    const streamUrl = serverStore.client.getStreamUrl(track.id, track.suffix)
-    await cacheService.cacheTrack(track, streamUrl)
+    try {
+      const streamUrl = serverStore.client.getStreamUrl(track.id, track.suffix)
+      await cacheService.cacheTrack(track, streamUrl)
+      toastService.success(`「${track.title}」已成功缓存至离线库`)
+    } catch (err) {
+      toastService.error(`缓存「${track.title}」失败`)
+      throw err
+    }
   }
 
   function playTrack(track: Track, newQueue?: Track[]) {
@@ -224,10 +231,14 @@ export const usePlayerStore = defineStore('player', () => {
   function addToQueue(track: Track) {
     if (!queue.value.find((t) => t.id === track.id)) {
       queue.value.push(track)
+      toastService.success(`已添加「${track.title}」至播放队列`)
+    } else {
+      toastService.info(`「${track.title}」已在播放队列中`)
     }
   }
 
   function removeFromQueue(index: number) {
+    const item = queue.value[index]
     if (index === currentIndex.value) {
       if (queue.value.length <= 1) {
         clearQueue()
@@ -238,6 +249,9 @@ export const usePlayerStore = defineStore('player', () => {
     queue.value.splice(index, 1)
     if (index < currentIndex.value) {
       currentIndex.value--
+    }
+    if (item) {
+      toastService.info(`已从队列移除「${item.title}」`)
     }
   }
 
@@ -250,6 +264,7 @@ export const usePlayerStore = defineStore('player', () => {
     isPlaying.value = false
     lyrics.value = []
     currentLyricIndex.value = -1
+    toastService.info('已清空当前播放队列')
   }
 
   async function toggleStar(track: Track) {
@@ -273,12 +288,15 @@ export const usePlayerStore = defineStore('player', () => {
           // 容错降级
         }
         await serverStore.client.star(track.id)
+        toastService.success(`已收藏「${track.title}」`)
       } else {
         await serverStore.client.unstar(track.id)
+        toastService.info(`已取消收藏「${track.title}」`)
       }
     } catch (e) {
       track.starred = !newStatus
       console.error('Failed to toggle star', e)
+      toastService.error('网络同步收藏状态失败')
     }
   }
 
@@ -382,9 +400,18 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function togglePlayMode() {
-    const modes: PlayMode[] = ['loop', 'sequence', 'random', 'single']
+    const modes: PlayMode[] = ['loop', 'single', 'random']
     const idx = modes.indexOf(playMode.value)
     playMode.value = modes[(idx + 1) % modes.length]
+    savePlayerState()
+
+    const labelMap: Record<PlayMode, string> = {
+      loop: '列表循环 🔁',
+      single: '单曲循环 🔂',
+      random: '随机播放 🔀',
+      sequence: '顺序播放 ⏩',
+    }
+    toastService.info(`已切换播放模式: ${labelMap[playMode.value] || playMode.value}`)
   }
 
   return {

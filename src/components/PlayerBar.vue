@@ -10,8 +10,10 @@ import {
   SkipBack,
   SkipForward,
   Repeat,
+  Repeat1,
   Shuffle,
   Volume2,
+  VolumeX,
   Maximize2,
   FileText,
   Heart,
@@ -80,12 +82,18 @@ async function toggleMiniPlayer() {
     <!-- 主界面浮动单行实时歌词胶囊 (与底部控制栏显著拉开间距: -top-16，内边距增大: px-6 py-2.5) -->
     <div
       v-if="currentLyricText"
-      class="absolute -top-16 left-1/2 -translate-x-1/2 px-6 py-2.5 rounded-full bg-neutral-900/95 border border-emerald-500/35 text-sm sm:text-base text-emerald-300 font-semibold backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)] flex items-center gap-2.5 cursor-pointer hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all max-w-[85vw] truncate group animate-fade-in"
+      class="absolute -top-16 left-1/2 -translate-x-1/2 px-6 py-2.5 rounded-full bg-neutral-900/95 border border-emerald-500/35 text-sm sm:text-base text-emerald-300 font-semibold backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)] flex items-center gap-2.5 cursor-pointer hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all max-w-[85vw] group overflow-hidden"
       @click="playerStore.showFullscreen = true"
       title="点击进入全屏沉浸歌词"
     >
       <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.9)]"></span>
-      <span class="truncate tracking-wide">{{ currentLyricText }}</span>
+      <div class="relative overflow-hidden h-6 flex items-center max-w-[70vw]">
+        <Transition name="lyric-scroll" mode="out-in">
+          <span :key="currentLyricText" class="truncate tracking-wide block select-none">
+            {{ currentLyricText }}
+          </span>
+        </Transition>
+      </div>
     </div>
 
     <!-- 左侧：当前歌曲信息与单行歌词 -->
@@ -158,14 +166,15 @@ async function toggleMiniPlayer() {
 
     <!-- 右侧：播放模式、迷你悬浮窗、音量、EQ、播放列表与全屏歌词触发 -->
     <div class="flex items-center justify-end gap-2 w-1/4">
-      <!-- 播放模式切换 (放置在桌面迷你悬浮窗口图标左侧) -->
+      <!-- 播放模式切换 (支持列表循环 / 单曲循环 / 随机播放) -->
       <button
         class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
-        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.2)]': playerStore.playMode === 'random' }"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.2)]': playerStore.playMode !== 'loop' }"
         @click="playerStore.togglePlayMode"
-        :title="playerStore.playMode === 'random' ? '当前模式: 随机播放 (点击切换)' : '当前模式: 列表循环 (点击切换)'"
+        :title="playerStore.playMode === 'random' ? '当前模式: 随机播放' : playerStore.playMode === 'single' ? '当前模式: 单曲循环' : '当前模式: 列表循环'"
       >
         <Shuffle v-if="playerStore.playMode === 'random'" class="w-4 h-4" />
+        <Repeat1 v-else-if="playerStore.playMode === 'single'" class="w-4 h-4" />
         <Repeat v-else class="w-4 h-4" />
       </button>
 
@@ -216,8 +225,15 @@ async function toggleMiniPlayer() {
         <FileText class="w-4 h-4" />
       </button>
 
-      <div class="hidden sm:flex items-center gap-2 pl-2">
-        <Volume2 class="w-4 h-4 text-neutral-400" />
+      <div class="hidden sm:flex items-center gap-1.5 pl-2">
+        <button
+          class="text-neutral-400 hover:text-white transition-colors cursor-pointer p-1"
+          @click="playerStore.volume === 0 ? playerStore.setVolume(0.8) : playerStore.setVolume(0)"
+          :title="playerStore.volume === 0 ? '取消静音' : '点击静音'"
+        >
+          <VolumeX v-if="playerStore.volume === 0" class="w-4 h-4 text-rose-400" />
+          <Volume2 v-else class="w-4 h-4" />
+        </button>
         <input
           type="range"
           min="0"
@@ -237,3 +253,20 @@ async function toggleMiniPlayer() {
     <TrackInfoModal v-model="showTrackInfo" />
   </div>
 </template>
+
+<style scoped>
+.lyric-scroll-enter-active,
+.lyric-scroll-leave-active {
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lyric-scroll-enter-from {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.lyric-scroll-leave-to {
+  opacity: 0;
+  transform: translateY(-14px);
+}
+</style>

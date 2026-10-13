@@ -11,6 +11,7 @@ import MiniPlayerWindow from './components/MiniPlayerWindow.vue'
 import WindowControls from './components/WindowControls.vue'
 import UpdateDialog from './components/UpdateDialog.vue'
 import ParticleBackground from './components/ParticleBackground.vue'
+import GlobalToast from './components/GlobalToast.vue'
 import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
 import { isDesktopApp, isTauriApp, listenTrayActions } from './services/desktop'
@@ -163,5 +164,8 @@ onUnmounted(() => {
       <!-- 版本更新提醒气泡 -->
       <UpdateDialog v-if="autoUpdateInfo" :update-info="autoUpdateInfo" />
     </template>
+
+    <!-- 全局丝滑极光胶囊通知系统 -->
+    <GlobalToast />
   </div>
 </template>
