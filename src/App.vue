@@ -10,6 +10,7 @@ import EqualizerModal from './components/EqualizerModal.vue'
 import MiniPlayerWindow from './components/MiniPlayerWindow.vue'
 import WindowControls from './components/WindowControls.vue'
 import UpdateDialog from './components/UpdateDialog.vue'
+import ParticleBackground from './components/ParticleBackground.vue'
 import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
 import { isDesktopApp, isTauriApp, listenTrayActions } from './services/desktop'
@@ -109,11 +110,12 @@ onUnmounted(() => {
         <WindowControls class="pointer-events-auto" />
       </header>
 
-      <!-- 全局炫彩流光氛围背景 (微调提高透明度与层次明度，避免死黑沉闷) -->
+      <!-- 全局炫彩流光氛围背景与互动音频星空粒子 (微调提高透明度与层次明度，避免死黑沉闷) -->
       <div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         <div class="absolute -top-[25%] -left-[10%] w-[650px] h-[650px] rounded-full bg-emerald-500/15 blur-[120px] animate-pulse" />
         <div class="absolute top-[35%] -right-[15%] w-[550px] h-[550px] rounded-full bg-indigo-500/15 blur-[130px]" />
         <div class="absolute -bottom-[15%] left-[25%] w-[650px] h-[650px] rounded-full bg-teal-500/12 blur-[140px]" />
+        <ParticleBackground :density="45" />
       </div>
 
       <!-- 桌面侧栏 (窄屏隐藏) -->

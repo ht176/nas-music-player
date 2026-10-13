@@ -7,6 +7,7 @@ import { statsService } from '../services/stats'
 import { LyricsService } from '../services/lyrics'
 import { MediaSessionService } from '../services/media-session'
 import { useServerStore } from './server'
+import confetti from 'canvas-confetti'
 
 const STORAGE_PLAYER_STATE_KEY = 'aura_music_player_state'
 
@@ -255,6 +256,20 @@ export const usePlayerStore = defineStore('player', () => {
     track.starred = newStatus
     try {
       if (newStatus) {
+        // 收藏成功时触发炫彩爱心粒子爆炸动效
+        try {
+          confetti({
+            particleCount: 42,
+            spread: 60,
+            origin: { y: 0.88 },
+            colors: ['#f43f5e', '#ec4899', '#10b981', '#38bdf8', '#fbbf24'],
+            ticks: 180,
+            gravity: 1.1,
+            scalar: 0.9,
+          })
+        } catch {
+          // 容错降级
+        }
         await serverStore.client.star(track.id)
       } else {
         await serverStore.client.unstar(track.id)

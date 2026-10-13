@@ -5,6 +5,7 @@ import { useServerStore } from '../stores/server'
 import AudioSpectrumVisualizer from './AudioSpectrumVisualizer.vue'
 import LyricSearchModal from './LyricSearchModal.vue'
 import TrackInfoModal from './TrackInfoModal.vue'
+import ParticleBackground from './ParticleBackground.vue'
 import {
   ChevronDown,
   Play,
@@ -68,13 +69,14 @@ watch(
     v-if="playerStore.showFullscreen && playerStore.currentTrack"
     class="fixed inset-0 z-50 bg-neutral-950 flex flex-col justify-between p-6 sm:p-10 overflow-hidden animate-fade-in select-none"
   >
-    <!-- Apple Music 风格动态极光背景 -->
+    <!-- Apple Music 风格动态极光背景与粒子流光 -->
     <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
       <div
         class="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] bg-cover bg-center opacity-30 blur-[100px] scale-125 animate-pulse-slow"
         :style="{ backgroundImage: `url(${coverUrl})` }"
       />
       <div class="absolute inset-0 bg-neutral-950/70 backdrop-blur-2xl" />
+      <ParticleBackground :density="60" />
     </div>
 
     <!-- 顶部导航与功能栏 -->
@@ -166,10 +168,20 @@ watch(
       <div class="flex flex-col items-center justify-center relative w-full">
         <!-- 模拟黑胶唱盘机外环与黑胶光盘 (缩小两号: w-48/h-48 到 w-72/h-72，配合 min-w/min-h) -->
         <div class="relative w-[36vmin] h-[36vmin] min-w-[180px] min-h-[180px] max-w-[280px] max-h-[280px] flex items-center justify-center shrink-0">
+          <!-- 黑胶唱片背景环境光晕与呼吸环 -->
+          <div
+            class="absolute -inset-2 sm:-inset-3 rounded-full blur-xl pointer-events-none transition-all duration-700"
+            :class="[
+              playerStore.isPlaying
+                ? 'bg-gradient-to-tr from-emerald-500/25 via-teal-400/20 to-sky-500/25 opacity-100 scale-105'
+                : 'bg-emerald-500/5 opacity-40 scale-100'
+            ]"
+          ></div>
+
           <!-- 黑胶唱盘大圆盘 -->
           <div
-            class="w-full h-full rounded-full bg-neutral-950 p-2 sm:p-2.5 shadow-[0_16px_40px_rgba(0,0,0,0.8)] border border-white/10 relative flex items-center justify-center"
-            :class="[playerStore.isPlaying ? 'animate-vinyl' : '']"
+            class="w-full h-full rounded-full bg-neutral-950 p-2 sm:p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 relative flex items-center justify-center transition-transform duration-500"
+            :class="[playerStore.isPlaying ? 'animate-vinyl shadow-[0_0_35px_rgba(16,185,129,0.25)]' : '']"
             style="background: radial-gradient(circle, #1a1a1a 0%, #0d0d0d 40%, #151515 70%, #000 100%);"
           >
             <!-- 唱片黑胶微同心圆沟槽纹理层 -->
@@ -313,5 +325,12 @@ watch(
 }
 .animate-pulse-slow {
   animation: pulse-slow 18s ease-in-out infinite;
+}
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-vinyl {
+  animation: vinyl-spin 22s linear infinite;
 }
 </style>

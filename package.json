@@ -15,6 +15,7 @@
     "@tauri-apps/api": "^2.12.3",
     "@tauri-apps/plugin-process": "^2.4.0",
     "@tauri-apps/plugin-updater": "^2.13.3",
+    "canvas-confetti": "^1.9.4",
     "crypto-js": "^4.2.0",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^4.0.3",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "2.12.2",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",

@@ -5,6 +5,7 @@ import { useServerStore } from '../stores/server'
 import { usePlayerStore } from '../stores/player'
 import AlbumCard from '../components/AlbumCard.vue'
 import TrackRow from '../components/TrackRow.vue'
+import ParticleBackground from '../components/ParticleBackground.vue'
 import type { Album, Track } from '../api/types'
 import { Sparkles, ChevronUp, ChevronDown, Flame, Play, RefreshCw, Disc, Clock } from 'lucide-vue-next'
 
@@ -79,8 +80,9 @@ onMounted(() => {
 <template>
   <div class="space-y-8 pb-12 animate-fade-in">
     <!-- 顶部流光迎宾横幅 (支持右上角自由收缩/展开，记忆偏好) -->
-    <div class="relative overflow-hidden rounded-3xl p-5 sm:p-7 bg-gradient-to-r from-emerald-950/60 via-teal-950/40 to-neutral-900/60 border border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] transition-all duration-300">
-      <div class="absolute -right-10 -bottom-10 w-60 h-60 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+    <div class="relative overflow-hidden rounded-3xl p-5 sm:p-7 bg-gradient-to-r from-emerald-950/70 via-teal-950/50 to-neutral-900/80 border border-emerald-500/25 shadow-[0_10px_35px_rgba(0,0,0,0.4)] transition-all duration-300">
+      <div class="absolute -right-10 -bottom-10 w-60 h-60 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none"></div>
+      <ParticleBackground :density="25" class="opacity-60" />
 
       <!-- 横幅头部与折叠切换按钮 -->
       <div class="flex items-center justify-between relative z-10">
