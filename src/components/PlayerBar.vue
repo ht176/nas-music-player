@@ -74,15 +74,15 @@ async function toggleMiniPlayer() {
     <!-- 顶部极细渐变微光线 -->
     <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
-    <!-- 主界面浮动单行实时歌词胶囊 (点击直达沉浸全屏模式) -->
+    <!-- 主界面浮动单行实时歌词胶囊 (点击直达沉浸全屏模式 - 放大两号) -->
     <div
       v-if="currentLyricText"
-      class="absolute -top-7 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-neutral-900/90 border border-white/15 text-xs text-emerald-400 font-medium backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.5)] flex items-center gap-1.5 cursor-pointer hover:border-emerald-500/50 hover:bg-neutral-800 transition-all max-w-[85vw] truncate group animate-fade-in"
+      class="absolute -top-9 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full bg-neutral-900/95 border border-emerald-500/30 text-sm text-emerald-300 font-semibold backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.6)] flex items-center gap-2 cursor-pointer hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all max-w-[85vw] truncate group animate-fade-in"
       @click="playerStore.showFullscreen = true"
       title="点击进入全屏沉浸歌词"
     >
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-      <span class="truncate">{{ currentLyricText }}</span>
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+      <span class="truncate tracking-wide">{{ currentLyricText }}</span>
     </div>
 
     <!-- 左侧：当前歌曲信息与单行歌词 -->

@@ -138,23 +138,23 @@ watch(
       </div>
     </div>
 
-    <!-- 中部：唱片与歌词分栏 -->
-    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-10 items-center max-w-6xl mx-auto w-full my-4 overflow-hidden">
-      <!-- 左栏：唱片封面 / 黑胶唱盘机模拟 -->
-      <div class="flex flex-col items-center justify-center relative">
-        <!-- 模拟黑胶唱盘机外环与黑胶光盘 -->
-        <div class="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
+    <!-- 中部：唱片与歌词分栏 (流体弹性布局，设最小高度保障缩放稳定) -->
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center max-w-6xl mx-auto w-full my-2 overflow-hidden min-h-[300px]">
+      <!-- 左栏：唱片封面 / 黑胶唱盘机模拟 (缩小两号，跟随视口弹性缩放，带 min/max 限制) -->
+      <div class="flex flex-col items-center justify-center relative w-full">
+        <!-- 模拟黑胶唱盘机外环与黑胶光盘 (缩小两号: w-48/h-48 到 w-72/h-72，配合 min-w/min-h) -->
+        <div class="relative w-[36vmin] h-[36vmin] min-w-[180px] min-h-[180px] max-w-[280px] max-h-[280px] flex items-center justify-center shrink-0">
           <!-- 黑胶唱盘大圆盘 -->
           <div
-            class="w-full h-full rounded-full bg-neutral-950 p-2 sm:p-3 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 relative flex items-center justify-center"
+            class="w-full h-full rounded-full bg-neutral-950 p-2 sm:p-2.5 shadow-[0_16px_40px_rgba(0,0,0,0.8)] border border-white/10 relative flex items-center justify-center"
             :class="[playerStore.isPlaying ? 'animate-vinyl' : '']"
             style="background: radial-gradient(circle, #1a1a1a 0%, #0d0d0d 40%, #151515 70%, #000 100%);"
           >
             <!-- 唱片黑胶微同心圆沟槽纹理层 -->
-            <div class="absolute inset-2 sm:inset-3 rounded-full border border-white/[0.04] pointer-events-none"></div>
-            <div class="absolute inset-6 sm:inset-8 rounded-full border border-white/[0.03] pointer-events-none"></div>
-            <div class="absolute inset-10 sm:inset-14 rounded-full border border-white/[0.03] pointer-events-none"></div>
-            <div class="absolute inset-16 sm:inset-20 rounded-full border border-white/[0.04] pointer-events-none"></div>
+            <div class="absolute inset-1.5 sm:inset-2 rounded-full border border-white/[0.04] pointer-events-none"></div>
+            <div class="absolute inset-4 sm:inset-6 rounded-full border border-white/[0.03] pointer-events-none"></div>
+            <div class="absolute inset-8 sm:inset-10 rounded-full border border-white/[0.03] pointer-events-none"></div>
+            <div class="absolute inset-12 sm:inset-14 rounded-full border border-white/[0.04] pointer-events-none"></div>
 
             <!-- 唱片黑胶反光高光锥形渐变 -->
             <div
@@ -163,31 +163,31 @@ watch(
             ></div>
 
             <!-- 唱片中心圆形封面 (Label) -->
-            <div class="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 rounded-full overflow-hidden shadow-2xl relative border-2 sm:border-4 border-neutral-900 z-10">
+            <div class="w-[50%] h-[50%] rounded-full overflow-hidden shadow-2xl relative border-2 border-neutral-900 z-10">
               <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover select-none" />
               <!-- 唱片中心金属轴孔 -->
-              <div class="absolute inset-0 m-auto w-6 h-6 rounded-full bg-neutral-950 border-2 border-neutral-700/80 shadow-inner flex items-center justify-center">
-                <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+              <div class="absolute inset-0 m-auto w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-neutral-950 border-2 border-neutral-700/80 shadow-inner flex items-center justify-center">
+                <div class="w-1 h-1 rounded-full bg-white/40"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="mt-6 text-center max-w-sm">
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight truncate drop-shadow-md">{{ playerStore.currentTrack.title }}</h2>
-          <p class="text-sm font-medium text-neutral-400 mt-2 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
+        <div class="mt-4 text-center max-w-sm px-2">
+          <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate drop-shadow-md">{{ playerStore.currentTrack.title }}</h2>
+          <p class="text-xs sm:text-sm font-medium text-neutral-400 mt-1 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
         </div>
 
         <!-- 动态律动频谱仪 -->
-        <div class="w-full mt-3">
+        <div class="w-full max-w-xs mt-2">
           <AudioSpectrumVisualizer />
         </div>
       </div>
 
-      <!-- 右栏：逐行/逐字同步滚动歌词 -->
+      <!-- 右栏：逐行/逐字同步滚动歌词 (字号缩小一号，行距与弹性优化) -->
       <div
         ref="lyricsContainer"
-        class="h-72 md:h-full max-h-[520px] overflow-y-auto flex flex-col items-center md:items-start text-center md:text-left space-y-8 py-28 select-none mask-gradient px-4 scroll-smooth"
+        class="h-64 md:h-full max-h-[460px] min-h-[220px] overflow-y-auto flex flex-col items-center md:items-start text-center md:text-left space-y-6 py-20 select-none mask-gradient px-4 scroll-smooth"
       >
         <template v-if="playerStore.lyrics.length > 0">
           <div
@@ -197,8 +197,8 @@ watch(
             class="transition-all duration-300 cursor-pointer font-medium max-w-lg leading-relaxed lyric-text"
             :class="[
               idx === playerStore.currentLyricIndex
-                ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white text-2xl sm:text-3xl font-extrabold scale-105 origin-left drop-shadow-[0_0_20px_rgba(16,185,129,0.35)] tracking-normal'
-                : 'text-neutral-500 hover:text-neutral-300 text-lg sm:text-xl scale-100 opacity-40 font-normal hover:opacity-80',
+                ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white text-xl sm:text-2xl font-extrabold scale-105 origin-left drop-shadow-[0_0_16px_rgba(16,185,129,0.35)] tracking-normal'
+                : 'text-neutral-500 hover:text-neutral-300 text-base sm:text-lg scale-100 opacity-40 font-normal hover:opacity-80',
             ]"
             @click="playerStore.seek(line.time)"
           >
