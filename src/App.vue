@@ -9,14 +9,17 @@ import SearchModal from './components/SearchModal.vue'
 import EqualizerModal from './components/EqualizerModal.vue'
 import MiniPlayerWindow from './components/MiniPlayerWindow.vue'
 import WindowControls from './components/WindowControls.vue'
+import UpdateDialog from './components/UpdateDialog.vue'
 import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
 import { isDesktopApp } from './services/desktop'
+import { checkAppUpdate, type UpdateInfo } from './services/updater'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
 const showSearch = ref(false)
 const isDesktop = ref(isDesktopApp())
+const autoUpdateInfo = ref<UpdateInfo | null>(null)
 
 // 监听快捷键 Ctrl+K / Cmd+K 呼出全局搜索
 function handleKeyDown(e: KeyboardEvent) {
@@ -30,6 +33,18 @@ onMounted(() => {
   serverStore.loadConfig()
   playerStore.initRestoredState()
   window.addEventListener('keydown', handleKeyDown)
+
+  // 启动 3 秒后在后台静默检测版本更新
+  setTimeout(async () => {
+    try {
+      const res = await checkAppUpdate()
+      if (res.available) {
+        autoUpdateInfo.value = res
+      }
+    } catch {
+      // 容错静默
+    }
+  }, 3000)
 })
 
 onUnmounted(() => {
@@ -100,6 +115,9 @@ onUnmounted(() => {
 
       <!-- Web 环境下的迷你浮窗 -->
       <MiniPlayerWindow v-if="!isDesktop" />
+
+      <!-- 版本更新提醒气泡 -->
+      <UpdateDialog v-if="autoUpdateInfo" :update-info="autoUpdateInfo" />
     </template>
   </div>
 </template>

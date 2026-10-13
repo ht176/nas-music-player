@@ -8,6 +8,12 @@ use tauri::{
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            #[cfg(desktop)]
+            {
+                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.handle().plugin(tauri_plugin_process::init())?;
+            }
+
             let show_i = MenuItem::with_id(app, "show", "显示主界面", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "退出应用", true, None::<&str>)?;
             let tray_menu = Menu::with_items(app, &[&show_i, &quit_i])?;

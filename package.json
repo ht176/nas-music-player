@@ -1,7 +1,7 @@
 {
   "name": "nas-project",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "packageManager": "pnpm@10.18.2",
   "type": "module",
   "scripts": {
@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.3",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.13.3",
     "crypto-js": "^4.2.0",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^4.0.3",

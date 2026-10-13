@@ -1,12 +1,51 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServerStore } from '../stores/server'
 import { SubsonicClient } from '../api/client'
-import { Server, CheckCircle2, AlertCircle, Plus, Trash2, Check, Radio } from 'lucide-vue-next'
+import { checkAppUpdate, installAppUpdate, type UpdateInfo } from '../services/updater'
+import { Server, CheckCircle2, AlertCircle, Plus, Trash2, Check, Radio, Sparkles, RefreshCw, DownloadCloud } from 'lucide-vue-next'
 
 const router = useRouter()
 const serverStore = useServerStore()
+
+const checkingUpdate = ref(false)
+const installingUpdate = ref(false)
+const downloadProgress = ref<number>(0)
+const updateInfo = ref<UpdateInfo | null>(null)
+const updateChecked = ref(false)
+const updateError = ref('')
+
+async function handleCheckUpdate() {
+  checkingUpdate.value = true
+  updateError.value = ''
+  try {
+    const res = await checkAppUpdate()
+    updateInfo.value = res
+    updateChecked.value = true
+  } catch (err: any) {
+    updateError.value = '检查更新失败: ' + (err.message || err)
+  } finally {
+    checkingUpdate.value = false
+  }
+}
+
+async function handleInstallUpdate() {
+  installingUpdate.value = true
+  downloadProgress.value = 0
+  try {
+    await installAppUpdate((p) => {
+      downloadProgress.value = p
+    })
+  } catch (err: any) {
+    updateError.value = '更新安装失败: ' + (err.message || err)
+    installingUpdate.value = false
+  }
+}
+
+onMounted(() => {
+  handleCheckUpdate()
+})
 
 const serverName = ref('家庭内网 NAS')
 const serverUrl = ref('http://192.168.1.100:4533')
@@ -241,6 +280,87 @@ function onRemove(id: string, e: MouseEvent) {
         <span v-if="loading">正在测试并保存...</span>
         <span v-else>保存并启用该节点</span>
       </button>
+    </div>
+
+    <!-- 软件版本与自动更新模块 -->
+    <div class="bg-neutral-900/60 p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <Sparkles class="w-5 h-5 text-emerald-400" />
+          <h3 class="font-bold text-white text-base">软件版本与自动更新</h3>
+        </div>
+        <button
+          :disabled="checkingUpdate || installingUpdate"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-neutral-200 text-xs font-medium transition cursor-pointer"
+          @click="handleCheckUpdate"
+        >
+          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': checkingUpdate }" />
+          <span>{{ checkingUpdate ? '正在检查...' : '检查更新' }}</span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between py-1">
+        <div>
+          <div class="text-sm font-medium text-white flex items-center gap-2">
+            当前运行版本:
+            <span class="px-2 py-0.5 rounded-md bg-neutral-800 font-mono text-emerald-400 font-bold text-xs">
+              v{{ updateInfo?.currentVersion || '1.0.3' }}
+            </span>
+          </div>
+          <p class="text-xs text-neutral-400 mt-1">
+            支持静默下载增量更新包并自动安装重启，保持客户端始终为最新功能与优化。
+          </p>
+        </div>
+      </div>
+
+      <!-- 发现新版本提示卡片 -->
+      <div v-if="updateInfo?.available" class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+            <Sparkles class="w-4 h-4" />
+            <span>发现新版本: v{{ updateInfo.version }}</span>
+          </div>
+          <span v-if="updateInfo.date" class="text-[11px] text-neutral-400 font-mono">
+            {{ new Date(updateInfo.date).toLocaleDateString() }}
+          </span >
+        </div>
+
+        <div v-if="updateInfo.body" class="text-xs text-neutral-300 bg-black/30 p-2.5 rounded-lg whitespace-pre-wrap font-sans max-h-32 overflow-y-auto border border-white/5">
+          {{ updateInfo.body }}
+        </div>
+
+        <!-- 下载进度条 -->
+        <div v-if="installingUpdate" class="space-y-1.5">
+          <div class="flex justify-between text-xs text-emerald-400 font-medium">
+            <span>正在下载并安装更新...</span>
+            <span>{{ downloadProgress }}%</span>
+          </div>
+          <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-emerald-500 transition-all duration-300"
+              :style="{ width: `${downloadProgress}%` }"
+            />
+          </div>
+        </div>
+
+        <button
+          v-else
+          class="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+          @click="handleInstallUpdate"
+        >
+          <DownloadCloud class="w-4 h-4" /> 立即更新并重启应用
+        </button>
+      </div>
+
+      <div v-else-if="updateChecked && !checkingUpdate" class="text-xs text-neutral-400 flex items-center gap-1.5 bg-neutral-950/40 p-3 rounded-lg border border-neutral-800/40">
+        <CheckCircle2 class="w-4 h-4 text-emerald-400 shrink-0" />
+        <span>当前已是最新版本，无需更新。</span>
+      </div>
+
+      <div v-if="updateError" class="text-xs text-rose-400 bg-rose-500/10 p-3 rounded-lg border border-rose-500/20 flex items-center gap-1.5">
+        <AlertCircle class="w-4 h-4 shrink-0" />
+        <span>{{ updateError }}</span>
+      </div>
     </div>
   </div>
 </template>
