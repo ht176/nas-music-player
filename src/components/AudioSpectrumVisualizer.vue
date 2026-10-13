@@ -4,17 +4,16 @@ import { audioService } from '../services/audio'
 import { usePlayerStore } from '../stores/player'
 
 export type VisualizerMode =
-  | 'holographic-ribbon' // 案例三：中间向两边对称扩散的全息丝带流体波
-  | 'neon-light-floor'   // 案例四：中间向两边扩散的赛博地坪垂直光柱与倒影
-  | 'neon-glow-line'     // 案例一：中间向两边扩散的霓虹折线脉冲
-  | 'aurora-mirror'      // 经典：极光对称柱
+  | 'neon-light-floor' // 案例四：赛博透视地坪垂直光柱与倒影 (默认)
+  | 'neon-glow-line'   // 案例一：霓虹折线脉冲与频柱
+  | 'aurora-mirror'    // 经典：极光对称柱
 
 const props = withDefaults(
   defineProps<{
     mode?: VisualizerMode
   }>(),
   {
-    mode: 'holographic-ribbon',
+    mode: 'neon-light-floor',
   }
 )
 
@@ -22,7 +21,7 @@ const playerStore = usePlayerStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animId: number | null = null
 
-// 采样点数必须为偶数（方便从中间向两侧完全镜像扩散）
+// 采样点数
 const barCount = 48
 const smoothedHeights = new Float32Array(barCount)
 const peakHeights = new Float32Array(barCount)
@@ -62,208 +61,73 @@ function render() {
   const isWebAudioLive = realData && realData.some((v) => v > 0)
   const isPlaying = playerStore.isPlaying
   const rawVol = playerStore.volume ?? 0.8
-  // 智能音量保护，避免低音量时无律动
-  const volumeFactor = rawVol > 0.01 ? Math.max(0.5, Math.min(1.0, Math.sqrt(rawVol))) : 0
+  const volumeFactor = rawVol > 0.01 ? Math.max(0.4, Math.min(1.0, Math.sqrt(rawVol))) : 0
 
   flowPhase += 0.038
   const centerY = height * 0.52
   const maxBarHalfHeight = height * 0.44
 
   // 1. 中间向两边对称采样计算 (Center to Edges Diffusion)
-  // 低频（重低音、鼓点）集中在画面正中心，高频与泛音对称向左右两侧延伸展开
+  // 杜绝顶格：采用合理线性归一化与适当动态增益，预留 25% 动态余量
   for (let i = 0; i < barCount; i++) {
-    // 计算当前条离中心的相对距离 distanceFromCenter: 中心为 0，两端为 1
+    // 距几何中心的相对距离 (中心为 0，两端为 1)
     const distFromCenter = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2)
 
     let targetVal = 0
 
     if (isPlaying && volumeFactor > 0.01) {
       if (isWebAudioLive && realData) {
-        const n = Math.min(realData.length, 128)
-        // 映射索引：中心对应低频 (0)，两侧对应中高频
-        const sampleIdx = Math.floor(Math.pow(distFromCenter, 1.45) * (n - 1))
+        const n = Math.min(realData.length, 120)
+        // 映射索引：中心对应低频，两侧对应中高频
+        const sampleIdx = Math.floor(Math.pow(distFromCenter, 1.4) * (n - 1))
         const rawVal = realData[sampleIdx] || 0
         const prevVal = sampleIdx > 0 ? realData[sampleIdx - 1] : rawVal
         const nextVal = sampleIdx < n - 1 ? realData[sampleIdx + 1] : rawVal
         const blended = (rawVal * 0.6 + (prevVal + nextVal) * 0.2) / 255
 
-        // 非线性动态增强与中心鼓点加权 (中心低频更澎湃)
-        const centerBassBoost = 1.0 + (1.0 - distFromCenter) * 0.6
-        const powerBoost = Math.pow(blended, 1.22) * 2.0 * centerBassBoost
-        targetVal = Math.min(1.0, powerBoost) * maxBarHalfHeight * volumeFactor
+        // 合理的动态缩放：既灵动又不会全屏顶死
+        const centerWeight = 1.0 + (1.0 - distFromCenter) * 0.35
+        const norm = Math.min(1.0, Math.pow(blended, 1.1) * 1.35 * centerWeight)
+        targetVal = norm * (maxBarHalfHeight * 0.82) * volumeFactor
       } else {
-        // 仿真平滑呼吸浪涌（对称）
-        const t = (playerStore.currentTime || 0) * 5 + flowPhase
-        const wave1 = Math.sin(t + distFromCenter * 3.14) * 0.5 + 0.5
-        const wave2 = Math.cos(t * 0.8 - distFromCenter * 2.2) * 0.4 + 0.5
-        const bell = Math.cos(distFromCenter * (Math.PI / 2)) // 中心高两端低
-        const composite = (wave1 * 0.55 + wave2 * 0.45) * (0.3 + bell * 0.7)
-        targetVal = composite * maxBarHalfHeight * 0.95 * volumeFactor
+        // 离线平滑仿真呼吸浪涌（对称且动态起伏自然）
+        const t = (playerStore.currentTime || 0) * 4.5 + flowPhase
+        const wave1 = Math.sin(t + distFromCenter * 2.8) * 0.45 + 0.45
+        const wave2 = Math.cos(t * 0.7 - distFromCenter * 2.0) * 0.35 + 0.35
+        const envelope = Math.cos(distFromCenter * (Math.PI / 2.3))
+        const composite = (wave1 * 0.6 + wave2 * 0.4) * envelope
+        targetVal = composite * (maxBarHalfHeight * 0.78) * volumeFactor
       }
     } else {
-      targetVal = 1.5
+      targetVal = 1.0
     }
 
-    // 动态双向弹簧阻尼 (上升 0.55 冲顶抓节拍，回落 0.16 保持张力)
+    // 动态双向弹簧阻尼 (上升 0.48，回落 0.18，节奏分明)
     const current = smoothedHeights[i]
     if (targetVal > current) {
-      smoothedHeights[i] = current + (targetVal - current) * 0.55
+      smoothedHeights[i] = current + (targetVal - current) * 0.48
     } else {
-      smoothedHeights[i] = current + (targetVal - current) * 0.16
+      smoothedHeights[i] = current + (targetVal - current) * 0.18
     }
 
     if (smoothedHeights[i] > peakHeights[i]) {
       peakHeights[i] = smoothedHeights[i]
     } else {
-      peakHeights[i] = Math.max(1.5, peakHeights[i] - 0.55)
+      peakHeights[i] = Math.max(1.0, peakHeights[i] - 0.45)
     }
   }
 
   // 2. 分支渲染各案例视觉
-  if (props.mode === 'holographic-ribbon') {
-    renderHolographicRibbon(ctx, width, height, centerY)
-  } else if (props.mode === 'neon-light-floor') {
-    renderNeonLightFloor(ctx, width, height)
-  } else if (props.mode === 'neon-glow-line') {
+  if (props.mode === 'neon-glow-line') {
     renderNeonGlowLine(ctx, width, height, centerY)
-  } else {
+  } else if (props.mode === 'aurora-mirror') {
     renderAuroraMirror(ctx, width, height, centerY)
+  } else {
+    // 默认：案例四 赛博透视地坪
+    renderNeonLightFloor(ctx, width, height)
   }
 
   animId = requestAnimationFrame(render)
-}
-
-/**
- * 🌟 案例三：全息丝带流体多波层 (Holographic Ribbon Waves)
- * 中间向两侧对称扩散，两端优雅收拢贴合激光基准线
- */
-function renderHolographicRibbon(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  _height: number,
-  centerY: number
-) {
-  const stepX = width / (barCount - 1)
-
-  const drawWaveLayer = (
-    phaseOffset: number,
-    harmonicFactor: number,
-    upScale: number,
-    downScale: number,
-    colorStops: [number, string][],
-    lineWidth = 1.6
-  ) => {
-    ctx.beginPath()
-
-    // 顶部波峰曲线
-    ctx.moveTo(0, centerY)
-    for (let i = 0; i < barCount - 1; i++) {
-      const distFromCenter = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2)
-      // 包络线让中心波峰最高，两端平滑归零贴合基准线
-      const envelope = Math.cos(distFromCenter * (Math.PI / 2))
-      const ripple = Math.sin(flowPhase * 1.5 + distFromCenter * 2.8 + phaseOffset) * 0.2 + 0.8
-      const h0 = smoothedHeights[i] * envelope * upScale * ripple
-      const h1 =
-        smoothedHeights[i + 1] *
-        Math.cos((Math.abs(i + 1 - (barCount - 1) / 2) / ((barCount - 1) / 2)) * (Math.PI / 2)) *
-        upScale *
-        ripple
-
-      const x0 = i * stepX
-      const y0 = centerY - h0 * harmonicFactor
-      const x1 = (i + 1) * stepX
-      const y1 = centerY - h1 * harmonicFactor
-      const midX = (x0 + x1) / 2
-      const midY = (y0 + y1) / 2
-      ctx.quadraticCurveTo(x0, y0, midX, midY)
-    }
-
-    // 底部波谷对称曲线
-    for (let i = barCount - 1; i > 0; i--) {
-      const distFromCenter = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2)
-      const envelope = Math.cos(distFromCenter * (Math.PI / 2))
-      const ripple = Math.cos(flowPhase * 1.2 + distFromCenter * 2.5 + phaseOffset) * 0.18 + 0.82
-      const h0 = smoothedHeights[i] * envelope * downScale * ripple
-      const h1 =
-        smoothedHeights[i - 1] *
-        Math.cos((Math.abs(i - 1 - (barCount - 1) / 2) / ((barCount - 1) / 2)) * (Math.PI / 2)) *
-        downScale *
-        ripple
-
-      const x0 = i * stepX
-      const y0 = centerY + h0 * harmonicFactor * 0.65
-      const x1 = (i - 1) * stepX
-      const y1 = centerY + h1 * harmonicFactor * 0.65
-      const midX = (x0 + x1) / 2
-      const midY = (y0 + y1) / 2
-      ctx.quadraticCurveTo(x0, y0, midX, midY)
-    }
-    ctx.closePath()
-
-    // 中间向两端对称渐变
-    const grad = ctx.createLinearGradient(0, 0, width, 0)
-    colorStops.forEach(([pos, col]) => grad.addColorStop(pos, col))
-
-    ctx.fillStyle = grad
-    ctx.fill()
-
-    ctx.strokeStyle = colorStops[1] ? colorStops[1][1] : 'rgba(255,255,255,0.7)'
-    ctx.lineWidth = lineWidth
-    ctx.stroke()
-  }
-
-  // 1. 蓝青主波（中心高耸壮阔）
-  drawWaveLayer(0, 1.45, 1.35, 0.95, [
-    [0, 'rgba(56, 189, 248, 0.05)'],
-    [0.25, 'rgba(56, 189, 248, 0.35)'],
-    [0.5, 'rgba(20, 184, 166, 0.55)'],
-    [0.75, 'rgba(56, 189, 248, 0.35)'],
-    [1, 'rgba(56, 189, 248, 0.05)'],
-  ], 2.0)
-
-  // 2. 翡翠蓝绿谐波
-  drawWaveLayer(1.2, 1.15, 1.1, 0.8, [
-    [0, 'rgba(16, 185, 129, 0.05)'],
-    [0.3, 'rgba(16, 185, 129, 0.45)'],
-    [0.5, 'rgba(6, 182, 212, 0.5)'],
-    [0.7, 'rgba(16, 185, 129, 0.45)'],
-    [1, 'rgba(16, 185, 129, 0.05)'],
-  ], 1.6)
-
-  // 3. 品红/紫红浪漫交织波
-  drawWaveLayer(2.5, 0.95, 0.9, 1.05, [
-    [0, 'rgba(244, 63, 94, 0.05)'],
-    [0.3, 'rgba(236, 72, 153, 0.45)'],
-    [0.5, 'rgba(168, 85, 247, 0.5)'],
-    [0.7, 'rgba(236, 72, 153, 0.45)'],
-    [1, 'rgba(244, 63, 94, 0.05)'],
-  ], 1.6)
-
-  // 4. 金黄柔波
-  drawWaveLayer(3.8, 0.75, 0.7, 0.6, [
-    [0, 'rgba(251, 191, 36, 0.02)'],
-    [0.35, 'rgba(245, 158, 11, 0.35)'],
-    [0.5, 'rgba(251, 191, 36, 0.45)'],
-    [0.65, 'rgba(245, 158, 11, 0.35)'],
-    [1, 'rgba(251, 191, 36, 0.02)'],
-  ], 1.4)
-
-  // 5. 贯穿中心的发光激光基线 (对称渐变)
-  ctx.beginPath()
-  ctx.moveTo(0, centerY)
-  ctx.lineTo(width, centerY)
-  const lineGrad = ctx.createLinearGradient(0, 0, width, 0)
-  lineGrad.addColorStop(0, 'rgba(56, 189, 248, 0.2)')
-  lineGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.85)')
-  lineGrad.addColorStop(0.5, 'rgba(94, 234, 212, 1)')
-  lineGrad.addColorStop(0.65, 'rgba(255, 255, 255, 0.85)')
-  lineGrad.addColorStop(1, 'rgba(56, 189, 248, 0.2)')
-  ctx.strokeStyle = lineGrad
-  ctx.lineWidth = 2.0
-  ctx.shadowColor = '#5eead4'
-  ctx.shadowBlur = 10
-  ctx.stroke()
-  ctx.shadowBlur = 0
 }
 
 /**
@@ -316,9 +180,9 @@ function renderNeonLightFloor(
   ctx.stroke()
   ctx.shadowBlur = 0
 
-  // 3. 垂直霓虹光柱 (中间向两边对称高度)
+  // 3. 垂直霓虹光柱 (中间向两边对称高度，不顶格)
   for (let i = 0; i < barCount; i++) {
-    const val = Math.max(3.0, smoothedHeights[i] * 1.55)
+    const val = Math.max(2.5, smoothedHeights[i] * 1.35)
     const x = i * stepX + stepX * 0.25
     const topY = baseLineY - val
 
@@ -333,9 +197,9 @@ function renderNeonLightFloor(
     ctx.fill()
 
     // 顶端发光白点
-    if (val > 8) {
+    if (val > 6) {
       ctx.beginPath()
-      ctx.arc(x + barWidth / 2, topY, barWidth * 0.7, 0, Math.PI * 2)
+      ctx.arc(x + barWidth / 2, topY, barWidth * 0.65, 0, Math.PI * 2)
       ctx.fillStyle = '#ffffff'
       ctx.shadowColor = i % 2 === 0 ? '#38bdf8' : '#f43f5e'
       ctx.shadowBlur = 8

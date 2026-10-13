@@ -30,19 +30,25 @@ const lyricsContainer = ref<HTMLElement | null>(null)
 const showSleepMenu = ref(false)
 const showLyricSearchModal = ref(false)
 const showTrackInfoModal = ref(false)
-const visualizerMode = ref<VisualizerMode>('holographic-ribbon')
+const VISUALIZER_STORAGE_KEY = 'aura_visualizer_mode'
+const initialVisualizerMode = (localStorage.getItem(VISUALIZER_STORAGE_KEY) as VisualizerMode) || 'neon-light-floor'
+const visualizerMode = ref<VisualizerMode>(
+  ['neon-light-floor', 'neon-glow-line', 'aurora-mirror'].includes(initialVisualizerMode)
+    ? initialVisualizerMode
+    : 'neon-light-floor'
+)
 
 const visualizerModeLabels: Record<VisualizerMode, string> = {
-  'holographic-ribbon': '全息丝带流体波 (案例三)',
   'neon-light-floor': '赛博地坪光柱倒影 (案例四)',
   'neon-glow-line': '霓虹折线脉冲 (案例一)',
   'aurora-mirror': '经典极光对称柱',
 }
 
 function cycleVisualizerMode() {
-  const modes: VisualizerMode[] = ['holographic-ribbon', 'neon-light-floor', 'neon-glow-line', 'aurora-mirror']
+  const modes: VisualizerMode[] = ['neon-light-floor', 'neon-glow-line', 'aurora-mirror']
   const nextIdx = (modes.indexOf(visualizerMode.value) + 1) % modes.length
   visualizerMode.value = modes[nextIdx]
+  localStorage.setItem(VISUALIZER_STORAGE_KEY, visualizerMode.value)
 }
 
 const coverUrl = computed(() => {
