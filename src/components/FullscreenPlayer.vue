@@ -22,6 +22,7 @@ import {
   Activity,
 } from 'lucide-vue-next'
 import type { VisualizerMode } from './AudioSpectrumVisualizer.vue'
+import VinylSpectrumVisualizer from './VinylSpectrumVisualizer.vue'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
@@ -193,6 +194,9 @@ watch(
                 : 'bg-emerald-500/5 opacity-40 scale-100'
             ]"
           ></div>
+
+          <!-- 黑胶唱片环形辐射律动特效 (基于 toolka 博客方案与黑胶唱片联动) -->
+          <VinylSpectrumVisualizer />
 
           <!-- 黑胶唱盘大圆盘 -->
           <div
