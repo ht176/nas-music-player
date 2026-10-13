@@ -112,10 +112,12 @@ watch(
 </script>
 
 <template>
-  <div
-    v-if="playerStore.showFullscreen && playerStore.currentTrack"
-    class="fixed inset-0 z-50 bg-neutral-950 flex flex-col justify-between p-6 sm:p-10 overflow-hidden animate-fade-in select-none"
-  >
+  <Teleport to="body">
+    <Transition name="fullscreen-slide">
+      <div
+        v-if="playerStore.showFullscreen && playerStore.currentTrack"
+        class="fixed inset-0 z-50 bg-neutral-950 flex flex-col justify-between p-6 sm:p-10 overflow-hidden select-none"
+      >
     <!-- Apple Music 风格动态极光背景与粒子流光 -->
     <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
       <div
@@ -158,7 +160,7 @@ watch(
 
         <button
           class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
-          title="查看歌曲文件属性与 NAS 物理信息"
+          title="查看歌曲文件属性与物理存储信息"
           @click="showTrackInfoModal = true"
         >
           <Info class="w-5 h-5 text-neutral-300 hover:text-emerald-400" />
@@ -412,7 +414,9 @@ watch(
       v-model="showAddToPlaylistModal"
       :track="playerStore.currentTrack"
     />
-  </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -432,5 +436,20 @@ watch(
 }
 .animate-vinyl {
   animation: vinyl-spin 22s linear infinite;
+}
+
+/* 沉浸式全屏丝滑上升入场与渐变离场过渡 */
+.fullscreen-slide-enter-active,
+.fullscreen-slide-leave-active {
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+.fullscreen-slide-enter-from {
+  opacity: 0;
+  transform: translateY(24px) scale(0.985);
+}
+.fullscreen-slide-leave-to {
+  opacity: 0;
+  transform: translateY(24px) scale(0.985);
 }
 </style>

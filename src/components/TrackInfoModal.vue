@@ -65,72 +65,73 @@ function handleCopyPath() {
 </script>
 
 <template>
-  <div
-    v-if="modelValue && track"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
-    @click.self="emit('update:modelValue', false)"
-  >
+  <Teleport to="body">
     <div
-      class="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      v-if="modelValue && track"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
+      @click.self="emit('update:modelValue', false)"
     >
-      <!-- 弹窗顶栏 -->
-      <div class="px-6 py-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/90">
-        <div class="flex items-center gap-2.5">
-          <Info class="w-5 h-5 text-emerald-400" />
-          <h3 class="text-base font-bold text-white">音乐文件属性与 NAS 物理信息</h3>
-        </div>
-        <button
-          class="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
-          @click="emit('update:modelValue', false)"
-        >
-          <X class="w-5 h-5" />
-        </button>
-      </div>
-
-      <!-- 内容主体 -->
-      <div class="p-6 overflow-y-auto space-y-5 flex-1">
-        <!-- 歌曲顶部概览卡片 -->
-        <div class="flex items-center gap-4 p-4 rounded-xl bg-neutral-950/60 border border-neutral-800/80">
-          <div class="w-16 h-16 rounded-xl overflow-hidden bg-neutral-800 shrink-0 shadow-md">
-            <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" alt="cover" />
-            <div v-else class="w-full h-full flex items-center justify-center text-neutral-600">
-              <Music class="w-7 h-7" />
-            </div>
+      <div
+        class="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      >
+        <!-- 弹窗顶栏 -->
+        <div class="px-6 py-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/90">
+          <div class="flex items-center gap-2.5">
+            <Info class="w-5 h-5 text-emerald-400" />
+            <h3 class="text-base font-bold text-white">音乐文件属性与物理存储信息</h3>
           </div>
-          <div class="min-w-0 flex-1">
-            <h4 class="text-white font-bold text-base truncate">{{ track.title }}</h4>
-            <p class="text-xs text-neutral-400 truncate mt-0.5">{{ track.artist }} · {{ track.album }}</p>
-            <div class="flex items-center gap-2 mt-2">
-              <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                {{ track.suffix || 'FLAC' }}
-              </span>
-              <span v-if="track.bitRate" class="text-[11px] text-neutral-400 font-mono">
-                {{ track.bitRate }} kbps
-              </span>
-            </div>
-          </div>
+          <button
+            class="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
+            @click="emit('update:modelValue', false)"
+          >
+            <X class="w-5 h-5" />
+          </button>
         </div>
 
-        <!-- NAS 物理存储文件路径（核对比对的核心） -->
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between text-xs text-neutral-400 font-medium">
-            <span class="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <Folder class="w-4 h-4" /> NAS 存储文件相对路径
-            </span>
-            <button
-              v-if="track.path"
-              class="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-white px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 transition cursor-pointer"
-              @click="handleCopyPath"
-            >
-              <Check v-if="copied" class="w-3 h-3 text-emerald-400" />
-              <Copy v-else class="w-3 h-3" />
-              <span>{{ copied ? '已复制' : '复制路径' }}</span>
-            </button>
+        <!-- 内容主体 -->
+        <div class="p-6 overflow-y-auto space-y-5 flex-1">
+          <!-- 歌曲顶部概览卡片 -->
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-neutral-950/60 border border-neutral-800/80">
+            <div class="w-16 h-16 rounded-xl overflow-hidden bg-neutral-800 shrink-0 shadow-md">
+              <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" alt="cover" />
+              <div v-else class="w-full h-full flex items-center justify-center text-neutral-600">
+                <Music class="w-7 h-7" />
+              </div>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h4 class="text-white font-bold text-base truncate">{{ track.title }}</h4>
+              <p class="text-xs text-neutral-400 truncate mt-0.5">{{ track.artist }} · {{ track.album }}</p>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {{ track.suffix || 'FLAC' }}
+                </span>
+                <span v-if="track.bitRate" class="text-[11px] text-neutral-400 font-mono">
+                  {{ track.bitRate }} kbps
+                </span>
+              </div>
+            </div>
           </div>
-          <div class="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/80 font-mono text-xs text-neutral-200 break-all select-all leading-relaxed">
-            {{ track.path || '服务端未返回物理文件路径（建议在 Navidrome 重新扫描文件）' }}
+
+          <!-- 物理存储文件路径 -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs text-neutral-400 font-medium">
+              <span class="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <Folder class="w-4 h-4" /> 物理文件存储相对路径
+              </span>
+              <button
+                v-if="track.path"
+                class="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-white px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 transition cursor-pointer"
+                @click="handleCopyPath"
+              >
+                <Check v-if="copied" class="w-3 h-3 text-emerald-400" />
+                <Copy v-else class="w-3 h-3" />
+                <span>{{ copied ? '已复制' : '复制路径' }}</span>
+              </button>
+            </div>
+            <div class="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/80 font-mono text-xs text-neutral-200 break-all select-all leading-relaxed">
+              {{ track.path || '服务端未返回物理文件路径（建议在音乐库中重新扫描文件）' }}
+            </div>
           </div>
-        </div>
 
         <!-- 详细音频规格与属性网格 -->
         <div class="grid grid-cols-2 gap-3 text-xs">
@@ -221,4 +222,5 @@ function handleCopyPath() {
       </div>
     </div>
   </div>
+  </Teleport>
 </template>

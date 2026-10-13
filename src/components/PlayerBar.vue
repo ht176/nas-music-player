@@ -200,7 +200,7 @@ async function toggleMiniPlayer() {
         class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
         :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': showTrackInfo }"
         @click="showTrackInfo = !showTrackInfo"
-        title="查看歌曲文件属性与 NAS 物理路径"
+        title="查看歌曲文件属性与物理存储路径"
       >
         <Info class="w-4 h-4" />
       </button>
