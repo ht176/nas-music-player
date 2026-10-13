@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServerStore } from '../stores/server'
 import { usePlayerStore } from '../stores/player'
@@ -18,6 +18,7 @@ const router = useRouter()
 const serverStore = useServerStore()
 const playerStore = usePlayerStore()
 
+const inputRef = ref<HTMLInputElement | null>(null)
 const query = ref('')
 const loading = ref(false)
 const results = ref<{ songs: Track[]; albums: Album[]; artists: Artist[] }>({
@@ -27,6 +28,20 @@ const results = ref<{ songs: Track[]; albums: Album[]; artists: Artist[] }>({
 })
 
 let timer: any = null
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) {
+      nextTick(() => {
+        setTimeout(() => {
+          inputRef.value?.focus()
+          inputRef.value?.select()
+        }, 50)
+      })
+    }
+  }
+)
 
 watch(query, (val) => {
   clearTimeout(timer)
@@ -70,23 +85,24 @@ function handleSelectArtist(artist: Artist) {
 </script>
 
 <template>
-  <div
-    v-if="props.modelValue"
-    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-fade-in"
-    @click.self="close"
-  >
-    <div class="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh]">
-      <!-- 搜索框 -->
-      <div class="p-4 border-b border-neutral-800 flex items-center gap-3">
-        <Search class="w-5 h-5 text-neutral-400 shrink-0" />
-        <input
-          v-model="query"
-          type="text"
-          placeholder="搜索单曲、专辑、艺术家..."
-          autofocus
-          class="flex-1 bg-transparent text-white text-base focus:outline-none placeholder-neutral-500"
-          @keydown.esc="close"
-        />
+  <Teleport to="body">
+    <div
+      v-if="props.modelValue"
+      class="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-fade-in"
+      @click.self="close"
+    >
+      <div class="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh]">
+        <!-- 搜索框 -->
+        <div class="p-4 border-b border-neutral-800 flex items-center gap-3">
+          <Search class="w-5 h-5 text-neutral-400 shrink-0" />
+          <input
+            ref="inputRef"
+            v-model="query"
+            type="text"
+            placeholder="搜索单曲、专辑、艺术家..."
+            class="flex-1 bg-transparent text-white text-base focus:outline-none placeholder-neutral-500"
+            @keydown.esc="close"
+          />
         <button
           v-if="query"
           class="p-1 rounded-md text-neutral-400 hover:text-white cursor-pointer"
@@ -178,4 +194,5 @@ function handleSelectArtist(artist: Artist) {
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
