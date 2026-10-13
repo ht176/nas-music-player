@@ -54,6 +54,7 @@ onMounted(async () => {
   serverStore.loadConfig()
   playerStore.initRestoredState()
   window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('contextmenu', handleContextMenu)
 
   if (isDesktop.value) {
     unlistenTray = await listenTrayActions((action) => {
@@ -82,8 +83,14 @@ onMounted(async () => {
   }
 })
 
+function handleContextMenu(e: MouseEvent) {
+  // 禁止默认系统网页右键菜单
+  e.preventDefault()
+}
+
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('contextmenu', handleContextMenu)
   unlistenTray?.()
 })
 </script>

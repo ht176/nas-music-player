@@ -119,30 +119,21 @@ async function toggleMiniPlayer() {
 
     <!-- 中间：核心控制与区分已播/未播的进度条 -->
     <div class="flex flex-col items-center max-w-xl w-2/4">
-      <div class="flex items-center gap-5 mb-1.5">
-        <button
-          class="text-neutral-400 hover:text-white transition-colors cursor-pointer p-1 rounded-md"
-          :class="{ 'text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]': playerStore.playMode === 'random' }"
-          @click="playerStore.togglePlayMode"
-          title="播放模式"
-        >
-          <Shuffle v-if="playerStore.playMode === 'random'" class="w-4 h-4" />
-          <Repeat v-else class="w-4 h-4" />
-        </button>
-
-        <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev">
+      <div class="flex items-center gap-6 mb-1.5">
+        <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev" title="上一首">
           <SkipBack class="w-5 h-5 fill-current" />
         </button>
 
         <button
           class="h-10 w-10 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-neutral-950 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] hover:scale-105 active:scale-95 transition duration-200 cursor-pointer font-bold"
           @click="playerStore.togglePlay"
+          :title="playerStore.isPlaying ? '暂停' : '播放'"
         >
           <Pause v-if="playerStore.isPlaying" class="w-5 h-5 fill-current" />
           <Play v-else class="w-5 h-5 fill-current ml-0.5" />
         </button>
 
-        <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next">
+        <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next" title="下一首">
           <SkipForward class="w-5 h-5 fill-current" />
         </button>
       </div>
@@ -165,8 +156,19 @@ async function toggleMiniPlayer() {
       </div>
     </div>
 
-    <!-- 右侧：音量、EQ、播放列表与全屏歌词触发 -->
+    <!-- 右侧：播放模式、迷你悬浮窗、音量、EQ、播放列表与全屏歌词触发 -->
     <div class="flex items-center justify-end gap-2 w-1/4">
+      <!-- 播放模式切换 (放置在桌面迷你悬浮窗口图标左侧) -->
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.2)]': playerStore.playMode === 'random' }"
+        @click="playerStore.togglePlayMode"
+        :title="playerStore.playMode === 'random' ? '当前模式: 随机播放 (点击切换)' : '当前模式: 列表循环 (点击切换)'"
+      >
+        <Shuffle v-if="playerStore.playMode === 'random'" class="w-4 h-4" />
+        <Repeat v-else class="w-4 h-4" />
+      </button>
+
       <!-- 桌面端独占：迷你浮窗模式 (网页端/移动端不展示) -->
       <button
         v-if="isDesktopApp()"
