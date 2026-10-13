@@ -1,5 +1,17 @@
 import type { LyricLine } from '../api/types'
 
+export interface OnlineLyricResult {
+  id: number
+  trackName: string
+  artistName: string
+  albumName?: string
+  duration?: number
+  syncedLyrics?: string
+  plainLyrics?: string
+}
+
+const LYRIC_OVERRIDE_PREFIX = 'aura_lyric_override_'
+
 export class LyricsService {
   /**
    * 解析标准 LRC 文本为时间戳数组
@@ -52,5 +64,64 @@ export class LyricsService {
     }
 
     return best
+  }
+
+  /**
+   * 从开源 LRCLIB API 在线检索同步/纯文本歌词
+   */
+  static async searchOnlineLyrics(keyword: string): Promise<OnlineLyricResult[]> {
+    if (!keyword || !keyword.trim()) return []
+    try {
+      const url = `https://lrclib.net/api/search?q=${encodeURIComponent(keyword.trim())}`
+      const res = await fetch(url)
+      if (!res.ok) return []
+      const data = await res.json()
+      if (!Array.isArray(data)) return []
+      return data.map((item: any) => ({
+        id: item.id,
+        trackName: item.trackName || item.name || '',
+        artistName: item.artistName || '',
+        albumName: item.albumName || '',
+        duration: item.duration,
+        syncedLyrics: item.syncedLyrics || '',
+        plainLyrics: item.plainLyrics || '',
+      })).filter((item: OnlineLyricResult) => item.syncedLyrics || item.plainLyrics)
+    } catch (e) {
+      console.warn('检索在线歌词失败:', e)
+      return []
+    }
+  }
+
+  /**
+   * 保存当前曲目被用户手动替换的自定义歌词
+   */
+  static saveLyricOverride(trackId: string, lyricLines: LyricLine[]) {
+    try {
+      localStorage.setItem(`${LYRIC_OVERRIDE_PREFIX}${trackId}`, JSON.stringify(lyricLines))
+    } catch (e) {
+      console.warn('缓存覆盖歌词失败', e)
+    }
+  }
+
+  /**
+   * 读取当前曲目是否存在用户手动替换的歌词
+   */
+  static getLyricOverride(trackId: string): LyricLine[] | null {
+    try {
+      const raw = localStorage.getItem(`${LYRIC_OVERRIDE_PREFIX}${trackId}`)
+      if (raw) return JSON.parse(raw)
+    } catch (e) {
+      // 容错
+    }
+    return null
+  }
+
+  /**
+   * 清除用户对某首曲目的歌词替换，恢复服务端默认
+   */
+  static removeLyricOverride(trackId: string) {
+    try {
+      localStorage.removeItem(`${LYRIC_OVERRIDE_PREFIX}${trackId}`)
+    } catch {}
   }
 }

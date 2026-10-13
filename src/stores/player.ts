@@ -163,14 +163,25 @@ export const usePlayerStore = defineStore('player', () => {
 
     lyrics.value = []
     currentLyricIndex.value = -1
-    serverStore.client.getLyrics(track.id, track.artist, track.title).then((res) => {
-      lyrics.value = res.lines || []
-      if (lyrics.value.length > 0) {
-        currentLyricIndex.value = LyricsService.findActiveIndex(lyrics.value, currentTime.value)
-      }
-    }).catch((err) => {
-      console.warn('[PlayerStore] 获取歌词失败:', err)
-    })
+
+    // 优先读取用户手动覆盖的本地精准歌词
+    const overridden = LyricsService.getLyricOverride(track.id)
+    if (overridden && overridden.length > 0) {
+      lyrics.value = overridden
+      currentLyricIndex.value = LyricsService.findActiveIndex(lyrics.value, currentTime.value)
+    } else {
+      serverStore.client.getLyrics(track.id, track.artist, track.title).then((res) => {
+        // 如果在异步返回前用户没有手动换歌词
+        if (!LyricsService.getLyricOverride(track.id)) {
+          lyrics.value = res.lines || []
+          if (lyrics.value.length > 0) {
+            currentLyricIndex.value = LyricsService.findActiveIndex(lyrics.value, currentTime.value)
+          }
+        }
+      }).catch((err) => {
+        console.warn('[PlayerStore] 获取歌词失败:', err)
+      })
+    }
 
     try {
       await play()
@@ -386,5 +397,23 @@ export const usePlayerStore = defineStore('player', () => {
     setVolume,
     togglePlayMode,
     initRestoredState,
+    applyCustomLyrics(lines: LyricLine[]) {
+      if (!currentTrack.value) return
+      LyricsService.saveLyricOverride(currentTrack.value.id, lines)
+      lyrics.value = lines
+      if (lines.length > 0) {
+        currentLyricIndex.value = LyricsService.findActiveIndex(lines, currentTime.value)
+      }
+    },
+    resetTrackLyrics() {
+      if (!currentTrack.value || !serverStore.client) return
+      LyricsService.removeLyricOverride(currentTrack.value.id)
+      serverStore.client.getLyrics(currentTrack.value.id, currentTrack.value.artist, currentTrack.value.title).then((res) => {
+        lyrics.value = res.lines || []
+        if (lyrics.value.length > 0) {
+          currentLyricIndex.value = LyricsService.findActiveIndex(lyrics.value, currentTime.value)
+        }
+      })
+    },
   }
 })
