@@ -1,4 +1,4 @@
-import { isDesktopApp } from './desktop'
+import { isTauriApp } from './desktop'
 
 export interface UpdateInfo {
   available: boolean
@@ -11,24 +11,11 @@ export interface UpdateInfo {
 let updaterInstance: any = null
 
 export async function checkAppUpdate(): Promise<UpdateInfo> {
-  const currentVersion = '1.0.3'
+  const currentVersion = '1.0.5'
 
-  if (!isDesktopApp()) {
-    try {
-      const res = await fetch('https://api.github.com/repos/ht176/nas-music-player/releases/latest')
-      if (!res.ok) return { available: false, currentVersion }
-      const data = await res.json()
-      const latestTag = (data.tag_name || '').replace(/^v/, '')
-      return {
-        available: Boolean(latestTag && latestTag !== currentVersion),
-        currentVersion,
-        version: latestTag,
-        date: data.published_at,
-        body: data.body,
-      }
-    } catch {
-      return { available: false, currentVersion }
-    }
+  // 纯网页端 (Web/Docker 部署) 由服务端发布与浏览器刷新维护，不参与客户端版本检测与弹窗
+  if (!isTauriApp()) {
+    return { available: false, currentVersion }
   }
 
   try {
@@ -52,8 +39,7 @@ export async function checkAppUpdate(): Promise<UpdateInfo> {
 }
 
 export async function installAppUpdate(onProgress?: (progress: number) => void): Promise<void> {
-  if (!isDesktopApp() || !updaterInstance) {
-    window.open('https://github.com/ht176/nas-music-player/releases/latest', '_blank')
+  if (!isTauriApp() || !updaterInstance) {
     return
   }
 

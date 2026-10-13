@@ -12,7 +12,7 @@ import WindowControls from './components/WindowControls.vue'
 import UpdateDialog from './components/UpdateDialog.vue'
 import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
-import { isDesktopApp, listenTrayActions } from './services/desktop'
+import { isDesktopApp, isTauriApp, listenTrayActions } from './services/desktop'
 import { checkAppUpdate, type UpdateInfo } from './services/updater'
 
 const playerStore = usePlayerStore()
@@ -66,17 +66,19 @@ onMounted(async () => {
     })
   }
 
-  // 启动 3 秒后在后台静默检测版本更新
-  setTimeout(async () => {
-    try {
-      const res = await checkAppUpdate()
-      if (res.available) {
-        autoUpdateInfo.value = res
+  // 仅在原生客户端环境下，启动 3 秒后在后台静默检测版本更新
+  if (isTauriApp()) {
+    setTimeout(async () => {
+      try {
+        const res = await checkAppUpdate()
+        if (res.available) {
+          autoUpdateInfo.value = res
+        }
+      } catch {
+        // 容错静默
       }
-    } catch {
-      // 容错静默
-    }
-  }, 3000)
+    }, 3000)
+  }
 })
 
 onUnmounted(() => {

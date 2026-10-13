@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useServerStore } from '../stores/server'
 import { SubsonicClient } from '../api/client'
 import { checkAppUpdate, installAppUpdate, type UpdateInfo } from '../services/updater'
+import { isTauriApp } from '../services/desktop'
 import { Server, CheckCircle2, AlertCircle, Plus, Trash2, Check, Radio, Sparkles, RefreshCw, DownloadCloud } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -282,8 +283,8 @@ function onRemove(id: string, e: MouseEvent) {
       </button>
     </div>
 
-    <!-- 软件版本与自动更新模块 -->
-    <div class="bg-neutral-900/60 p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
+    <!-- 软件版本与自动更新模块（仅客户端原生环境支持） -->
+    <div v-if="isTauriApp()" class="bg-neutral-900/60 p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
       <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
         <div class="flex items-center gap-2.5">
           <Sparkles class="w-5 h-5 text-emerald-400" />

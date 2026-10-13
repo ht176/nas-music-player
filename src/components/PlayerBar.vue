@@ -164,7 +164,9 @@ async function toggleMiniPlayer() {
 
     <!-- 右侧：音量、EQ、播放列表与全屏歌词触发 -->
     <div class="flex items-center justify-end gap-2 w-1/4">
+      <!-- 桌面端独占：迷你浮窗模式 (网页端/移动端不展示) -->
       <button
+        v-if="isDesktopApp()"
         class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
         :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showMiniPlayer }"
         @click="toggleMiniPlayer"
