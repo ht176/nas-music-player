@@ -50,7 +50,9 @@ function render() {
   for (let i = 0; i < barCount; i++) {
     let targetVal = 0
 
-    if (isPlaying) {
+    const volumeFactor = playerStore.volume ?? 0.8
+
+    if (isPlaying && volumeFactor > 0.01) {
       if (isWebAudioLive && realData) {
         // 对数/非线性频段采样映射：人耳对低频到中低频最敏感
         // 低频对应 20Hz~250Hz，中频 250Hz~4kHz，高频 4kHz~20kHz
@@ -64,11 +66,11 @@ function render() {
         const nextVal = sampleIdx < n - 1 ? realData[sampleIdx + 1] : rawVal
         const blended = (rawVal * 0.6 + (prevVal + nextVal) * 0.2) / 255
 
-        // 人耳听感补偿（高频轻微增益，避免右侧完全平直）
+        // 人耳听感补偿与音量强绑定
         const earCompensation = 1 + (i / barCount) * 0.35
-        targetVal = Math.min(1, blended * earCompensation) * maxBarHalfHeight
+        targetVal = Math.min(1, blended * earCompensation) * maxBarHalfHeight * volumeFactor
       } else {
-        // 当流媒体由浏览器原生直推时（CORS限制），使用基于歌曲当前时间戳的高保真物理流体声学模型
+        // 当流媒体由浏览器原生直推时（CORS限制），使用基于歌曲当前时间戳的动态声学拟真模型（按音量等比放大/缩小）
         const t = (playerStore.currentTime || 0) * 4 + flowPhase
         // 多谐波自然重叠 (仿交响/人声呼吸波束)
         const wave1 = Math.sin(t + i * 0.28) * 0.45 + 0.5
@@ -77,11 +79,11 @@ function render() {
         // 呈现中间丰满、两端优雅收敛的声波自然鼓形曲线 (Bell Envelope)
         const bell = Math.sin((i / (barCount - 1)) * Math.PI)
         const composite = (wave1 * 0.5 + wave2 * 0.35 + wave3 * 0.15) * (0.35 + bell * 0.65)
-        targetVal = composite * maxBarHalfHeight * 0.88
+        targetVal = composite * maxBarHalfHeight * 0.88 * volumeFactor
       }
     } else {
-      // 暂停时微弱常驻静息呼吸底线
-      targetVal = 2.0
+      // 暂停或静音时：彻底归于静止微平底线
+      targetVal = 1.0
     }
 
     // 动态阻尼弹性过渡 (Spring / Damping lerp)

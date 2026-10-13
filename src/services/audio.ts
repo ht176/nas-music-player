@@ -36,47 +36,20 @@ export class AudioPlayerService {
 
   constructor() {
     this.audio = new Audio()
+    this.audio.crossOrigin = 'anonymous'
     this.preloadAudio = new Audio()
+    this.preloadAudio.crossOrigin = 'anonymous'
     this.preloadAudio.preload = 'auto'
     this.initListeners()
-  }
-
-  private corsChecked = false
-  private isCorsSupported = false
-
-  /**
-   * 异步检测当前正在播放的音频流是否具备合法 CORS 跨域响应头
-   */
-  private async checkCorsSupport(): Promise<boolean> {
-    if (!this.audio.src) return false
-    try {
-      const res = await fetch(this.audio.src, { method: 'HEAD', mode: 'cors' })
-      return res.ok && !!res.headers.get('access-control-allow-origin')
-    } catch {
-      return false
-    }
   }
 
   private async tryInitAudioContext() {
     if (this.isConnectedToWebAudio) return
 
-    // 如果尚未完成 CORS 跨域检测，先进行快速探测
-    if (!this.corsChecked) {
-      this.isCorsSupported = await this.checkCorsSupport()
-      this.corsChecked = true
-    }
-
-    if (!this.isCorsSupported) {
-      console.info('[AudioPlayer] NAS 服务端音频流未下发 CORS 跨域头，为保障播放无静音，使用浏览器原生高保真引擎直推播放')
-      this.isConnectedToWebAudio = false
-      return
-    }
-
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
       if (!AudioCtx) return
 
-      this.audio.crossOrigin = 'anonymous'
       this.audioCtx = new AudioCtx()
       this.gainNode = this.audioCtx.createGain()
       this.analyserNode = this.audioCtx.createAnalyser()
@@ -216,7 +189,7 @@ export class AudioPlayerService {
   }
 
   setSource(url: string) {
-    this.corsChecked = false
+    this.audio.crossOrigin = 'anonymous'
     this.audio.src = url
     this.audio.load()
   }
