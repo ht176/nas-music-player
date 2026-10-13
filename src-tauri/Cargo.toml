@@ -1,6 +1,6 @@
 [package]
 name = "nas-music-player"
-version = "1.0.4"
+version = "1.0.5"
 description = "High-Fidelity Cross-Platform NAS Music Player Client"
 authors = ["you"]
 edition = "2021"
