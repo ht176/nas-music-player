@@ -83,14 +83,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Setup NDK
-        id: setup-ndk
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r26d
+      - name: Configure Android SDK & NDK Environment
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -n 1)
+          echo "NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$NDK_PATH" >> $GITHUB_ENV
+          echo "Using Android NDK: $NDK_PATH"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -107,13 +106,11 @@ jobs:
       - name: Init Tauri Android target
         env:
           CI: 'true'
-          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: pnpm tauri android init
 
       - name: Build Android APK
         env:
           CI: 'true'
-          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: pnpm tauri android build --apk
 
       - name: Collect Android APKs
