@@ -318,6 +318,66 @@ export class SubsonicClient {
     return { songs, albums, artists }
   }
 
+  /**
+   * 按关键词搜索歌曲 (Subsonic search3.view)
+   */
+  async searchSongs(query: string, count = 30, offset = 0): Promise<Track[]> {
+    const res = await this.request<{ searchResult3?: { song?: any[] } }>('search3.view', {
+      query: query || '',
+      songCount: count,
+      songOffset: offset,
+    })
+    const list = res.searchResult3?.song || []
+    return list.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      artistId: s.artistId,
+      album: s.album,
+      albumId: s.albumId,
+      coverArtId: s.coverArt,
+      duration: s.duration || 0,
+      trackNumber: s.track,
+      discNumber: s.discNumber,
+      year: s.year,
+      bitRate: s.bitRate,
+      suffix: s.suffix,
+      size: s.size,
+      starred: !!s.starred,
+      userRating: s.userRating,
+      genre: s.genre,
+      created: s.created,
+    }))
+  }
+
+  /**
+   * 随机获取一批歌曲 (Subsonic getRandomSongs.view)
+   */
+  async getRandomSongs(size = 30): Promise<Track[]> {
+    const res = await this.request<{ randomSongs?: { song?: any[] } }>('getRandomSongs.view', { size })
+    const list = res.randomSongs?.song || []
+    return list.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      artistId: s.artistId,
+      album: s.album,
+      albumId: s.albumId,
+      coverArtId: s.coverArt,
+      duration: s.duration || 0,
+      trackNumber: s.track,
+      discNumber: s.discNumber,
+      year: s.year,
+      bitRate: s.bitRate,
+      suffix: s.suffix,
+      size: s.size,
+      starred: !!s.starred,
+      userRating: s.userRating,
+      genre: s.genre,
+      created: s.created,
+    }))
+  }
+
   getStreamUrl(songId: string, suffix?: string): string {
     const cleanBaseUrl = this.config.url.replace(/\/+$/, '')
     const params = this.getAuthParams()

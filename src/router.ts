@@ -9,6 +9,7 @@ import PlaylistDetailView from './views/PlaylistDetailView.vue'
 import DownloadedView from './views/DownloadedView.vue'
 import StatsView from './views/StatsView.vue'
 import SettingsView from './views/SettingsView.vue'
+import AllSongsView from './views/AllSongsView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,7 @@ export const router = createRouter({
     { path: '/', component: ExploreView },
     { path: '/album/:id', component: AlbumDetailView },
     { path: '/favorites', component: FavoritesView },
+    { path: '/songs', component: AllSongsView },
     { path: '/downloaded', component: DownloadedView },
     { path: '/stats', component: StatsView },
     { path: '/artists', component: ArtistsView },

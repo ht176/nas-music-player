@@ -101,8 +101,7 @@ async function toggleMiniPlayer() {
           {{ playerStore.currentTrack.title }}
         </div>
         <div class="text-xs text-neutral-400 truncate mt-0.5 flex items-center gap-1.5">
-          <span class="shrink-0">{{ playerStore.currentTrack.artist }}</span>
-          <span v-if="currentLyricText" class="text-emerald-400/90 truncate font-medium max-w-[180px]" :title="currentLyricText">· {{ currentLyricText }}</span>
+          <span class="truncate">{{ playerStore.currentTrack.artist }}</span>
         </div>
       </div>
       <button

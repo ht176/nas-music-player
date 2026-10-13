@@ -24,6 +24,9 @@ export interface Track {
   suffix?: string
   size?: number
   starred?: boolean
+  userRating?: number
+  genre?: string
+  created?: string
 }
 
 export interface Album {

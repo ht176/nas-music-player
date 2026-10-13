@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { Disc, Settings, Radio, Heart, User, ListMusic, Search, DownloadCloud, BarChart3 } from 'lucide-vue-next'
+import { Disc, Settings, Radio, Heart, User, ListMusic, Search, DownloadCloud, BarChart3, Music } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,6 +12,7 @@ const emit = defineEmits<{
 const navItems = [
   { name: '发现音乐', path: '/', icon: Disc },
   { name: '我喜欢的', path: '/favorites', icon: Heart },
+  { name: '全部歌曲', path: '/songs', icon: Music },
   { name: '已下载', path: '/downloaded', icon: DownloadCloud },
   { name: '足迹统计', path: '/stats', icon: BarChart3 },
   { name: '艺术家', path: '/artists', icon: User },
