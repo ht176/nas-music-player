@@ -230,7 +230,7 @@ watch(
 
         <!-- 动态律动频谱仪 (支持点击快速切换现代声波风格) -->
         <div
-          class="w-full max-w-sm mt-2 relative group cursor-pointer"
+          class="w-full max-w-lg mt-1 relative group cursor-pointer"
           @click="cycleVisualizerMode"
           :title="`当前动效: ${visualizerModeLabels[visualizerMode]} (点击切换)`"
         >

@@ -36,13 +36,13 @@ interface SparkParticle {
   color: string
 }
 const sparks: SparkParticle[] = []
-for (let i = 0; i < 35; i++) {
+for (let i = 0; i < 40; i++) {
   sparks.push({
-    x: Math.random() * 540,
-    y: Math.random() * 30 + 60,
-    speed: Math.random() * 2.5 + 1.2,
-    length: Math.random() * 15 + 8,
-    color: ['#10b981', '#06b6d4', '#a855f7', '#f43f5e'][Math.floor(Math.random() * 4)],
+    x: Math.random() * 600,
+    y: Math.random() * 40 + 80,
+    speed: Math.random() * 3.2 + 1.6,
+    length: Math.random() * 22 + 10,
+    color: ['#10b981', '#06b6d4', '#a855f7', '#f43f5e', '#38bdf8'][Math.floor(Math.random() * 5)],
   })
 }
 
@@ -61,11 +61,14 @@ function render() {
   const realData = audioService.getByteFrequencyData()
   const isWebAudioLive = realData && realData.some((v) => v > 0)
   const isPlaying = playerStore.isPlaying
-  const volumeFactor = playerStore.volume ?? 0.8
+  const rawVol = playerStore.volume ?? 0.8
+  // 智能音量因子：在低音量下保持视觉感知力（不让小音量毁掉动效）
+  const volumeFactor = rawVol > 0.01 ? Math.max(0.45, Math.min(1.0, Math.sqrt(rawVol))) : 0
 
-  flowPhase += 0.035
-  const centerY = height * 0.58
-  const maxBarHalfHeight = height * 0.46
+  flowPhase += 0.038
+  const centerY = height * 0.52
+  // 显著扩大最大波峰高度 (使用全画布高度的 82%)
+  const maxBarHalfHeight = height * 0.42
 
   // 1. 计算每个频段的真实声学与弹性平滑
   for (let i = 0; i < barCount; i++) {
@@ -74,39 +77,43 @@ function render() {
     if (isPlaying && volumeFactor > 0.01) {
       if (isWebAudioLive && realData) {
         const n = realData.length
-        // 人耳非线性对数频段采样映射 (低频密集响应，高频适度补偿)
-        const sampleIdx = Math.floor(Math.pow(i / (barCount - 1), 1.7) * (n - 1))
+        // 人耳对数采样频段映射
+        const sampleIdx = Math.floor(Math.pow(i / (barCount - 1), 1.6) * (n - 1))
         const rawVal = realData[sampleIdx] || 0
         const prevVal = sampleIdx > 0 ? realData[sampleIdx - 1] : rawVal
         const nextVal = sampleIdx < n - 1 ? realData[sampleIdx + 1] : rawVal
         const blended = (rawVal * 0.6 + (prevVal + nextVal) * 0.2) / 255
-        const earCompensation = 1 + (i / barCount) * 0.35
-        targetVal = Math.min(1, blended * earCompensation) * maxBarHalfHeight * volumeFactor
+
+        // 非线性动态放大：强化中低频鼓点与瞬态爆发感 (振幅指数提升)
+        const powerBoost = Math.pow(blended, 1.25) * 1.85
+        const freqWeight = 1.0 + Math.sin((i / (barCount - 1)) * Math.PI) * 0.45
+        targetVal = Math.min(1.0, powerBoost * freqWeight) * maxBarHalfHeight * volumeFactor
       } else {
-        const t = (playerStore.currentTime || 0) * 4 + flowPhase
-        const wave1 = Math.sin(t + i * 0.28) * 0.45 + 0.5
-        const wave2 = Math.cos(t * 0.7 - i * 0.19) * 0.35 + 0.5
-        const wave3 = Math.sin(t * 1.6 + i * 0.5) * 0.2 + 0.5
+        // 优雅仿真波浪
+        const t = (playerStore.currentTime || 0) * 5 + flowPhase
+        const wave1 = Math.sin(t + i * 0.3) * 0.5 + 0.5
+        const wave2 = Math.cos(t * 0.8 - i * 0.2) * 0.4 + 0.5
+        const wave3 = Math.sin(t * 1.8 + i * 0.55) * 0.25 + 0.5
         const bell = Math.sin((i / (barCount - 1)) * Math.PI)
-        const composite = (wave1 * 0.5 + wave2 * 0.35 + wave3 * 0.15) * (0.35 + bell * 0.65)
-        targetVal = composite * maxBarHalfHeight * 0.88 * volumeFactor
+        const composite = (wave1 * 0.45 + wave2 * 0.35 + wave3 * 0.2) * (0.3 + bell * 0.7)
+        targetVal = composite * maxBarHalfHeight * 0.95 * volumeFactor
       }
     } else {
-      targetVal = 1.0
+      targetVal = 1.5
     }
 
-    // 动态双向弹簧阻尼 (上升 0.38，回落 0.12)
+    // 动态双向弹簧阻尼 (上升 0.55 极速冲顶抓住节拍，回落 0.16 保持节奏张力)
     const current = smoothedHeights[i]
     if (targetVal > current) {
-      smoothedHeights[i] = current + (targetVal - current) * 0.38
+      smoothedHeights[i] = current + (targetVal - current) * 0.55
     } else {
-      smoothedHeights[i] = current + (targetVal - current) * 0.12
+      smoothedHeights[i] = current + (targetVal - current) * 0.16
     }
 
     if (smoothedHeights[i] > peakHeights[i]) {
       peakHeights[i] = smoothedHeights[i]
     } else {
-      peakHeights[i] = Math.max(1.0, peakHeights[i] - 0.45)
+      peakHeights[i] = Math.max(1.5, peakHeights[i] - 0.55)
     }
   }
 
@@ -192,37 +199,37 @@ function renderHolographicRibbon(
     ctx.stroke()
   }
 
-  // 1. 蓝青主波（最高耸）
-  drawWaveLayer(0, 1.25, 1.0, 0.7, [
+  // 1. 蓝青主波（最高耸壮阔）
+  drawWaveLayer(0, 1.45, 1.35, 0.95, [
     [0, 'rgba(56, 189, 248, 0.05)'],
-    [0.3, 'rgba(56, 189, 248, 0.35)'],
-    [0.55, 'rgba(20, 184, 166, 0.4)'],
+    [0.3, 'rgba(56, 189, 248, 0.45)'],
+    [0.55, 'rgba(20, 184, 166, 0.5)'],
     [1, 'rgba(56, 189, 248, 0.05)'],
-  ], 1.5)
+  ], 2.0)
 
   // 2. 翡翠蓝绿谐波
-  drawWaveLayer(1.2, 0.95, 0.85, 0.55, [
+  drawWaveLayer(1.2, 1.15, 1.1, 0.8, [
     [0, 'rgba(16, 185, 129, 0.05)'],
-    [0.4, 'rgba(16, 185, 129, 0.45)'],
-    [0.7, 'rgba(6, 182, 212, 0.4)'],
+    [0.4, 'rgba(16, 185, 129, 0.5)'],
+    [0.7, 'rgba(6, 182, 212, 0.45)'],
     [1, 'rgba(16, 185, 129, 0.05)'],
-  ], 1.2)
+  ], 1.6)
 
   // 3. 品红/紫红浪漫交织波
-  drawWaveLayer(2.5, 0.8, 0.7, 0.85, [
+  drawWaveLayer(2.5, 0.95, 0.9, 1.05, [
     [0, 'rgba(244, 63, 94, 0.05)'],
-    [0.35, 'rgba(236, 72, 153, 0.45)'],
-    [0.65, 'rgba(168, 85, 247, 0.4)'],
+    [0.35, 'rgba(236, 72, 153, 0.5)'],
+    [0.65, 'rgba(168, 85, 247, 0.45)'],
     [1, 'rgba(244, 63, 94, 0.05)'],
-  ], 1.2)
+  ], 1.6)
 
   // 4. 金黄/落日暖色柔波
-  drawWaveLayer(3.8, 0.55, 0.5, 0.4, [
+  drawWaveLayer(3.8, 0.75, 0.7, 0.6, [
     [0, 'rgba(251, 191, 36, 0.02)'],
-    [0.5, 'rgba(245, 158, 11, 0.35)'],
-    [0.85, 'rgba(239, 68, 68, 0.3)'],
+    [0.5, 'rgba(245, 158, 11, 0.4)'],
+    [0.85, 'rgba(239, 68, 68, 0.35)'],
     [1, 'rgba(251, 191, 36, 0.02)'],
-  ], 1.0)
+  ], 1.4)
 
   // 5. 贯穿中心的水平发光基准光刃 (Horizontal Laser Center Line)
   ctx.beginPath()
@@ -294,7 +301,7 @@ function renderNeonLightFloor(
 
   // 3. 垂直霓虹光柱 (自基线向上拔起)
   for (let i = 0; i < barCount; i++) {
-    const val = Math.max(3.0, smoothedHeights[i] * 1.1)
+    const val = Math.max(3.0, smoothedHeights[i] * 1.55)
     const x = i * stepX + stepX * 0.25
     const topY = baseLineY - val
 
@@ -435,12 +442,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative flex items-center justify-center h-20 w-full max-w-lg mx-auto pointer-events-none select-none">
+  <div class="relative flex items-center justify-center h-28 w-full max-w-xl mx-auto pointer-events-none select-none">
     <canvas
       ref="canvasRef"
-      width="520"
-      height="80"
-      class="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(20,184,166,0.6)] transition-all duration-300"
+      width="600"
+      height="120"
+      class="w-full h-full object-contain filter drop-shadow-[0_0_24px_rgba(20,184,166,0.65)] transition-all duration-300"
     />
   </div>
 </template>
