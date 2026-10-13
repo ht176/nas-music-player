@@ -3,12 +3,14 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { audioService } from '../services/audio'
 import { usePlayerStore } from '../stores/player'
 
+export type VisualizerMode = 'aurora-mirror' | 'cyber-wave' | 'ambient-ring'
+
 const props = withDefaults(
   defineProps<{
-    mode?: 'bars' | 'wave' | 'mirror'
+    mode?: VisualizerMode
   }>(),
   {
-    mode: 'mirror',
+    mode: 'cyber-wave',
   }
 )
 
@@ -16,12 +18,14 @@ const playerStore = usePlayerStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animId: number | null = null
 
-// 48 个频段，低频到高频对数加权映射
+// 48 个采样点与弹性阻尼数组
 const barCount = 42
 const smoothedHeights = new Float32Array(barCount)
 const peakHeights = new Float32Array(barCount)
 
-// 拟真声波相位参数（在纯原生播放或频段极暗时产生温润拟真正弦流体）
+// 贝塞尔声波曲线平滑控制点 (用于 cyber-wave 模式)
+const wavePoints = new Float32Array(barCount)
+
 let flowPhase = 0
 
 function render() {
@@ -37,57 +41,41 @@ function render() {
   const realData = audioService.getByteFrequencyData()
   const isWebAudioLive = realData && realData.some((v) => v > 0)
   const isPlaying = playerStore.isPlaying
+  const volumeFactor = playerStore.volume ?? 0.8
 
-  flowPhase += 0.045
+  flowPhase += 0.04
   const centerY = height / 2
   const maxBarHalfHeight = height * 0.44
 
-  // 计算每根律动柱宽度与间隙
-  const totalBarWidthRatio = 0.68
-  const barWidth = (width / barCount) * totalBarWidthRatio
-  const gap = (width / barCount) * (1 - totalBarWidthRatio)
-
+  // 计算每点采样与动态阻尼
   for (let i = 0; i < barCount; i++) {
     let targetVal = 0
 
-    const volumeFactor = playerStore.volume ?? 0.8
-
     if (isPlaying && volumeFactor > 0.01) {
       if (isWebAudioLive && realData) {
-        // 对数/非线性频段采样映射：人耳对低频到中低频最敏感
-        // 低频对应 20Hz~250Hz，中频 250Hz~4kHz，高频 4kHz~20kHz
         const n = realData.length
-        // 指数映射采样点：低频集中细分采样
-        const sampleIdx = Math.floor(Math.pow(i / (barCount - 1), 1.8) * (n - 1))
+        // 人耳非线性对数频段采样映射 (低频集中)
+        const sampleIdx = Math.floor(Math.pow(i / (barCount - 1), 1.7) * (n - 1))
         const rawVal = realData[sampleIdx] || 0
-
-        // 引入相邻平滑，避免突兀单柱跳变
         const prevVal = sampleIdx > 0 ? realData[sampleIdx - 1] : rawVal
         const nextVal = sampleIdx < n - 1 ? realData[sampleIdx + 1] : rawVal
         const blended = (rawVal * 0.6 + (prevVal + nextVal) * 0.2) / 255
-
-        // 人耳听感补偿与音量强绑定
         const earCompensation = 1 + (i / barCount) * 0.35
         targetVal = Math.min(1, blended * earCompensation) * maxBarHalfHeight * volumeFactor
       } else {
-        // 当流媒体由浏览器原生直推时（CORS限制），使用基于歌曲当前时间戳的动态声学拟真模型（按音量等比放大/缩小）
         const t = (playerStore.currentTime || 0) * 4 + flowPhase
-        // 多谐波自然重叠 (仿交响/人声呼吸波束)
         const wave1 = Math.sin(t + i * 0.28) * 0.45 + 0.5
         const wave2 = Math.cos(t * 0.7 - i * 0.19) * 0.35 + 0.5
         const wave3 = Math.sin(t * 1.6 + i * 0.5) * 0.2 + 0.5
-        // 呈现中间丰满、两端优雅收敛的声波自然鼓形曲线 (Bell Envelope)
         const bell = Math.sin((i / (barCount - 1)) * Math.PI)
         const composite = (wave1 * 0.5 + wave2 * 0.35 + wave3 * 0.15) * (0.35 + bell * 0.65)
         targetVal = composite * maxBarHalfHeight * 0.88 * volumeFactor
       }
     } else {
-      // 暂停或静音时：彻底归于静止微平底线
       targetVal = 1.0
     }
 
-    // 动态阻尼弹性过渡 (Spring / Damping lerp)
-    // 上升快(0.35)，下降慢(0.12)，带来极其丝滑高级的视觉质感
+    // 双向阻尼平滑插值 (上升 0.36，下降 0.12)
     const current = smoothedHeights[i]
     if (targetVal > current) {
       smoothedHeights[i] = current + (targetVal - current) * 0.36
@@ -95,34 +83,141 @@ function render() {
       smoothedHeights[i] = current + (targetVal - current) * 0.12
     }
 
-    const val = Math.max(2.0, smoothedHeights[i])
-
-    // 峰值指示点模拟 (Peak Decay)
-    if (val > peakHeights[i]) {
-      peakHeights[i] = val
+    // 峰值回落衰减
+    if (smoothedHeights[i] > peakHeights[i]) {
+      peakHeights[i] = smoothedHeights[i]
     } else {
-      peakHeights[i] = Math.max(2.0, peakHeights[i] - 0.55)
+      peakHeights[i] = Math.max(1.0, peakHeights[i] - 0.5)
     }
 
+    wavePoints[i] = smoothedHeights[i]
+  }
+
+  // 渲染模式分支
+  if (props.mode === 'cyber-wave') {
+    renderCyberWave(ctx, width, height, centerY)
+  } else if (props.mode === 'ambient-ring') {
+    renderAmbientRing(ctx, width, height, centerY)
+  } else {
+    renderAuroraMirror(ctx, width, height, centerY)
+  }
+
+  animId = requestAnimationFrame(render)
+}
+
+/**
+ * 风格 1：网易云/Apple Music 赛博流体丝滑声波曲线 (Cyber Waveform)
+ * 双层渐变极光曲线 + 贝塞尔平滑插值 + 粒子辉光
+ */
+function renderCyberWave(ctx: CanvasRenderingContext2D, width: number, _height: number, centerY: number) {
+  const stepX = width / (barCount - 1)
+
+  // 1. 绘制底层填充渐变区域 (上下对称声波羽化)
+  const drawWavePath = (multiplier: number, alpha: number, colorStart: string, colorEnd: string) => {
+    ctx.beginPath()
+    // 上半部分曲线
+    ctx.moveTo(0, centerY)
+    for (let i = 0; i < barCount - 1; i++) {
+      const x0 = i * stepX
+      const y0 = centerY - wavePoints[i] * multiplier
+      const x1 = (i + 1) * stepX
+      const y1 = centerY - wavePoints[i + 1] * multiplier
+      const midX = (x0 + x1) / 2
+      const midY = (y0 + y1) / 2
+      ctx.quadraticCurveTo(x0, y0, midX, midY)
+    }
+    ctx.lineTo(width, centerY - wavePoints[barCount - 1] * multiplier)
+
+    // 下半部分镜面对称曲线
+    for (let i = barCount - 1; i > 0; i--) {
+      const x0 = i * stepX
+      const y0 = centerY + wavePoints[i] * multiplier
+      const x1 = (i - 1) * stepX
+      const y1 = centerY + wavePoints[i - 1] * multiplier
+      const midX = (x0 + x1) / 2
+      const midY = (y0 + y1) / 2
+      ctx.quadraticCurveTo(x0, y0, midX, midY)
+    }
+    ctx.closePath()
+
+    const grad = ctx.createLinearGradient(0, 0, width, 0)
+    grad.addColorStop(0, colorStart)
+    grad.addColorStop(0.5, 'rgba(20, 184, 166, ' + alpha + ')')
+    grad.addColorStop(1, colorEnd)
+
+    ctx.fillStyle = grad
+    ctx.fill()
+  }
+
+  // 绘制半透明辉光底层与核心高光层
+  drawWavePath(1.15, 0.22, 'rgba(56, 189, 248, 0.15)', 'rgba(168, 85, 247, 0.15)')
+  drawWavePath(0.9, 0.45, 'rgba(16, 185, 129, 0.45)', 'rgba(56, 189, 248, 0.45)')
+
+  // 2. 绘制上下两条主动态霓虹发光线条
+  const drawStrokeLine = (multiplier: number, lineWidth: number, strokeColor: string) => {
+    ctx.beginPath()
+    ctx.moveTo(0, centerY - wavePoints[0] * multiplier)
+    for (let i = 0; i < barCount - 1; i++) {
+      const x0 = i * stepX
+      const y0 = centerY - wavePoints[i] * multiplier
+      const x1 = (i + 1) * stepX
+      const y1 = centerY - wavePoints[i + 1] * multiplier
+      ctx.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2)
+    }
+    ctx.lineTo(width, centerY - wavePoints[barCount - 1] * multiplier)
+    ctx.strokeStyle = strokeColor
+    ctx.lineWidth = lineWidth
+    ctx.stroke()
+  }
+
+  // 顶端高光线
+  drawStrokeLine(1.0, 2.2, 'rgba(94, 234, 212, 0.95)')
+  // 底端倒影线
+  drawStrokeLine(-1.0, 1.6, 'rgba(56, 189, 248, 0.75)')
+
+  // 3. 关键振幅节点发光水珠点
+  for (let i = 2; i < barCount - 2; i += 3) {
+    if (wavePoints[i] > 6) {
+      const px = i * stepX
+      const py = centerY - wavePoints[i]
+      ctx.beginPath()
+      ctx.arc(px, py, 2.2, 0, Math.PI * 2)
+      ctx.fillStyle = '#ffffff'
+      ctx.shadowColor = '#10b981'
+      ctx.shadowBlur = 8
+      ctx.fill()
+      ctx.shadowBlur = 0
+    }
+  }
+}
+
+/**
+ * 风格 2：全息对称极光律动柱 (Aurora Mirror Bars)
+ */
+function renderAuroraMirror(ctx: CanvasRenderingContext2D, width: number, _height: number, centerY: number) {
+  const totalBarWidthRatio = 0.65
+  const barWidth = (width / barCount) * totalBarWidthRatio
+  const gap = (width / barCount) * (1 - totalBarWidthRatio)
+
+  for (let i = 0; i < barCount; i++) {
+    const val = Math.max(2.0, wavePoints[i])
     const x = i * (barWidth + gap) + gap / 2
     const topY = centerY - val
     const barTotalHeight = val * 2
 
-    // 绘制镜面对称渐变发光柱 (Aurora Fluid Beam)
     const grad = ctx.createLinearGradient(0, topY, 0, topY + barTotalHeight)
-    grad.addColorStop(0, 'rgba(56, 189, 248, 0.95)')   // 顶端天蓝高光
-    grad.addColorStop(0.25, 'rgba(20, 184, 166, 0.95)') // 极光青
-    grad.addColorStop(0.5, 'rgba(16, 185, 129, 1)')     // 核心翡翠绿
+    grad.addColorStop(0, 'rgba(56, 189, 248, 0.95)')
+    grad.addColorStop(0.25, 'rgba(20, 184, 166, 0.95)')
+    grad.addColorStop(0.5, 'rgba(16, 185, 129, 1)')
     grad.addColorStop(0.75, 'rgba(20, 184, 166, 0.95)')
-    grad.addColorStop(1, 'rgba(56, 189, 248, 0.95)')   // 底端天蓝高光
+    grad.addColorStop(1, 'rgba(56, 189, 248, 0.95)')
 
     ctx.fillStyle = grad
     ctx.beginPath()
     ctx.roundRect(x, topY, barWidth, barTotalHeight, [barWidth / 2])
     ctx.fill()
 
-    // 顶端/底端粒子浮标微光 (Peak Caps)
-    if (isPlaying && peakHeights[i] > 6) {
+    if (playerStore.isPlaying && peakHeights[i] > 6) {
       const peakY1 = centerY - peakHeights[i] - 1.5
       const peakY2 = centerY + peakHeights[i] + 0.5
       ctx.fillStyle = 'rgba(255, 255, 255, 0.88)'
@@ -132,8 +227,21 @@ function render() {
       ctx.fill()
     }
   }
+}
 
-  animId = requestAnimationFrame(render)
+/**
+ * 风格 3：声波粒子扩散环 (Ambient Ring - 紧凑型极光脉冲)
+ */
+function renderAmbientRing(ctx: CanvasRenderingContext2D, width: number, _height: number, centerY: number) {
+  const stepX = width / (barCount - 1)
+  for (let i = 0; i < barCount; i++) {
+    const val = wavePoints[i]
+    const x = i * stepX
+    ctx.beginPath()
+    ctx.fillStyle = `rgba(16, 185, 129, ${Math.min(0.8, val / 25)})`
+    ctx.arc(x, centerY, Math.max(1.5, val * 0.45), 0, Math.PI * 2)
+    ctx.fill()
+  }
 }
 
 onMounted(() => {
@@ -146,12 +254,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative flex items-center justify-center h-16 w-full max-w-md mx-auto pointer-events-none select-none">
+  <div class="relative flex items-center justify-center h-16 w-full max-w-lg mx-auto pointer-events-none select-none">
     <canvas
       ref="canvasRef"
-      width="440"
-      height="64"
-      class="w-full h-full object-contain filter drop-shadow-[0_0_16px_rgba(16,185,129,0.55)]"
+      width="480"
+      height="68"
+      class="w-full h-full object-contain filter drop-shadow-[0_0_18px_rgba(16,185,129,0.55)] transition-all duration-300"
     />
   </div>
 </template>

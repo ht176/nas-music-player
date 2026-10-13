@@ -19,7 +19,9 @@ import {
   Shuffle,
   FileSearch,
   Info,
+  Activity,
 } from 'lucide-vue-next'
+import type { VisualizerMode } from './AudioSpectrumVisualizer.vue'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
@@ -27,6 +29,13 @@ const lyricsContainer = ref<HTMLElement | null>(null)
 const showSleepMenu = ref(false)
 const showLyricSearchModal = ref(false)
 const showTrackInfoModal = ref(false)
+const visualizerMode = ref<VisualizerMode>('cyber-wave')
+
+function cycleVisualizerMode() {
+  const modes: VisualizerMode[] = ['cyber-wave', 'aurora-mirror', 'ambient-ring']
+  const nextIdx = (modes.indexOf(visualizerMode.value) + 1) % modes.length
+  visualizerMode.value = modes[nextIdx]
+}
 
 const coverUrl = computed(() => {
   return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 600) || ''
@@ -212,9 +221,16 @@ watch(
           <p class="text-xs sm:text-sm font-medium text-neutral-400 mt-1 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
         </div>
 
-        <!-- 动态律动频谱仪 -->
-        <div class="w-full max-w-xs mt-2">
-          <AudioSpectrumVisualizer />
+        <!-- 动态律动频谱仪 (支持点击快速切换现代声波风格) -->
+        <div
+          class="w-full max-w-sm mt-2 relative group cursor-pointer"
+          @click="cycleVisualizerMode"
+          :title="`当前动效: ${visualizerMode === 'cyber-wave' ? '赛博流体波' : visualizerMode === 'aurora-mirror' ? '全息极光柱' : '极光脉冲'} (点击切换)`"
+        >
+          <AudioSpectrumVisualizer :mode="visualizerMode" />
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-emerald-400/80 font-mono flex items-center gap-1 select-none pointer-events-none">
+            <Activity class="w-2.5 h-2.5" /> 点击切换律动风格
+          </div>
         </div>
       </div>
 
