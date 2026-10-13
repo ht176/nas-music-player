@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { Disc, Settings, Radio, Heart, User, ListMusic, Search, DownloadCloud, BarChart3, Music } from 'lucide-vue-next'
+import { Disc, Settings, Heart, User, ListMusic, Search, DownloadCloud, BarChart3, Music } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,8 +26,8 @@ const navItems = [
     <div class="space-y-6">
       <!-- 品牌 Logo -->
       <div class="flex items-center gap-3 px-3 py-2 cursor-pointer group" @click="router.push('/')">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 flex items-center justify-center text-neutral-950 shadow-[0_0_16px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_22px_rgba(16,185,129,0.7)] group-hover:scale-105 transition-all duration-300">
-          <Radio class="w-5 h-5 stroke-[2.2]" />
+        <div class="h-9 w-9 rounded-xl overflow-hidden shadow-[0_0_16px_rgba(16,185,129,0.35)] group-hover:shadow-[0_0_24px_rgba(16,185,129,0.65)] group-hover:scale-105 transition-all duration-300 shrink-0 border border-white/10">
+          <img src="/favicon.svg" class="w-full h-full object-cover" alt="AuraMusic Logo" />
         </div>
         <div class="flex flex-col">
           <span class="font-extrabold text-base tracking-tight text-white group-hover:text-emerald-300 transition-colors">AuraMusic</span>
