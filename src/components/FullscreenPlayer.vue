@@ -29,10 +29,17 @@ const lyricsContainer = ref<HTMLElement | null>(null)
 const showSleepMenu = ref(false)
 const showLyricSearchModal = ref(false)
 const showTrackInfoModal = ref(false)
-const visualizerMode = ref<VisualizerMode>('cyber-wave')
+const visualizerMode = ref<VisualizerMode>('holographic-ribbon')
+
+const visualizerModeLabels: Record<VisualizerMode, string> = {
+  'holographic-ribbon': '全息丝带流体波 (案例三)',
+  'neon-light-floor': '赛博地坪光柱倒影 (案例四)',
+  'neon-glow-line': '霓虹折线脉冲 (案例一)',
+  'aurora-mirror': '经典极光对称柱',
+}
 
 function cycleVisualizerMode() {
-  const modes: VisualizerMode[] = ['cyber-wave', 'aurora-mirror', 'ambient-ring']
+  const modes: VisualizerMode[] = ['holographic-ribbon', 'neon-light-floor', 'neon-glow-line', 'aurora-mirror']
   const nextIdx = (modes.indexOf(visualizerMode.value) + 1) % modes.length
   visualizerMode.value = modes[nextIdx]
 }
@@ -225,7 +232,7 @@ watch(
         <div
           class="w-full max-w-sm mt-2 relative group cursor-pointer"
           @click="cycleVisualizerMode"
-          :title="`当前动效: ${visualizerMode === 'cyber-wave' ? '赛博流体波' : visualizerMode === 'aurora-mirror' ? '全息极光柱' : '极光脉冲'} (点击切换)`"
+          :title="`当前动效: ${visualizerModeLabels[visualizerMode]} (点击切换)`"
         >
           <AudioSpectrumVisualizer :mode="visualizerMode" />
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-emerald-400/80 font-mono flex items-center gap-1 select-none pointer-events-none">
