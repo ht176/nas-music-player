@@ -27,8 +27,9 @@ async function loadPlaylistDetail() {
   }
 }
 
-async function removeSong(index: number) {
+async function removeSong(index: number, songTitle?: string) {
   if (!playlist.value || !serverStore.client) return
+  if (songTitle && !confirm(`确定要从歌单中移除《${songTitle}》吗？`)) return
   try {
     await serverStore.client.updatePlaylist(playlist.value.id, undefined, index)
     await loadPlaylistDetail()
@@ -94,9 +95,9 @@ onMounted(() => {
           @play="playerStore.playTrack(song, playlist.songs)"
         />
         <button
-          class="opacity-0 group-hover/row:opacity-100 p-2 text-neutral-500 hover:text-rose-400 hover:bg-white/10 rounded-lg transition mr-2 cursor-pointer"
-          title="从歌单中移除"
-          @click.stop="removeSong(idx)"
+          class="opacity-70 sm:opacity-0 sm:group-hover/row:opacity-100 p-2 text-neutral-400 hover:text-rose-400 hover:bg-white/10 active:scale-95 rounded-lg transition mr-1 sm:mr-2 cursor-pointer shrink-0"
+          :title="`从歌单中移除《${song.title}》`"
+          @click.stop="removeSong(idx, song.title)"
         >
           <Trash2 class="w-4 h-4" />
         </button>

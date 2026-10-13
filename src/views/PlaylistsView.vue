@@ -102,7 +102,7 @@ onMounted(() => {
         </div>
 
         <button
-          class="absolute top-4 right-4 p-1.5 rounded-lg bg-neutral-900/80 text-neutral-400 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+          class="absolute top-4 right-4 p-1.5 rounded-lg bg-neutral-900/80 text-neutral-400 hover:text-rose-400 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer active:scale-95"
           title="删除歌单"
           @click="handleDelete(pl.id, $event)"
         >
