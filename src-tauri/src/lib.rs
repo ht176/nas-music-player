@@ -1,3 +1,4 @@
+#[cfg(desktop)]
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -6,16 +7,16 @@ use tauri::{
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .setup(|app| {
-            #[cfg(desktop)]
-            {
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default();
+
+    #[cfg(desktop)]
+    {
+        builder = builder
+            .setup(|app| {
                 app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
                 app.handle().plugin(tauri_plugin_process::init())?;
-            }
 
-            #[cfg(desktop)]
-            {
                 let play_pause_i = MenuItem::with_id(app, "play_pause", "播放 / 暂停", true, None::<&str>)?;
                 let prev_i = MenuItem::with_id(app, "prev", "上一曲", true, None::<&str>)?;
                 let next_i = MenuItem::with_id(app, "next", "下一曲", true, None::<&str>)?;
@@ -70,17 +71,18 @@ pub fn run() {
                         })
                         .build(app)?;
                 }
-            }
 
-            Ok(())
-        })
-        .on_window_event(|window, event| {
-            #[cfg(desktop)]
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                let _ = window.hide();
-                api.prevent_close();
-            }
-        })
+                Ok(())
+            })
+            .on_window_event(|window, event| {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    let _ = window.hide();
+                    api.prevent_close();
+                }
+            });
+    }
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
