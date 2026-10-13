@@ -80,8 +80,8 @@ export class AudioPlayerService {
       this.audioCtx = new AudioCtx()
       this.gainNode = this.audioCtx.createGain()
       this.analyserNode = this.audioCtx.createAnalyser()
-      this.analyserNode.fftSize = 64
-      this.analyserNode.smoothingTimeConstant = 0.8
+      this.analyserNode.fftSize = 256
+      this.analyserNode.smoothingTimeConstant = 0.82
       this.sourceNode = this.audioCtx.createMediaElementSource(this.audio)
 
       let prevNode: AudioNode = this.sourceNode
