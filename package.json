@@ -1,7 +1,7 @@
 {
   "name": "nas-project",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "packageManager": "pnpm@10.18.2",
   "type": "module",
   "scripts": {
