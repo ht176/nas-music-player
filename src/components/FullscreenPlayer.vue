@@ -5,6 +5,7 @@ import { useServerStore } from '../stores/server'
 import AudioSpectrumVisualizer from './AudioSpectrumVisualizer.vue'
 import LyricSearchModal from './LyricSearchModal.vue'
 import TrackInfoModal from './TrackInfoModal.vue'
+import AddToPlaylistModal from './AddToPlaylistModal.vue'
 import ParticleBackground from './ParticleBackground.vue'
 import {
   ChevronDown,
@@ -22,6 +23,7 @@ import {
   Activity,
   Volume2,
   VolumeX,
+  FolderPlus,
 } from 'lucide-vue-next'
 import type { VisualizerMode } from './AudioSpectrumVisualizer.vue'
 import VinylSpectrumVisualizer from './VinylSpectrumVisualizer.vue'
@@ -32,6 +34,7 @@ const lyricsContainer = ref<HTMLElement | null>(null)
 const showSleepMenu = ref(false)
 const showLyricSearchModal = ref(false)
 const showTrackInfoModal = ref(false)
+const showAddToPlaylistModal = ref(false)
 const VISUALIZER_STORAGE_KEY = 'aura_visualizer_mode'
 const initialVisualizerMode = (localStorage.getItem(VISUALIZER_STORAGE_KEY) as VisualizerMode) || 'neon-light-floor'
 const visualizerMode = ref<VisualizerMode>(
@@ -143,8 +146,16 @@ watch(
         </span>
       </div>
 
-      <!-- 右上角工具：歌曲属性、歌词替换、均衡器与睡眠定时器 -->
+      <!-- 右上角工具：歌曲属性、加入歌单、歌词替换、均衡器与睡眠定时器 -->
       <div class="flex items-center gap-2 relative">
+        <button
+          class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+          title="加入歌单"
+          @click="showAddToPlaylistModal = true"
+        >
+          <FolderPlus class="w-5 h-5 text-neutral-300 hover:text-emerald-400" />
+        </button>
+
         <button
           class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
           title="查看歌曲文件属性与 NAS 物理信息"
@@ -272,20 +283,20 @@ watch(
         </div>
       </div>
 
-      <!-- 右栏：逐行/逐字同步滚动歌词 (字号缩小一号，行距与弹性优化) -->
+      <!-- 右栏：逐行/逐字同步滚动歌词 (居中对齐，字号、行距与弹性优化) -->
       <div
         ref="lyricsContainer"
-        class="h-64 md:h-full max-h-[460px] min-h-[220px] overflow-y-auto flex flex-col items-center md:items-start text-center md:text-left space-y-6 py-20 select-none mask-gradient px-4 scroll-smooth"
+        class="h-64 md:h-full max-h-[460px] min-h-[220px] overflow-y-auto flex flex-col items-center text-center space-y-6 py-20 select-none mask-gradient px-4 scroll-smooth w-full"
       >
         <template v-if="playerStore.lyrics.length > 0">
           <div
             v-for="(line, idx) in playerStore.lyrics"
             :key="idx"
             :data-index="idx"
-            class="transition-all duration-300 cursor-pointer font-medium max-w-lg leading-relaxed lyric-text"
+            class="transition-all duration-300 cursor-pointer font-medium max-w-xl leading-relaxed lyric-text w-full text-center"
             :class="[
               idx === playerStore.currentLyricIndex
-                ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white text-xl sm:text-2xl font-extrabold scale-105 origin-left drop-shadow-[0_0_16px_rgba(16,185,129,0.35)] tracking-normal'
+                ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white text-xl sm:text-2xl font-extrabold scale-105 origin-center drop-shadow-[0_0_16px_rgba(16,185,129,0.35)] tracking-normal'
                 : 'text-neutral-500 hover:text-neutral-300 text-base sm:text-lg scale-100 opacity-40 font-normal hover:opacity-80',
             ]"
             @click="playerStore.seek(line.time)"
@@ -395,6 +406,12 @@ watch(
 
     <!-- 歌曲文件属性与 NAS 物理信息弹窗 -->
     <TrackInfoModal v-model="showTrackInfoModal" />
+
+    <!-- 添加到歌单弹窗 -->
+    <AddToPlaylistModal
+      v-model="showAddToPlaylistModal"
+      :track="playerStore.currentTrack"
+    />
   </div>
 </template>
 
