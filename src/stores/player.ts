@@ -90,8 +90,10 @@ export const usePlayerStore = defineStore('player', () => {
   // 监听音频生命周期
   audioService.onTimeUpdate((time, dur) => {
     currentTime.value = time
-    if (dur && !isNaN(dur)) {
+    if (dur && !isNaN(dur) && isFinite(dur) && dur > 0) {
       duration.value = dur
+    } else if ((!duration.value || !isFinite(duration.value) || duration.value <= 0) && currentTrack.value?.duration) {
+      duration.value = currentTrack.value.duration
     }
     if (lyrics.value.length) {
       currentLyricIndex.value = LyricsService.findActiveIndex(lyrics.value, time)

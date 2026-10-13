@@ -165,7 +165,15 @@ export class AudioPlayerService {
 
   private initListeners() {
     this.audio.addEventListener('timeupdate', () => {
-      this.onTimeUpdateCallback?.(this.audio.currentTime, this.audio.duration || 0)
+      const dur = isFinite(this.audio.duration) ? this.audio.duration : 0
+      this.onTimeUpdateCallback?.(this.audio.currentTime, dur)
+    })
+
+    this.audio.addEventListener('durationchange', () => {
+      const dur = isFinite(this.audio.duration) ? this.audio.duration : 0
+      if (dur > 0) {
+        this.onTimeUpdateCallback?.(this.audio.currentTime, dur)
+      }
     })
 
     this.audio.addEventListener('ended', () => {

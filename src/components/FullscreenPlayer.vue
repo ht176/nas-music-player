@@ -20,6 +20,8 @@ import {
   FileSearch,
   Info,
   Activity,
+  Volume2,
+  VolumeX,
 } from 'lucide-vue-next'
 import type { VisualizerMode } from './AudioSpectrumVisualizer.vue'
 import VinylSpectrumVisualizer from './VinylSpectrumVisualizer.vue'
@@ -55,8 +57,11 @@ const coverUrl = computed(() => {
   return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 600) || ''
 })
 
-// 格式化时间
-const formatTime = (sec: number) => {
+// 格式化时间 (严密容错，避免 NaN / Infinity)
+const formatTime = (sec: number | null | undefined) => {
+  if (sec === null || sec === undefined || isNaN(sec) || !isFinite(sec) || sec <= 0) {
+    return '0:00'
+  }
   const m = Math.floor(sec / 60)
   const s = Math.floor(sec % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
@@ -67,8 +72,24 @@ const onProgressChange = (e: Event) => {
   playerStore.seek(val)
 }
 
+const onVolumeChange = (e: Event) => {
+  const val = Number((e.target as HTMLInputElement).value)
+  playerStore.setVolume(val)
+}
+
+const toggleMute = () => {
+  if (playerStore.volume > 0) {
+    playerStore.setVolume(0)
+  } else {
+    playerStore.setVolume(0.8)
+  }
+}
+
 const progressPercent = computed(() => {
-  const dur = playerStore.duration || 1
+  const dur = (playerStore.duration && isFinite(playerStore.duration) && playerStore.duration > 0)
+    ? playerStore.duration
+    : (playerStore.currentTrack?.duration || 0)
+  if (!dur || dur <= 0) return 0
   return Math.min(100, Math.max(0, (playerStore.currentTime / dur) * 100))
 })
 
@@ -187,8 +208,8 @@ watch(
 
     <!-- 中部：唱片与歌词分栏 (流体弹性布局，设最小高度保障缩放稳定) -->
     <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center max-w-6xl mx-auto w-full my-2 overflow-hidden min-h-[300px]">
-      <!-- 左栏：唱片封面 / 黑胶唱盘机模拟 (缩小两号，跟随视口弹性缩放，带 min/max 限制) -->
-      <div class="flex flex-col items-center justify-center relative w-full">
+      <!-- 左栏：唱片封面 / 黑胶唱盘机模拟 (下移一点，与右侧歌词视觉平衡) -->
+      <div class="flex flex-col items-center justify-center relative w-full pt-6 md:pt-10">
         <!-- 模拟黑胶唱盘机外环与黑胶光盘 (缩小两号: w-48/h-48 到 w-72/h-72，配合 min-w/min-h) -->
         <div class="relative w-[36vmin] h-[36vmin] min-w-[180px] min-h-[180px] max-w-[280px] max-h-[280px] flex items-center justify-center shrink-0">
           <!-- 黑胶唱片背景环境光晕与呼吸环 -->
@@ -287,56 +308,85 @@ watch(
 
     <!-- 底部：全功能控制条 -->
     <div class="max-w-xl mx-auto w-full space-y-4 pb-3">
-      <!-- 进度条 -->
+      <!-- 进度条 (清晰显示已播翡翠绿进度与未播半透明轨道) -->
       <div class="flex items-center gap-3 w-full text-xs text-neutral-400 font-mono">
         <span class="w-10 text-right">{{ formatTime(playerStore.currentTime) }}</span>
         <input
           type="range"
           min="0"
-          :max="playerStore.duration || 100"
+          :max="(playerStore.duration && isFinite(playerStore.duration) && playerStore.duration > 0) ? playerStore.duration : (playerStore.currentTrack?.duration || 100)"
           :value="playerStore.currentTime"
           @input="onProgressChange"
           class="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
           :style="{
-            background: `linear-gradient(to right, #10b981 ${progressPercent}%, rgba(255, 255, 255, 0.15) ${progressPercent}%)`
+            background: `linear-gradient(to right, #10b981 0%, #10b981 ${progressPercent}%, rgba(255, 255, 255, 0.18) ${progressPercent}%, rgba(255, 255, 255, 0.18) 100%)`
           }"
         />
-        <span class="w-10">{{ formatTime(playerStore.duration) }}</span>
+        <span class="w-10">{{ formatTime(playerStore.duration || playerStore.currentTrack?.duration) }}</span>
       </div>
 
-      <!-- 核心按键控制 -->
-      <div class="flex items-center justify-between px-4">
+      <!-- 核心按键控制与音量调节 -->
+      <div class="flex items-center justify-between px-2">
         <button
           class="text-neutral-400 hover:text-white transition-all cursor-pointer p-2 rounded-xl hover:bg-white/5"
           :class="{ 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]': playerStore.playMode === 'random' }"
           @click="playerStore.togglePlayMode"
+          title="播放模式"
         >
           <Shuffle v-if="playerStore.playMode === 'random'" class="w-5 h-5" />
           <Repeat v-else class="w-5 h-5" />
         </button>
 
         <div class="flex items-center gap-7">
-          <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev">
+          <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev" title="上一首">
             <SkipBack class="w-7 h-7 fill-current" />
           </button>
           <button
             class="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-neutral-950 flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:shadow-[0_0_35px_rgba(16,185,129,0.8)] hover:scale-105 active:scale-95 transition duration-200 cursor-pointer font-bold"
             @click="playerStore.togglePlay"
+            :title="playerStore.isPlaying ? '暂停' : '播放'"
           >
             <Pause v-if="playerStore.isPlaying" class="w-7 h-7 fill-current" />
             <Play v-else class="w-7 h-7 fill-current ml-1" />
           </button>
-          <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next">
+          <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next" title="下一首">
             <SkipForward class="w-7 h-7 fill-current" />
           </button>
         </div>
 
-        <button
-          class="text-neutral-400 hover:text-white transition-all cursor-pointer p-2 rounded-xl hover:bg-white/5"
-          @click="playerStore.showQueueDrawer = true"
-        >
-          <span class="text-xs font-mono font-medium">队列</span>
-        </button>
+        <!-- 右侧：音量调节与队列 -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <button
+              class="text-neutral-400 hover:text-white transition-colors cursor-pointer p-1"
+              @click="toggleMute"
+              :title="playerStore.volume === 0 ? '取消静音' : '静音'"
+            >
+              <VolumeX v-if="playerStore.volume === 0" class="w-4 h-4 text-rose-400" />
+              <Volume2 v-else class="w-4 h-4 text-neutral-400 hover:text-emerald-400" />
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              :value="playerStore.volume"
+              @input="onVolumeChange"
+              class="w-16 sm:w-20 h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
+              :style="{
+                background: `linear-gradient(to right, #10b981 0%, #10b981 ${playerStore.volume * 100}%, rgba(255, 255, 255, 0.18) ${playerStore.volume * 100}%, rgba(255, 255, 255, 0.18) 100%)`
+              }"
+            />
+          </div>
+
+          <button
+            class="text-neutral-400 hover:text-white transition-all cursor-pointer p-2 rounded-xl hover:bg-white/5"
+            @click="playerStore.showQueueDrawer = true"
+            title="播放队列"
+          >
+            <span class="text-xs font-mono font-medium">队列</span>
+          </button>
+        </div>
       </div>
     </div>
 
