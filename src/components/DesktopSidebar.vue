@@ -17,7 +17,7 @@ const navItems = [
   { name: '足迹统计', path: '/stats', icon: BarChart3 },
   { name: '艺术家', path: '/artists', icon: User },
   { name: '播放列表', path: '/playlists', icon: ListMusic },
-  { name: '连接设置', path: '/settings', icon: Settings },
+  { name: '设置', path: '/settings', icon: Settings },
 ]
 </script>
 
