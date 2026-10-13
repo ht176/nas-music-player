@@ -49,6 +49,14 @@ const currentLyricText = computed(() => {
   return ''
 })
 
+const nextLyricText = computed(() => {
+  if (playerStore.lyricDisplayLines === 2 && playerStore.lyrics.length && playerStore.currentLyricIndex >= 0) {
+    const nextLine = playerStore.lyrics[playerStore.currentLyricIndex + 1]
+    return nextLine?.text || ''
+  }
+  return ''
+})
+
 const onProgressChange = (e: Event) => {
   const val = Number((e.target as HTMLInputElement).value)
   playerStore.seek(val)
@@ -79,20 +87,32 @@ async function toggleMiniPlayer() {
     <!-- 顶部极细渐变微光线 -->
     <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
-    <!-- 主界面浮动单行实时歌词胶囊 (与底部控制栏显著拉开间距: -top-16，内边距增大: px-6 py-2.5) -->
+    <!-- 主界面浮动实时歌词胶囊 (与底部控制栏显著拉开间距: -top-16 / -top-22，支持单/双行显示) -->
     <div
       v-if="currentLyricText"
-      class="absolute -top-16 left-1/2 -translate-x-1/2 px-6 py-2.5 rounded-full bg-neutral-900/95 border border-emerald-500/35 text-sm sm:text-base text-emerald-300 font-semibold backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)] flex items-center gap-2.5 cursor-pointer hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all max-w-[85vw] group overflow-hidden"
+      class="absolute left-1/2 -translate-x-1/2 rounded-2xl sm:rounded-full bg-neutral-900/95 border border-emerald-500/35 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)] flex items-center gap-2.5 cursor-pointer hover:border-emerald-400 hover:scale-[1.02] active:scale-95 transition-all max-w-[88vw] group overflow-hidden"
+      :class="playerStore.lyricDisplayLines === 2 ? '-top-24 px-6 py-2.5' : '-top-16 px-6 py-2.5 rounded-full'"
       @click="playerStore.showFullscreen = true"
       title="点击进入全屏沉浸歌词"
     >
       <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.9)]"></span>
-      <div class="relative overflow-hidden h-6 flex items-center max-w-[70vw]">
-        <Transition name="lyric-scroll" mode="out-in">
-          <span :key="currentLyricText" class="truncate tracking-wide block select-none">
-            {{ currentLyricText }}
-          </span>
-        </Transition>
+      <div class="relative overflow-hidden flex flex-col justify-center max-w-[72vw] text-left">
+        <!-- 当前行歌词（平滑滚动翻滚） -->
+        <div class="h-6 flex items-center overflow-hidden">
+          <Transition name="lyric-scroll" mode="out-in">
+            <span :key="currentLyricText" class="truncate tracking-wide block select-none text-sm sm:text-base text-emerald-300 font-bold">
+              {{ currentLyricText }}
+            </span>
+          </Transition>
+        </div>
+        <!-- 双行模式下的下一句微透明预览歌词 -->
+        <div v-if="playerStore.lyricDisplayLines === 2" class="h-5 flex items-center overflow-hidden mt-0.5">
+          <Transition name="lyric-scroll" mode="out-in">
+            <span :key="nextLyricText" class="truncate tracking-wide block select-none text-xs sm:text-sm text-neutral-400/90 font-medium">
+              {{ nextLyricText || '⋯' }}
+            </span>
+          </Transition>
+        </div>
       </div>
     </div>
 
@@ -257,16 +277,16 @@ async function toggleMiniPlayer() {
 <style scoped>
 .lyric-scroll-enter-active,
 .lyric-scroll-leave-active {
-  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.55s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .lyric-scroll-enter-from {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(10px);
 }
 
 .lyric-scroll-leave-to {
   opacity: 0;
-  transform: translateY(-14px);
+  transform: translateY(-10px);
 }
 </style>

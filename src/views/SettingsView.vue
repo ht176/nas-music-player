@@ -475,7 +475,33 @@ onMounted(() => {
           />
         </div>
 
-        <!-- 4. 均衡器快捷入口 -->
+        <!-- 4. 主界面浮动歌词显示行数 -->
+        <div class="flex items-center justify-between p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+          <div>
+            <div class="text-sm font-semibold text-white">主界面浮动歌词显示模式</div>
+            <div class="text-xs text-neutral-400 mt-0.5">主界面播放条上方胶囊歌词的行数（单行聚焦 / 双行连贯展示）</div>
+          </div>
+          <div class="flex items-center bg-neutral-900 border border-neutral-800 rounded-xl p-1 gap-1">
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer"
+              :class="playerStore.lyricDisplayLines === 1 ? 'bg-emerald-500 text-neutral-950 font-bold shadow-sm' : 'text-neutral-400 hover:text-white'"
+              @click="playerStore.setLyricDisplayLines(1)"
+            >
+              单行歌词
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer"
+              :class="playerStore.lyricDisplayLines === 2 ? 'bg-emerald-500 text-neutral-950 font-bold shadow-sm' : 'text-neutral-400 hover:text-white'"
+              @click="playerStore.setLyricDisplayLines(2)"
+            >
+              双行歌词
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. 均衡器快捷入口 -->
         <div class="flex items-center justify-between p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
           <div>
             <div class="text-sm font-semibold text-white">专业 10 段图形均衡器 (10-Band EQ)</div>

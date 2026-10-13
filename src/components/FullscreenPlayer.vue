@@ -97,17 +97,53 @@ const progressPercent = computed(() => {
   return Math.min(100, Math.max(0, (playerStore.currentTime / dur) * 100))
 })
 
-// 歌词滚动居中同步
+// 精准滚动歌词到视口中央
+const scrollToCurrentLyric = (smooth = true) => {
+  const currentIdx = playerStore.currentLyricIndex
+  if (currentIdx < 0 || !lyricsContainer.value) return
+  nextTick(() => {
+    const activeEl = lyricsContainer.value?.querySelector(`[data-index="${currentIdx}"]`) as HTMLElement
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' })
+    }
+  })
+}
+
+// 1. 播放进度变更触发下一句滚动
 watch(
   () => playerStore.currentLyricIndex,
   (newIdx) => {
-    if (newIdx < 0 || !lyricsContainer.value) return
-    nextTick(() => {
-      const activeEl = lyricsContainer.value?.querySelector(`[data-index="${newIdx}"]`) as HTMLElement
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-    })
+    if (newIdx >= 0) {
+      scrollToCurrentLyric(true)
+    }
+  }
+)
+
+// 2. 点击进入播放详情页时，立即定位到当前正在播放的对应歌词位置（无需等待下一句）
+watch(
+  () => playerStore.showFullscreen,
+  (show) => {
+    if (show) {
+      // 首次微延迟等待 DOM 渲染与全屏过渡展开完成
+      setTimeout(() => {
+        scrollToCurrentLyric(false)
+      }, 50)
+      setTimeout(() => {
+        scrollToCurrentLyric(true)
+      }, 300)
+    }
+  }
+)
+
+// 3. 歌曲初次载入歌词解析完成后，若处于全屏模式，立即居中定位
+watch(
+  () => playerStore.lyrics,
+  (newLyrics) => {
+    if (playerStore.showFullscreen && newLyrics.length > 0) {
+      setTimeout(() => {
+        scrollToCurrentLyric(false)
+      }, 100)
+    }
   }
 )
 </script>

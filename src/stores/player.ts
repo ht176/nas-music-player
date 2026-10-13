@@ -31,6 +31,7 @@ export const usePlayerStore = defineStore('player', () => {
   const duration = ref<number>(savedState?.duration || 0)
   const volume = ref<number>(savedState?.volume ?? 0.8)
   const playMode = ref<PlayMode>(savedState?.playMode || 'loop')
+  const lyricDisplayLines = ref<number>(savedState?.lyricDisplayLines === 2 ? 2 : 1)
   const lyrics = ref<LyricLine[]>([])
   const currentLyricIndex = ref<number>(-1)
   const showFullscreen = ref<boolean>(false)
@@ -48,10 +49,16 @@ export const usePlayerStore = defineStore('player', () => {
         duration: duration.value,
         volume: volume.value,
         playMode: playMode.value,
+        lyricDisplayLines: lyricDisplayLines.value,
       }))
     } catch {
       // 容错
     }
+  }
+
+  function setLyricDisplayLines(lines: number) {
+    lyricDisplayLines.value = lines === 2 ? 2 : 1
+    savePlayerState()
   }
 
   // 10 段均衡器配置
@@ -423,6 +430,8 @@ export const usePlayerStore = defineStore('player', () => {
     duration,
     volume,
     playMode,
+    lyricDisplayLines,
+    setLyricDisplayLines,
     lyrics,
     currentLyricIndex,
     showFullscreen,
