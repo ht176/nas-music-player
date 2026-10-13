@@ -54,6 +54,39 @@ export class SubsonicClient {
     return subsonic as T
   }
 
+  mapSong(s: any): Track {
+    return {
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      artistId: s.artistId,
+      album: s.album,
+      albumId: s.albumId,
+      coverArtId: s.coverArt,
+      duration: s.duration || 0,
+      trackNumber: s.track,
+      discNumber: s.discNumber,
+      year: s.year,
+      bitRate: s.bitRate,
+      suffix: s.suffix,
+      size: s.size,
+      starred: !!s.starred,
+      userRating: s.userRating,
+      genre: s.genre,
+      path: s.path,
+      contentType: s.contentType,
+      samplingRate: s.samplingRate,
+      bitDepth: s.bitDepth,
+      channelCount: s.channelCount,
+      created: s.created,
+    }
+  }
+
+  async getSong(id: string): Promise<Track> {
+    const res = await this.request<{ song: any }>('getSong.view', { id })
+    return this.mapSong(res.song)
+  }
+
   async ping(): Promise<boolean> {
     const res = await this.request<{ status: string }>('ping.view')
     return res.status === 'ok'
@@ -80,21 +113,8 @@ export class SubsonicClient {
     const res = await this.request<{ album: any }>('getAlbum.view', { id })
     const a = res.album
     const songs: Track[] = (a.song || []).map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      artist: s.artist,
-      artistId: s.artistId,
-      album: s.album,
+      ...this.mapSong(s),
       albumId: s.albumId || a.id,
-      coverArtId: s.coverArt,
-      duration: s.duration,
-      trackNumber: s.track,
-      discNumber: s.discNumber,
-      year: s.year,
-      bitRate: s.bitRate,
-      suffix: s.suffix,
-      size: s.size,
-      starred: !!s.starred,
     }))
     return {
       id: a.id,
@@ -159,17 +179,7 @@ export class SubsonicClient {
     const res = await this.request<{ starred?: any }>('getStarred.view')
     const st = res.starred || {}
     const songs: Track[] = (st.song || []).map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      artist: s.artist,
-      artistId: s.artistId,
-      album: s.album,
-      albumId: s.albumId,
-      coverArtId: s.coverArt,
-      duration: s.duration,
-      trackNumber: s.track,
-      year: s.year,
-      suffix: s.suffix,
+      ...this.mapSong(s),
       starred: true,
     }))
     const albums: Album[] = (st.album || []).map((a: any) => ({
@@ -227,20 +237,7 @@ export class SubsonicClient {
   async getPlaylist(id: string): Promise<Playlist> {
     const res = await this.request<{ playlist: any }>('getPlaylist.view', { id })
     const p = res.playlist
-    const songs: Track[] = (p.entry || []).map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      artist: s.artist,
-      artistId: s.artistId,
-      album: s.album,
-      albumId: s.albumId,
-      coverArtId: s.coverArt,
-      duration: s.duration,
-      trackNumber: s.track,
-      year: s.year,
-      suffix: s.suffix,
-      starred: !!s.starred,
-    }))
+    const songs: Track[] = (p.entry || []).map((s: any) => this.mapSong(s))
     return {
       id: p.id,
       name: p.name,
@@ -284,20 +281,7 @@ export class SubsonicClient {
   async search(query: string): Promise<{ songs: Track[]; albums: Album[]; artists: Artist[] }> {
     const res = await this.request<{ searchResult3?: any }>('search3.view', { query })
     const sr = res.searchResult3 || {}
-    const songs: Track[] = (sr.song || []).map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      artist: s.artist,
-      artistId: s.artistId,
-      album: s.album,
-      albumId: s.albumId,
-      coverArtId: s.coverArt,
-      duration: s.duration,
-      trackNumber: s.track,
-      year: s.year,
-      suffix: s.suffix,
-      starred: !!s.starred,
-    }))
+    const songs: Track[] = (sr.song || []).map((s: any) => this.mapSong(s))
     const albums: Album[] = (sr.album || []).map((a: any) => ({
       id: a.id,
       name: a.name || a.title,
@@ -328,26 +312,7 @@ export class SubsonicClient {
       songOffset: offset,
     })
     const list = res.searchResult3?.song || []
-    return list.map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      artist: s.artist,
-      artistId: s.artistId,
-      album: s.album,
-      albumId: s.albumId,
-      coverArtId: s.coverArt,
-      duration: s.duration || 0,
-      trackNumber: s.track,
-      discNumber: s.discNumber,
-      year: s.year,
-      bitRate: s.bitRate,
-      suffix: s.suffix,
-      size: s.size,
-      starred: !!s.starred,
-      userRating: s.userRating,
-      genre: s.genre,
-      created: s.created,
-    }))
+    return list.map((s: any) => this.mapSong(s))
   }
 
   /**
@@ -356,26 +321,7 @@ export class SubsonicClient {
   async getRandomSongs(size = 30): Promise<Track[]> {
     const res = await this.request<{ randomSongs?: { song?: any[] } }>('getRandomSongs.view', { size })
     const list = res.randomSongs?.song || []
-    return list.map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      artist: s.artist,
-      artistId: s.artistId,
-      album: s.album,
-      albumId: s.albumId,
-      coverArtId: s.coverArt,
-      duration: s.duration || 0,
-      trackNumber: s.track,
-      discNumber: s.discNumber,
-      year: s.year,
-      bitRate: s.bitRate,
-      suffix: s.suffix,
-      size: s.size,
-      starred: !!s.starred,
-      userRating: s.userRating,
-      genre: s.genre,
-      created: s.created,
-    }))
+    return list.map((s: any) => this.mapSong(s))
   }
 
   getStreamUrl(songId: string, suffix?: string): string {

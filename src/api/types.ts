@@ -26,6 +26,11 @@ export interface Track {
   starred?: boolean
   userRating?: number
   genre?: string
+  path?: string
+  contentType?: string
+  samplingRate?: number
+  bitDepth?: number
+  channelCount?: number
   created?: string
 }
 

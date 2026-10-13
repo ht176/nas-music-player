@@ -4,6 +4,7 @@ import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
 import AudioSpectrumVisualizer from './AudioSpectrumVisualizer.vue'
 import LyricSearchModal from './LyricSearchModal.vue'
+import TrackInfoModal from './TrackInfoModal.vue'
 import {
   ChevronDown,
   Play,
@@ -16,6 +17,7 @@ import {
   Repeat,
   Shuffle,
   FileSearch,
+  Info,
 } from 'lucide-vue-next'
 
 const playerStore = usePlayerStore()
@@ -23,6 +25,7 @@ const serverStore = useServerStore()
 const lyricsContainer = ref<HTMLElement | null>(null)
 const showSleepMenu = ref(false)
 const showLyricSearchModal = ref(false)
+const showTrackInfoModal = ref(false)
 
 const coverUrl = computed(() => {
   return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 600) || ''
@@ -94,8 +97,16 @@ watch(
         </span>
       </div>
 
-      <!-- 右上角工具：歌词替换、均衡器与睡眠定时器 -->
+      <!-- 右上角工具：歌曲属性、歌词替换、均衡器与睡眠定时器 -->
       <div class="flex items-center gap-2 relative">
+        <button
+          class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+          title="查看歌曲文件属性与 NAS 物理信息"
+          @click="showTrackInfoModal = true"
+        >
+          <Info class="w-5 h-5 text-neutral-300 hover:text-emerald-400" />
+        </button>
+
         <button
           class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
           title="搜索替换当前歌词"
@@ -286,6 +297,9 @@ watch(
 
     <!-- 歌词搜索替换弹窗 -->
     <LyricSearchModal v-model="showLyricSearchModal" />
+
+    <!-- 歌曲文件属性与 NAS 物理信息弹窗 -->
+    <TrackInfoModal v-model="showTrackInfoModal" />
   </div>
 </template>
 

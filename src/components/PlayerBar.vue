@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
 import { isDesktopApp, enterMiniMode, exitMiniMode } from '../services/desktop'
+import TrackInfoModal from './TrackInfoModal.vue'
 import {
   Play,
   Pause,
@@ -17,10 +18,12 @@ import {
   ListMusic,
   Sliders,
   PictureInPicture2,
+  Info,
 } from 'lucide-vue-next'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
+const showTrackInfo = ref(false)
 
 const coverUrl = computed(() => {
   return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 120) || ''
@@ -195,6 +198,15 @@ async function toggleMiniPlayer() {
 
       <button
         class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+        :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': showTrackInfo }"
+        @click="showTrackInfo = !showTrackInfo"
+        title="查看歌曲文件属性与 NAS 物理路径"
+      >
+        <Info class="w-4 h-4" />
+      </button>
+
+      <button
+        class="text-neutral-400 hover:text-white transition-all p-2 rounded-xl hover:bg-white/5 cursor-pointer"
         :class="{ 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20': playerStore.showFullscreen }"
         @click="playerStore.showFullscreen = !playerStore.showFullscreen"
         title="歌词与全屏"
@@ -218,5 +230,8 @@ async function toggleMiniPlayer() {
         />
       </div>
     </div>
+
+    <!-- 歌曲文件属性与 NAS 物理信息弹窗 -->
+    <TrackInfoModal v-model="showTrackInfo" />
   </div>
 </template>

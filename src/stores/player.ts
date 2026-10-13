@@ -161,6 +161,16 @@ export const usePlayerStore = defineStore('player', () => {
     serverStore.client.scrobble(track.id, false)
     statsService.recordPlay(track) // 记录播放统计与历史
 
+    // 如果当前 track 缺少 path（可能来自旧列表缓存或简化接口），异步补全完整文件属性
+    if (!track.path && serverStore.client.getSong) {
+      serverStore.client.getSong(track.id).then((fullTrack) => {
+        if (currentIndex.value >= 0 && queue.value[currentIndex.value]?.id === track.id) {
+          queue.value[currentIndex.value] = { ...queue.value[currentIndex.value], ...fullTrack }
+          savePlayerState()
+        }
+      }).catch(() => {})
+    }
+
     lyrics.value = []
     currentLyricIndex.value = -1
 
