@@ -86,7 +86,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen w-screen overflow-hidden bg-[#0a0a0f] text-neutral-100 relative">
+  <div class="flex h-screen w-screen overflow-hidden bg-[#12131a] text-neutral-100 relative">
     <!-- 桌面极简迷你悬浮窗模式 (仅显示悬浮窗内容，彻底隐藏主界面) -->
     <template v-if="isDesktop && playerStore.showMiniPlayer">
       <MiniPlayerWindow :is-compact-desktop="true" />
@@ -98,7 +98,7 @@ onUnmounted(() => {
       <header
         v-if="isDesktop"
         data-tauri-drag-region
-        class="absolute top-0 left-0 right-0 h-8 flex items-center justify-between z-50 select-none bg-gradient-to-b from-[#0a0a0f]/90 to-transparent backdrop-blur-xs cursor-move"
+        class="absolute top-0 left-0 right-0 h-8 flex items-center justify-between z-50 select-none bg-gradient-to-b from-[#12131a]/95 to-transparent backdrop-blur-xs cursor-move"
       >
         <div data-tauri-drag-region class="flex items-center gap-2 pl-3.5 text-[11px] text-neutral-400 font-medium pointer-events-none">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -107,11 +107,11 @@ onUnmounted(() => {
         <WindowControls class="pointer-events-auto" />
       </header>
 
-      <!-- 全局炫彩流光氛围背景 -->
+      <!-- 全局炫彩流光氛围背景 (微调提高透明度与层次明度，避免死黑沉闷) -->
       <div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div class="absolute -top-[30%] -left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-500/10 blur-[130px] animate-pulse" />
-        <div class="absolute top-[40%] -right-[15%] w-[500px] h-[500px] rounded-full bg-indigo-500/10 blur-[140px]" />
-        <div class="absolute -bottom-[20%] left-[25%] w-[600px] h-[600px] rounded-full bg-rose-500/8 blur-[150px]" />
+        <div class="absolute -top-[25%] -left-[10%] w-[650px] h-[650px] rounded-full bg-emerald-500/15 blur-[120px] animate-pulse" />
+        <div class="absolute top-[35%] -right-[15%] w-[550px] h-[550px] rounded-full bg-indigo-500/15 blur-[130px]" />
+        <div class="absolute -bottom-[15%] left-[25%] w-[650px] h-[650px] rounded-full bg-teal-500/12 blur-[140px]" />
       </div>
 
       <!-- 桌面侧栏 (窄屏隐藏) -->
@@ -134,10 +134,10 @@ onUnmounted(() => {
         <MobileTabBar />
       </main>
 
-      <!-- 播放队列抽屉 -->
+      <!-- 播放队列抽屉 (提高层级为 z-60，确保全屏模式下也能顺畅呼出) -->
       <QueueDrawer />
 
-      <!-- 全屏黑胶/歌词沉浸视图 -->
+      <!-- 全屏黑胶/歌词沉浸视图 (z-50) -->
       <FullscreenPlayer />
 
       <!-- 全局快捷搜索浮窗 -->
@@ -146,8 +146,8 @@ onUnmounted(() => {
       <!-- 专业 10 段图形均衡器 -->
       <EqualizerModal />
 
-      <!-- Web 环境下的迷你浮窗 -->
-      <MiniPlayerWindow v-if="!isDesktop" />
+      <!-- Web 环境下的迷你浮窗 (仅在用户主动打开时显现) -->
+      <MiniPlayerWindow v-if="!isDesktop && playerStore.showMiniPlayer" />
 
       <!-- 版本更新提醒气泡 -->
       <UpdateDialog v-if="autoUpdateInfo" :update-info="autoUpdateInfo" />

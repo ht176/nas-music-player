@@ -14,7 +14,7 @@ const formatTime = (sec: number) => {
 <template>
   <div
     v-if="playerStore.showQueueDrawer"
-    class="fixed inset-y-0 right-0 w-80 sm:w-96 bg-neutral-900/95 border-l border-neutral-800 backdrop-blur-xl shadow-2xl z-50 flex flex-col animate-fade-in"
+    class="fixed inset-y-0 right-0 w-80 sm:w-96 bg-neutral-900/95 border-l border-neutral-800 backdrop-blur-xl shadow-2xl z-60 flex flex-col animate-fade-in"
   >
     <!-- 头部栏 -->
     <div class="p-4 border-b border-neutral-800 flex items-center justify-between">
