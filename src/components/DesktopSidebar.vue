@@ -24,13 +24,13 @@ const navItems = [
 <template>
   <aside class="w-60 bg-neutral-900/60 border-r border-neutral-800/80 flex flex-col justify-between p-4 shrink-0">
     <div class="space-y-6">
-      <!-- 品牌 Logo -->
+      <!-- 品牌 Logo (放大一号: h-11 w-11) -->
       <div class="flex items-center gap-3 px-3 py-2 cursor-pointer group" @click="router.push('/')">
-        <div class="h-9 w-9 rounded-xl overflow-hidden shadow-[0_0_16px_rgba(16,185,129,0.35)] group-hover:shadow-[0_0_24px_rgba(16,185,129,0.65)] group-hover:scale-105 transition-all duration-300 shrink-0 border border-white/10">
+        <div class="h-11 w-11 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_28px_rgba(16,185,129,0.7)] group-hover:scale-105 transition-all duration-300 shrink-0 border border-white/10">
           <img src="/favicon.svg" class="w-full h-full object-cover" alt="AuraMusic Logo" />
         </div>
         <div class="flex flex-col">
-          <span class="font-extrabold text-base tracking-tight text-white group-hover:text-emerald-300 transition-colors">AuraMusic</span>
+          <span class="font-extrabold text-lg tracking-tight text-white group-hover:text-emerald-300 transition-colors">AuraMusic</span>
           <span class="text-[10px] text-neutral-400 font-medium tracking-widest uppercase">极光私有音乐</span>
         </div>
       </div>

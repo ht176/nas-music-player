@@ -104,7 +104,7 @@ onUnmounted(() => {
         class="absolute top-0 left-0 right-0 h-8 flex items-center justify-between z-50 select-none bg-gradient-to-b from-[#12131a]/95 to-transparent backdrop-blur-xs cursor-move"
       >
         <div data-tauri-drag-region class="flex items-center gap-2 pl-3 text-[11px] text-neutral-300 font-medium pointer-events-none">
-          <img src="/favicon.svg" class="w-3.5 h-3.5 rounded-sm object-cover" alt="AuraMusic" />
+          <img src="/favicon.svg" class="w-4.5 h-4.5 rounded-sm object-cover" alt="AuraMusic" />
           <span>AuraMusic · 私有云音乐播放器</span>
         </div>
         <WindowControls class="pointer-events-auto" />
