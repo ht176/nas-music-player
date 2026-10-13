@@ -77,10 +77,10 @@ async function toggleMiniPlayer() {
     <!-- 顶部极细渐变微光线 -->
     <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
-    <!-- 主界面浮动单行实时歌词胶囊 (间距增大: -top-12，内边距增大: px-6 py-2.5) -->
+    <!-- 主界面浮动单行实时歌词胶囊 (与底部控制栏显著拉开间距: -top-16，内边距增大: px-6 py-2.5) -->
     <div
       v-if="currentLyricText"
-      class="absolute -top-12 left-1/2 -translate-x-1/2 px-6 py-2.5 rounded-full bg-neutral-900/95 border border-emerald-500/35 text-sm sm:text-base text-emerald-300 font-semibold backdrop-blur-md shadow-[0_8px_25px_rgba(0,0,0,0.65)] flex items-center gap-2.5 cursor-pointer hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all max-w-[85vw] truncate group animate-fade-in"
+      class="absolute -top-16 left-1/2 -translate-x-1/2 px-6 py-2.5 rounded-full bg-neutral-900/95 border border-emerald-500/35 text-sm sm:text-base text-emerald-300 font-semibold backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)] flex items-center gap-2.5 cursor-pointer hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all max-w-[85vw] truncate group animate-fade-in"
       @click="playerStore.showFullscreen = true"
       title="点击进入全屏沉浸歌词"
     >

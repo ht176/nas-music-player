@@ -219,8 +219,8 @@ watch(
       </div>
     </div>
 
-    <!-- 中部：唱片与歌词分栏 (流体弹性布局，设最小高度保障缩放稳定) -->
-    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center max-w-6xl mx-auto w-full my-2 overflow-hidden min-h-[300px]">
+    <!-- 中部：唱片与歌词分栏 (流体弹性布局，设最小高度，底部留出 mb-8 与播放控制栏拉开明显呼吸空间) -->
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center max-w-6xl mx-auto w-full my-2 mb-6 sm:mb-8 overflow-hidden min-h-[300px]">
       <!-- 左栏：唱片封面 / 黑胶唱盘机模拟 (下移一点，与右侧歌词视觉平衡) -->
       <div class="flex flex-col items-center justify-center relative w-full pt-6 md:pt-10">
         <!-- 模拟黑胶唱盘机外环与黑胶光盘 (缩小两号: w-48/h-48 到 w-72/h-72，配合 min-w/min-h) -->
@@ -319,8 +319,8 @@ watch(
       </div>
     </div>
 
-    <!-- 底部：全功能控制条 -->
-    <div class="max-w-xl mx-auto w-full space-y-4 pb-3">
+    <!-- 底部：全功能控制条 (强化顶部间隔与独立背景分层) -->
+    <div class="max-w-xl mx-auto w-full space-y-4 pt-4 pb-3">
       <!-- 进度条 (清晰显示已播翡翠绿进度与未播半透明轨道) -->
       <div class="flex items-center gap-3 w-full text-xs text-neutral-400 font-mono">
         <span class="w-10 text-right">{{ formatTime(playerStore.currentTime) }}</span>
