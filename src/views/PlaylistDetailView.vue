@@ -5,7 +5,7 @@ import { useServerStore } from '../stores/server'
 import { usePlayerStore } from '../stores/player'
 import TrackRow from '../components/TrackRow.vue'
 import type { Playlist } from '../api/types'
-import { ListMusic, Play } from 'lucide-vue-next'
+import { ListMusic, Play, Trash2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const serverStore = useServerStore()
@@ -24,6 +24,16 @@ async function loadPlaylistDetail() {
     console.error('加载歌单详情失败', e)
   } finally {
     loading.value = false
+  }
+}
+
+async function removeSong(index: number) {
+  if (!playlist.value || !serverStore.client) return
+  try {
+    await serverStore.client.updatePlaylist(playlist.value.id, undefined, index)
+    await loadPlaylistDetail()
+  } catch (err) {
+    console.error('移除曲目失败', err)
   }
 }
 
@@ -70,15 +80,27 @@ onMounted(() => {
 
     <!-- 歌曲列表 -->
     <div v-if="playlist.songs?.length" class="space-y-1">
-      <TrackRow
+      <div
         v-for="(song, idx) in playlist.songs"
         :key="song.id"
-        :track="song"
-        :index="idx"
-        :is-active="playerStore.currentTrack?.id === song.id"
-        :is-playing="playerStore.isPlaying"
-        @play="playerStore.playTrack(song, playlist.songs)"
-      />
+        class="relative group/row flex items-center"
+      >
+        <TrackRow
+          class="flex-1"
+          :track="song"
+          :index="idx"
+          :is-active="playerStore.currentTrack?.id === song.id"
+          :is-playing="playerStore.isPlaying"
+          @play="playerStore.playTrack(song, playlist.songs)"
+        />
+        <button
+          class="opacity-0 group-hover/row:opacity-100 p-2 text-neutral-500 hover:text-rose-400 hover:bg-white/10 rounded-lg transition mr-2 cursor-pointer"
+          title="从歌单中移除"
+          @click.stop="removeSong(idx)"
+        >
+          <Trash2 class="w-4 h-4" />
+        </button>
+      </div>
     </div>
     <div v-else class="text-center py-16 text-neutral-500 text-sm">
       歌单内还没有任何曲目

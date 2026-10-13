@@ -92,6 +92,18 @@ class StatsService {
       .slice(0, limit)
   }
 
+  /**
+   * 24 小时活跃时间段分布 (0-23点)
+   */
+  getHourlyDistribution(): number[] {
+    const hours = new Array(24).fill(0)
+    for (const item of this.stats.history) {
+      const h = new Date(item.playedAt).getHours()
+      hours[h] += item.playCount
+    }
+    return hours
+  }
+
   clearHistory() {
     this.stats = {
       totalPlayCount: 0,

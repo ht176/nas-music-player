@@ -12,10 +12,12 @@ const stats = ref<UserStats>({
   history: [],
 })
 const topArtists = ref<{ name: string; count: number }[]>([])
+const hourlyDistribution = ref<number[]>(new Array(24).fill(0))
 
 function loadData() {
   stats.value = statsService.getStats()
   topArtists.value = statsService.getTopArtists(6)
+  hourlyDistribution.value = statsService.getHourlyDistribution()
 }
 
 const formatHours = (seconds: number) => {
@@ -102,6 +104,34 @@ onMounted(() => {
             <div class="text-base font-bold text-white mt-0.5 truncate">
               {{ topArtists[0]?.name || '暂无数据' }}
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 24小时听歌时段活跃度分布 -->
+    <div class="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800/80">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-neutral-200 flex items-center gap-2">
+          <Clock class="w-4 h-4 text-emerald-400" /> 24 小时聆听时段分布
+        </h2>
+        <span class="text-xs text-neutral-500 font-mono">0:00 - 23:00 活跃热度</span>
+      </div>
+      <div class="h-20 flex items-end gap-1 sm:gap-1.5 pt-4">
+        <div
+          v-for="(val, h) in hourlyDistribution"
+          :key="h"
+          class="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end"
+        >
+          <div
+            class="w-full rounded-t-sm transition-all duration-300"
+            :class="val > 0 ? 'bg-gradient-to-t from-emerald-500/40 to-teal-400 group-hover:to-emerald-300' : 'bg-neutral-800/40'"
+            :style="{ height: `${Math.max(8, (val / Math.max(1, ...hourlyDistribution)) * 100)}%` }"
+          ></div>
+          <span class="text-[9px] text-neutral-500 font-mono scale-90">{{ h % 4 === 0 ? `${h}h` : '' }}</span>
+          <!-- 悬停 Tooltip -->
+          <div class="absolute -top-7 opacity-0 group-hover:opacity-100 transition pointer-events-none bg-neutral-800 border border-neutral-700 text-[10px] text-white px-1.5 py-0.5 rounded font-mono z-10 whitespace-nowrap">
+            {{ h }}:00 - {{ val }}次
           </div>
         </div>
       </div>

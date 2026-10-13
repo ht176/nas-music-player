@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
+import AudioSpectrumVisualizer from './AudioSpectrumVisualizer.vue'
 import {
   ChevronDown,
   Play,
@@ -172,9 +173,14 @@ watch(
           </div>
         </div>
 
-        <div class="mt-8 text-center max-w-sm">
+        <div class="mt-6 text-center max-w-sm">
           <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight truncate drop-shadow-md">{{ playerStore.currentTrack.title }}</h2>
           <p class="text-sm font-medium text-neutral-400 mt-2 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
+        </div>
+
+        <!-- 动态律动频谱仪 -->
+        <div class="w-full mt-3">
+          <AudioSpectrumVisualizer />
         </div>
       </div>
 

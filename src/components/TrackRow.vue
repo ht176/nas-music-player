@@ -2,9 +2,10 @@
 import { computed } from 'vue'
 import type { Track } from '../api/types'
 import { usePlayerStore } from '../stores/player'
-import { Heart, Plus, Download, Check } from 'lucide-vue-next'
+import { Heart, Plus, Download, Check, ListPlus } from 'lucide-vue-next'
 import { cacheService } from '../services/cache'
 import { onMounted, ref } from 'vue'
+import AddToPlaylistModal from './AddToPlaylistModal.vue'
 
 const props = defineProps<{
   track: Track
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 const playerStore = usePlayerStore()
 const isCached = ref(false)
 const isDownloading = ref(false)
+const showAddToPlaylist = ref(false)
 
 const formattedDuration = computed(() => {
   const dur = props.track.duration || 0
@@ -119,6 +121,15 @@ onMounted(async () => {
         <Download v-else class="w-4 h-4" :class="{ 'animate-bounce text-emerald-400': isDownloading }" />
       </button>
 
+      <!-- 添加到指定歌单 -->
+      <button
+        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-emerald-400 cursor-pointer"
+        title="添加到歌单"
+        @click.stop="showAddToPlaylist = true"
+      >
+        <ListPlus class="w-4 h-4" />
+      </button>
+
       <!-- 添加到播放队列 -->
       <button
         class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-white cursor-pointer"
@@ -135,5 +146,11 @@ onMounted(async () => {
 
       <span class="w-11 text-right font-mono text-neutral-400">{{ formattedDuration }}</span>
     </div>
+
+    <!-- 歌单添加弹窗 -->
+    <AddToPlaylistModal
+      v-model="showAddToPlaylist"
+      :track="props.track"
+    />
   </div>
 </template>

@@ -21,6 +21,7 @@ export class AudioPlayerService {
   private sourceNode?: MediaElementAudioSourceNode
   private eqFilters: BiquadFilterNode[] = []
   private gainNode?: GainNode
+  private analyserNode?: AnalyserNode
   private isConnectedToWebAudio = false
 
   // 交叉淡入淡出定时器
@@ -78,6 +79,9 @@ export class AudioPlayerService {
       this.audio.crossOrigin = 'anonymous'
       this.audioCtx = new AudioCtx()
       this.gainNode = this.audioCtx.createGain()
+      this.analyserNode = this.audioCtx.createAnalyser()
+      this.analyserNode.fftSize = 64
+      this.analyserNode.smoothingTimeConstant = 0.8
       this.sourceNode = this.audioCtx.createMediaElementSource(this.audio)
 
       let prevNode: AudioNode = this.sourceNode
@@ -99,13 +103,21 @@ export class AudioPlayerService {
         return filter
       })
 
-      prevNode.connect(this.gainNode)
+      prevNode.connect(this.analyserNode)
+      this.analyserNode.connect(this.gainNode)
       this.gainNode.connect(this.audioCtx.destination)
       this.isConnectedToWebAudio = true
     } catch (e) {
       console.warn('[AudioPlayer] Web Audio 节点连接失败，安全降级为原生播放:', e)
       this.isConnectedToWebAudio = false
     }
+  }
+
+  getByteFrequencyData(): Uint8Array | null {
+    if (!this.analyserNode) return null
+    const buffer = new Uint8Array(this.analyserNode.frequencyBinCount)
+    this.analyserNode.getByteFrequencyData(buffer)
+    return buffer
   }
 
   async setEQGains(gains: number[]) {
@@ -221,6 +233,7 @@ export class AudioPlayerService {
   }
 
   async play(withFadeIn = true) {
+    await this.tryInitAudioContext()
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       try {
         await this.audioCtx.resume()

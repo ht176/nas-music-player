@@ -74,3 +74,17 @@ export async function exitMiniMode() {
     console.warn('Failed to exit mini mode', err)
   }
 }
+
+export async function listenTrayActions(handler: (action: string) => void): Promise<(() => void) | undefined> {
+  if (!isDesktopApp()) return
+  try {
+    const { listen } = await import('@tauri-apps/api/event')
+    const unlisten = await listen<string>('tray-action', (event) => {
+      handler(event.payload)
+    })
+    return unlisten
+  } catch (err) {
+    console.warn('Failed to listen to tray actions', err)
+  }
+}
+

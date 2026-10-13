@@ -14,9 +14,12 @@ pub fn run() {
                 app.handle().plugin(tauri_plugin_process::init())?;
             }
 
+            let play_pause_i = MenuItem::with_id(app, "play_pause", "播放 / 暂停", true, None::<&str>)?;
+            let prev_i = MenuItem::with_id(app, "prev", "上一曲", true, None::<&str>)?;
+            let next_i = MenuItem::with_id(app, "next", "下一曲", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "显示主界面", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "退出应用", true, None::<&str>)?;
-            let tray_menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            let tray_menu = Menu::with_items(app, &[&play_pause_i, &prev_i, &next_i, &show_i, &quit_i])?;
 
             if let Some(icon) = app.default_window_icon().cloned() {
                 let _tray = TrayIconBuilder::new()
@@ -39,7 +42,17 @@ pub fn run() {
                         }
                     })
                     .on_menu_event(|app, event| {
+                        use tauri::Emitter;
                         match event.id.as_ref() {
+                            "play_pause" => {
+                                let _ = app.emit("tray-action", "toggle_play");
+                            }
+                            "prev" => {
+                                let _ = app.emit("tray-action", "prev");
+                            }
+                            "next" => {
+                                let _ = app.emit("tray-action", "next");
+                            }
                             "show" => {
                                 if let Some(window) = app.get_webview_window("main") {
                                     let _ = window.unminimize();

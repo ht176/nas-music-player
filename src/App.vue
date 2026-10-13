@@ -12,7 +12,7 @@ import WindowControls from './components/WindowControls.vue'
 import UpdateDialog from './components/UpdateDialog.vue'
 import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
-import { isDesktopApp } from './services/desktop'
+import { isDesktopApp, listenTrayActions } from './services/desktop'
 import { checkAppUpdate, type UpdateInfo } from './services/updater'
 
 const playerStore = usePlayerStore()
@@ -20,19 +20,51 @@ const serverStore = useServerStore()
 const showSearch = ref(false)
 const isDesktop = ref(isDesktopApp())
 const autoUpdateInfo = ref<UpdateInfo | null>(null)
+let unlistenTray: (() => void) | undefined
 
-// 监听快捷键 Ctrl+K / Cmd+K 呼出全局搜索
+// 键盘快捷键监听
 function handleKeyDown(e: KeyboardEvent) {
+  const target = e.target as HTMLElement
+  const isInput = target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+  if (isInput) return
+
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     showSearch.value = !showSearch.value
+  } else if (e.code === 'Space') {
+    e.preventDefault()
+    playerStore.togglePlay()
+  } else if (e.key === 'ArrowRight' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault()
+    playerStore.next()
+  } else if (e.key === 'ArrowLeft' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault()
+    playerStore.prev()
+  } else if (e.key === 'ArrowUp' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault()
+    playerStore.setVolume(Math.min(1, playerStore.volume + 0.05))
+  } else if (e.key === 'ArrowDown' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault()
+    playerStore.setVolume(Math.max(0, playerStore.volume - 0.05))
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   serverStore.loadConfig()
   playerStore.initRestoredState()
   window.addEventListener('keydown', handleKeyDown)
+
+  if (isDesktop.value) {
+    unlistenTray = await listenTrayActions((action) => {
+      if (action === 'toggle_play') {
+        playerStore.togglePlay()
+      } else if (action === 'prev') {
+        playerStore.prev()
+      } else if (action === 'next') {
+        playerStore.next()
+      }
+    })
+  }
 
   // 启动 3 秒后在后台静默检测版本更新
   setTimeout(async () => {
@@ -49,6 +81,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  unlistenTray?.()
 })
 </script>
 
