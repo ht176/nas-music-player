@@ -16,10 +16,13 @@ jobs:
         include:
           - platform: 'windows-latest'
             args: ''
+            targets: ''
           - platform: 'macos-latest'
-            args: ''
+            args: '--target universal-apple-darwin'
+            targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
           - platform: 'ubuntu-22.04'
             args: ''
+            targets: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -28,6 +31,8 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -55,7 +60,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'NAS Music Player v__VERSION__'
-          releaseBody: '全平台发布产物（Windows / macOS / Linux / Android）。'
+          releaseBody: '全平台发布产物（Windows / macOS Universal / Linux / Android）。'
           releaseDraft: true
           prerelease: false
           args: --ignore-version-mismatches ${{ matrix.args }}
@@ -113,10 +118,25 @@ jobs:
           CI: 'true'
         run: pnpm tauri android build --apk
 
+      - name: Sign APKs with uber-apk-signer
+        run: |
+          curl -L -o uber-apk-signer.jar https://github.com/patrickfav/uber-apk-signer/releases/latest/download/uber-apk-signer.jar
+          mkdir -p signed-apks
+          RAW_APKS=$(find src-tauri/gen/android -name "*.apk")
+          echo "Found generated APKs: $RAW_APKS"
+          java -jar uber-apk-signer.jar --apks src-tauri/gen/android/app/build/outputs/apk/ --out signed-apks/ --allowResign
+          ls -la signed-apks/
+
       - name: Collect Android APKs
         run: |
           mkdir -p android-apks
-          find src-tauri/gen/android -name "*.apk" -exec cp {} android-apks/ \;
+          # 优先提取带签名/已对齐的 apk
+          find signed-apks/ -name "*-aligned-debugSigned.apk" -exec cp {} android-apks/ \; || true
+          find signed-apks/ -name "*-aligned-signed.apk" -exec cp {} android-apks/ \; || true
+          # 若没有对齐名则复制全部有效 apk
+          if [ -z "$(ls -A android-apks)" ]; then
+            find signed-apks/ -name "*.apk" -exec cp {} android-apks/ \;
+          fi
           ls -la android-apks
 
       - name: Upload APKs to Release
@@ -143,12 +163,14 @@ jobs:
                 if (file.endsWith('.apk')) {
                   const filePath = path.join(apkDir, file);
                   const fileData = fs.readFileSync(filePath);
-                  console.log(`Uploading ${file} (${fileData.length} bytes)...`);
+                  // 净化文件名便于用户识别
+                  const cleanName = file.replace('-unsigned', '').replace('-aligned-debugSigned', '').replace('-aligned-signed', '');
+                  console.log(`Uploading ${cleanName} (${fileData.length} bytes)...`);
                   await github.rest.repos.uploadReleaseAsset({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     release_id: draft.id,
-                    name: `NAS-Music-Player-${file}`,
+                    name: `NAS-Music-Player-${cleanName}`,
                     data: fileData,
                   });
                 }
