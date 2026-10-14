@@ -21,7 +21,7 @@ jobs:
             args: '--target universal-apple-darwin'
             targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
           - platform: 'ubuntu-22.04'
-            args: ''
+            args: '--bundles deb,appimage'
             targets: ''
 
     runs-on: ${{ matrix.platform }}
@@ -202,6 +202,7 @@ jobs:
 
   publish-release:
     needs: [release, release-android]
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
