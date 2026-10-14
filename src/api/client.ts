@@ -259,10 +259,12 @@ export class SubsonicClient {
     return res.playlist
   }
 
-  async updatePlaylist(playlistId: string, songIdToAdd?: string, songIndexToRemove?: number): Promise<void> {
+  async updatePlaylist(playlistId: string, songIdToAdd?: string, songIndexToRemove?: number, name?: string, comment?: string): Promise<void> {
     const params: Record<string, string | number> = { playlistId }
     if (songIdToAdd) params.songIdToAdd = songIdToAdd
     if (songIndexToRemove !== undefined) params.songIndexToRemove = songIndexToRemove
+    if (name !== undefined) params.name = name
+    if (comment !== undefined) params.comment = comment
     await this.request('updatePlaylist.view', params)
   }
 

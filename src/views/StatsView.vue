@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { statsService, type UserStats } from '../services/stats'
 import { usePlayerStore } from '../stores/player'
+import { toastService } from '../services/toast'
 import TrackRow from '../components/TrackRow.vue'
 import { BarChart3, Clock, Flame, User, Play, Trash2 } from 'lucide-vue-next'
 
@@ -46,6 +47,7 @@ function clearAll() {
   if (!confirm('确定清空所有听歌历史足迹吗？')) return
   statsService.clearHistory()
   loadData()
+  toastService.info('听歌历史足迹已清空')
 }
 
 onMounted(() => {
