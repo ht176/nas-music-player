@@ -16,6 +16,7 @@ pub fn run() {
             .setup(|app| {
                 app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
                 app.handle().plugin(tauri_plugin_process::init())?;
+                app.handle().plugin(tauri_plugin_global_shortcut::Builder::new().build())?;
 
                 let play_pause_i = MenuItem::with_id(app, "play_pause", "播放 / 暂停", true, None::<&str>)?;
                 let prev_i = MenuItem::with_id(app, "prev", "上一曲", true, None::<&str>)?;

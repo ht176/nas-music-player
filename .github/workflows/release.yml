@@ -113,6 +113,17 @@ jobs:
           CI: 'true'
         run: pnpm tauri android init
 
+      - name: Sync Custom Android Launcher Icons
+        run: |
+          echo "Copying custom Android launcher icons to gen/android/app/src/main/res/..."
+          cp -rf src-tauri/icons/android/* src-tauri/gen/android/app/src/main/res/
+          ls -la src-tauri/gen/android/app/src/main/res/mipmap-xxxhdpi/
+
+      - name: Patch Android System Navigation Bar & Dark Theme
+        run: |
+          echo "Patching Android theme and system navigation bar color..."
+          python3 scripts/patch-android-theme.py
+
       - name: Build Android APK
         env:
           CI: 'true'
@@ -233,7 +244,10 @@ jobs:
 
               const bodyContent = [
                 '### 🚀 全平台发布产物（Windows / macOS / Linux / Android APK）',
-                '安卓用户请下载资产列表中的 `.apk` 文件并在手机上直接点击安装即可。',
+                '\n#### 平台下载安装建议：',
+                '- **Windows 用户**：优先推荐下载 **`.exe` (x64-setup.exe)** 安装包，支持一键无感智能覆盖安装（无需卸载旧版）；`.msi` 为企业组策略包，重新安装会进入 Windows Installer 维护模式。',
+                '- **安卓用户**：请直接下载资产列表中的 **`.apk`** 文件直接在手机中打开安装即可。',
+                '- **macOS 用户**：推荐下载 **`universal.dmg`**；如打开遇系统提示“已损坏”，在系统终端执行 `xattr -cr "/Applications/NAS Music Player.app"` 即可。',
                 notes ? `\n### 📝 更新日志 (Changelog)\n${notes}` : '',
                 '\n---\n*本 Release 由 GitHub Actions 自动化流水线构建并签名签名发布。*'
               ].filter(Boolean).join('\n');

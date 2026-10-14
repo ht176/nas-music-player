@@ -23,6 +23,17 @@ import {
   Info,
 } from 'lucide-vue-next'
 
+withDefaults(
+  defineProps<{
+    mobileOnly?: boolean
+    desktopOnly?: boolean
+  }>(),
+  {
+    mobileOnly: false,
+    desktopOnly: false,
+  }
+)
+
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
 const showTrackInfo = ref(false)
@@ -83,11 +94,10 @@ async function toggleMiniPlayer() {
 </script>
 
 <template>
-  <template v-if="playerStore.currentTrack">
-    <!-- ==================== 移动端专属：悬浮迷你音乐胶囊 (Mobile Floating Capsule) ==================== -->
+  <!-- ==================== 移动端专属：悬浮迷你音乐胶囊 (Mobile Floating Capsule) ==================== -->
+  <template v-if="mobileOnly && playerStore.currentTrack">
     <div
-      class="fixed left-2.5 right-2.5 z-40 md:hidden bg-[#151620]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300 select-none"
-      :style="{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.4rem)' }"
+      class="w-full bg-[#151620]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300 select-none pointer-events-auto"
     >
       <div class="h-14 px-3 flex items-center justify-between gap-2.5">
         <!-- 左侧：点击展开全屏播放器 (封面 + 歌名/歌手) -->
@@ -157,8 +167,10 @@ async function toggleMiniPlayer() {
         />
       </div>
     </div>
+  </template>
 
-    <!-- ==================== 桌面端专属：全功能三栏式底栏 (Desktop Bottom Bar) ==================== -->
+  <!-- ==================== 桌面端专属：全功能三栏式底栏 (Desktop Bottom Bar) ==================== -->
+  <template v-if="!mobileOnly && playerStore.currentTrack">
     <div class="hidden md:flex fixed bottom-0 left-0 right-0 h-20 glass-panel border-t border-white/10 px-5 items-center justify-between z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
       <!-- 顶部极细渐变微光线 -->
       <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>

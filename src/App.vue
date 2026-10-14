@@ -16,6 +16,7 @@ import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
 import { isDesktopApp, isTauriApp, listenTrayActions } from './services/desktop'
 import { checkAppUpdate, type UpdateInfo } from './services/updater'
+import { initGlobalShortcuts } from './services/shortcuts'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
@@ -23,6 +24,7 @@ const showSearch = ref(false)
 const isDesktop = ref(isDesktopApp())
 const autoUpdateInfo = ref<UpdateInfo | null>(null)
 let unlistenTray: (() => void) | undefined
+let cleanupShortcuts: (() => Promise<void>) | undefined
 
 // 键盘快捷键监听
 function handleKeyDown(e: KeyboardEvent) {
@@ -67,6 +69,14 @@ onMounted(async () => {
         playerStore.next()
       }
     })
+
+    cleanupShortcuts = await initGlobalShortcuts({
+      togglePlay: () => playerStore.togglePlay(),
+      prev: () => playerStore.prev(),
+      next: () => playerStore.next(),
+      volumeUp: () => playerStore.setVolume(Math.min(1, playerStore.volume + 0.05)),
+      volumeDown: () => playerStore.setVolume(Math.max(0, playerStore.volume - 0.05)),
+    })
   }
 
   // 仅在原生客户端环境下，启动 3 秒后在后台静默检测版本更新
@@ -93,6 +103,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('contextmenu', handleContextMenu)
   unlistenTray?.()
+  cleanupShortcuts?.()
 })
 </script>
 
@@ -143,18 +154,32 @@ onUnmounted(() => {
           class="flex-1 overflow-y-auto px-3.5 py-4 sm:px-6 md:px-8"
           :style="{
             paddingBottom: playerStore.currentTrack
-              ? 'calc(3.5rem + 4.2rem + env(safe-area-inset-bottom, 0px) + 1.25rem)'
-              : 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 1rem)'
+              ? 'calc(3.5rem + 3.75rem + max(env(safe-area-inset-bottom, 0px), 8px) + 1rem)'
+              : 'calc(3.5rem + max(env(safe-area-inset-bottom, 0px), 8px) + 0.75rem)'
           }"
         >
           <router-view />
         </div>
 
-        <!-- 常驻底部播放控制栏 -->
-        <PlayerBar />
+        <!-- 桌面端常驻底栏 (高度 80px，仅桌面显示) -->
+        <PlayerBar class="hidden md:flex" :desktop-only="true" />
 
-        <!-- 移动端底部 Tab 栏 -->
-        <MobileTabBar />
+        <!-- 移动端一体化底部停靠系统 (胶囊播放器 + 底部Tab栏联动，绝对物理防重叠) -->
+        <div class="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none flex flex-col justify-end">
+          <transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="opacity-0 translate-y-3 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 translate-y-3 scale-95"
+          >
+            <div v-if="playerStore.currentTrack" class="pointer-events-auto px-2.5 pb-2">
+              <PlayerBar :mobile-only="true" />
+            </div>
+          </transition>
+          <MobileTabBar class="pointer-events-auto" />
+        </div>
       </main>
 
       <!-- 播放队列抽屉 (提高层级为 z-60，确保全屏模式下也能顺畅呼出) -->

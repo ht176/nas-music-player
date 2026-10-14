@@ -25,23 +25,6 @@ export function isWebApp(): boolean {
   return !isTauriApp()
 }
 
-const NORMAL_SIZE_KEY = 'aura_desktop_last_normal_size'
-
-function getSavedNormalSize(): { width: number; height: number } {
-  try {
-    const raw = localStorage.getItem(NORMAL_SIZE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed.width >= 400 && parsed.height >= 300) {
-        return parsed
-      }
-    }
-  } catch {}
-  return { width: 1100, height: 720 }
-}
-
-let lastNormalSize = getSavedNormalSize()
-
 export async function minimizeWindow() {
   if (!isDesktopApp()) return
   try {
@@ -83,21 +66,21 @@ export async function isWindowMaximized(): Promise<boolean> {
   }
 }
 
+export const DEFAULT_WINDOW_WIDTH = 1100
+export const DEFAULT_WINDOW_HEIGHT = 720
+export const MINI_WINDOW_WIDTH = 340
+export const MINI_WINDOW_HEIGHT = 96
+export const MINI_EXPANDED_HEIGHT = 380
+
 export async function enterMiniMode() {
   if (!isDesktopApp()) return
   try {
     const win = getCurrentWindow()
-    const size = await win.innerSize()
-    // 仅在当前处于正常非迷你尺寸时记录
-    if (size.width >= 500 && size.height >= 350) {
-      lastNormalSize = { width: size.width, height: size.height }
-      try {
-        localStorage.setItem(NORMAL_SIZE_KEY, JSON.stringify(lastNormalSize))
-      } catch {}
-    }
-    // 迷你播放器高度减小: 设为 88px 高度, 330px 宽度
+    // 禁止最大化与自由缩放，彻底杜绝 Windows 客户端双击标题栏/拖拽区域触发最大化全屏
+    await win.setMaximizable(false)
+    await win.setResizable(false)
     await win.setMinSize(new LogicalSize(280, 80))
-    await win.setSize(new LogicalSize(330, 92))
+    await win.setSize(new LogicalSize(MINI_WINDOW_WIDTH, MINI_WINDOW_HEIGHT))
     await win.setAlwaysOnTop(true)
   } catch (err) {
     console.warn('Failed to enter mini mode', err)
@@ -109,11 +92,37 @@ export async function exitMiniMode() {
   try {
     const win = getCurrentWindow()
     await win.setAlwaysOnTop(false)
+    // 恢复窗口最大化与调整尺寸权限
+    await win.setResizable(true)
+    await win.setMaximizable(true)
     await win.setMinSize(new LogicalSize(400, 500))
-    const restoreSize = lastNormalSize.width ? lastNormalSize : getSavedNormalSize()
-    await win.setSize(new LogicalSize(restoreSize.width || 1100, restoreSize.height || 720))
+    // 恢复为初始化默认尺寸 (1100 x 720)
+    await win.setSize(new LogicalSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT))
+    // 居中显示，彻底解决受迷你播放器拖拽位置影响的问题
+    await win.center()
+    await win.setFocus()
   } catch (err) {
     console.warn('Failed to exit mini mode', err)
+  }
+}
+
+export async function expandMiniWindow() {
+  if (!isDesktopApp()) return
+  try {
+    const win = getCurrentWindow()
+    await win.setSize(new LogicalSize(MINI_WINDOW_WIDTH, MINI_EXPANDED_HEIGHT))
+  } catch (err) {
+    console.warn('Failed to expand mini window', err)
+  }
+}
+
+export async function collapseMiniWindow() {
+  if (!isDesktopApp()) return
+  try {
+    const win = getCurrentWindow()
+    await win.setSize(new LogicalSize(MINI_WINDOW_WIDTH, MINI_WINDOW_HEIGHT))
+  } catch (err) {
+    console.warn('Failed to collapse mini window', err)
   }
 }
 

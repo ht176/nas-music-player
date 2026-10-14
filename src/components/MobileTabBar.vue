@@ -16,8 +16,8 @@ const navItems = [
 
 <template>
   <nav
-    class="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-[#0e0e14]/90 backdrop-blur-2xl border-t border-white/10 select-none shadow-[0_-8px_25px_rgba(0,0,0,0.6)]"
-    :style="{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }"
+    class="w-full bg-[#0e0e14]/95 backdrop-blur-2xl border-t border-white/10 select-none shadow-[0_-8px_25px_rgba(0,0,0,0.6)] pointer-events-auto"
+    :style="{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }"
   >
     <div class="h-14 flex items-center justify-around px-1">
       <button

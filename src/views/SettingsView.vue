@@ -181,12 +181,17 @@ async function handleClearAllCache() {
 
 // 4. 快捷键清单
 const shortcutList = [
-  { key: 'Space (空格键)', desc: '播放 / 暂停', scope: '全局窗口' },
-  { key: 'Ctrl / ⌘ + K', desc: '快速呼出全局搜索弹窗', scope: '全局窗口' },
-  { key: 'Ctrl / ⌘ + →', desc: '切换到下一首曲目', scope: '全局窗口' },
-  { key: 'Ctrl / ⌘ + ←', desc: '切换到上一首曲目', scope: '全局窗口' },
-  { key: 'Ctrl / ⌘ + ↑', desc: '音量增加 5%', scope: '全局窗口' },
-  { key: 'Ctrl / ⌘ + ↓', desc: '音量减小 5%', scope: '全局窗口' },
+  { key: 'MediaPlayPause / ⌘+Alt+Space', desc: '播放 / 暂停', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
+  { key: 'MediaTrackNext / ⌘+Alt+→', desc: '下一首曲目', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
+  { key: 'MediaTrackPrevious / ⌘+Alt+←', desc: '上一首曲目', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
+  { key: 'Ctrl / ⌘ + Alt + ↑', desc: '全局音量增加 5%', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
+  { key: 'Ctrl / ⌘ + Alt + ↓', desc: '全局音量减小 5%', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
+  { key: 'Space (空格键)', desc: '播放 / 暂停', scope: '窗口聚焦', isGlobal: false },
+  { key: 'Ctrl / ⌘ + K', desc: '快速呼出全局搜索弹窗', scope: '窗口聚焦', isGlobal: false },
+  { key: 'Ctrl / ⌘ + →', desc: '切换到下一首曲目', scope: '窗口聚焦', isGlobal: false },
+  { key: 'Ctrl / ⌘ + ←', desc: '切换到上一首曲目', scope: '窗口聚焦', isGlobal: false },
+  { key: 'Ctrl / ⌘ + ↑', desc: '音量增加 5%', scope: '窗口聚焦', isGlobal: false },
+  { key: 'Ctrl / ⌘ + ↓', desc: '音量减小 5%', scope: '窗口聚焦', isGlobal: false },
 ]
 
 // 5. 版本检查与更新状态
@@ -203,6 +208,9 @@ async function handleCheckUpdate() {
   try {
     const res = await checkAppUpdate()
     updateInfo.value = res
+    if (res.error) {
+      updateError.value = '检查更新异常: ' + res.error
+    }
     updateChecked.value = true
   } catch (err: any) {
     updateError.value = '检查更新失败: ' + (err.message || err)
@@ -597,11 +605,19 @@ onMounted(() => {
           <div
             v-for="(item, idx) in shortcutList"
             :key="idx"
-            class="flex items-center justify-between py-3.5 text-xs"
+            class="flex items-center justify-between py-3.5 text-xs gap-3"
           >
-            <span class="text-neutral-200 font-medium text-sm">{{ item.desc }}</span>
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-lg bg-neutral-950 border border-neutral-800 font-mono text-emerald-400 font-bold tracking-wide shadow-inner">
+            <div class="flex items-center gap-2.5">
+              <span class="text-neutral-200 font-medium text-sm">{{ item.desc }}</span>
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-medium"
+                :class="item.isGlobal ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60'"
+              >
+                {{ item.scope }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="px-2.5 py-1 rounded-lg bg-neutral-950 border border-neutral-800 font-mono text-emerald-400 font-bold tracking-wide shadow-inner text-right">
                 {{ item.key }}
               </span>
             </div>
@@ -622,7 +638,7 @@ onMounted(() => {
             <div class="flex items-center gap-2.5">
               <h2 class="text-xl font-black text-white tracking-tight">AuraMusic · 极光私有音乐</h2>
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                v1.0.6
+                v1.0.7
               </span>
             </div>
             <p class="text-xs text-neutral-400 mt-1">

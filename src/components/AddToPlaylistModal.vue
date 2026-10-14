@@ -143,10 +143,10 @@ async function handleCreateAndAdd() {
 <template>
   <div
     v-if="props.modelValue && props.track"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+    class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
     @click.self="emit('update:modelValue', false)"
   >
-    <div class="w-full max-w-sm rounded-2xl bg-neutral-900 border border-white/10 p-5 shadow-2xl space-y-4">
+    <div class="w-full max-w-sm rounded-2xl bg-neutral-900 border border-white/10 p-3.5 sm:p-5 shadow-2xl space-y-3 sm:space-y-4">
       <div class="flex items-center justify-between pb-1 border-b border-white/5">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
           <Music2 class="w-4 h-4 text-emerald-400" /> 添加到歌单
@@ -195,7 +195,7 @@ async function handleCreateAndAdd() {
       </div>
 
       <!-- 歌单列表 -->
-      <div class="max-h-56 overflow-y-auto space-y-1 pr-1">
+      <div class="max-h-40 sm:max-h-56 overflow-y-auto space-y-1 pr-1">
         <div v-if="loading" class="text-xs text-neutral-500 text-center py-4">正在查询歌单状态...</div>
         <div v-else-if="playlists.length === 0" class="text-xs text-neutral-500 text-center py-4">
           暂无可用歌单，可直接上方输入新建

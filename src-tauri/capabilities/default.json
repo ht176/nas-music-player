@@ -18,11 +18,18 @@
     "core:window:allow-set-size",
     "core:window:allow-set-always-on-top",
     "core:window:allow-set-resizable",
+    "core:window:allow-set-maximizable",
     "core:window:allow-set-focus",
     "core:window:allow-set-min-size",
     "core:window:allow-set-max-size",
+    "core:window:allow-center",
     "updater:default",
     "process:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "global-shortcut:allow-is-registered",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-register-all",
+    "global-shortcut:allow-unregister",
+    "global-shortcut:allow-unregister-all"
   ]
 }

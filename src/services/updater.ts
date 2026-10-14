@@ -6,12 +6,13 @@ export interface UpdateInfo {
   version?: string
   date?: string
   body?: string
+  error?: string
 }
 
 let updaterInstance: any = null
 
 export async function checkAppUpdate(): Promise<UpdateInfo> {
-  const currentVersion = '1.0.5'
+  const currentVersion = '1.0.8'
 
   // 纯网页端 (Web/Docker 部署) 由服务端发布与浏览器刷新维护，不参与客户端版本检测与弹窗
   if (!isTauriApp()) {
@@ -32,9 +33,10 @@ export async function checkAppUpdate(): Promise<UpdateInfo> {
       }
     }
     return { available: false, currentVersion }
-  } catch (err) {
-    console.warn('Tauri updater check error:', err)
-    return { available: false, currentVersion }
+  } catch (err: any) {
+    const message = err?.message || String(err)
+    console.warn('Tauri updater check error:', message)
+    return { available: false, currentVersion, error: message }
   }
 }
 

@@ -78,3 +78,20 @@ pnpm tauri android build
 pnpm tauri ios init
 pnpm tauri ios build
 ```
+
+---
+
+## 💡 常见问题与排错 (FAQ)
+
+### macOS 提示「“NAS Music Player”已损坏，无法打开。你应该将它移到废纸篓」
+- **原因**：开源软件未经 Apple 商业付费证书（每年 $99）公证，从浏览器或 GitHub 下载时 macOS Gatekeeper 隔离机制会自动打上 `com.apple.quarantine` 属性并拦截运行。
+- **解决方法**：打开系统终端（Terminal），执行以下单行命令清除隔离属性与重新赋予本地签名即可正常打开：
+  ```bash
+  xattr -cr "/Applications/NAS Music Player.app" && codesign --force --deep --sign - "/Applications/NAS Music Player.app"
+  ```
+
+### Windows 安装时提示选择 Remove 卸载旧版本？
+- **原因**：如果下载的是 `.msi`（微软企业分发格式），当系统已安装过该应用时，Windows Installer 会强制触发“维护模式”（Maintenance Mode：修复或卸载），必须点击 Remove 卸载退出后再重新打开安装。
+- **解决方法**：强烈推荐 Windows 用户下载 **`.exe` (x64-setup.exe)** 安装包。该安装包由 NSIS 构建，具备智能覆盖升级能力，会自动检测旧版并一次性平滑升级完成，绝不会提示手动 Remove。
+
+
