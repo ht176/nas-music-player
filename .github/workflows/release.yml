@@ -118,25 +118,48 @@ jobs:
           CI: 'true'
         run: pnpm tauri android build --apk
 
-      - name: Sign APKs with uber-apk-signer
+      - name: Sign APKs with Android Official apksigner
         run: |
-          curl -L -o uber-apk-signer.jar https://github.com/patrickfav/uber-apk-signer/releases/latest/download/uber-apk-signer.jar
+          # 1. 查找 Android SDK 原生自带的 build-tools 工具路径
+          BUILD_TOOLS_DIR=$(ls -d /usr/local/lib/android/sdk/build-tools/* | sort -V | tail -n 1)
+          ZIPALIGN="$BUILD_TOOLS_DIR/zipalign"
+          APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
+          echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
+
+          # 2. 生成标准 Android 签名密钥库
+          keytool -genkey -v -keystore release.keystore \
+            -storepass android -alias androidkey \
+            -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=NASMusicPlayer,O=Aura,C=CN"
+
           mkdir -p signed-apks
           RAW_APKS=$(find src-tauri/gen/android -name "*.apk")
           echo "Found generated APKs: $RAW_APKS"
-          java -jar uber-apk-signer.jar --apks src-tauri/gen/android/app/build/outputs/apk/ --out signed-apks/ --allowResign
-          ls -la signed-apks/
+
+          for apk in $RAW_APKS; do
+            filename=$(basename "$apk")
+            aligned_apk="signed-apks/aligned-$filename"
+            final_apk="signed-apks/${filename/-unsigned/}"
+            
+            # 字节对齐
+            $ZIPALIGN -v -p 4 "$apk" "$aligned_apk"
+            # 官方证书签名 (支持 v1 + v2 + v3 签名方案)
+            $APKSIGNER sign --ks release.keystore \
+              --ks-pass pass:android \
+              --key-pass pass:android \
+              --ks-key-alias androidkey \
+              --out "$final_apk" \
+              "$aligned_apk"
+            
+            # 验证签名有效性
+            $APKSIGNER verify --verbose "$final_apk"
+          done
 
       - name: Collect Android APKs
         run: |
           mkdir -p android-apks
-          # 优先提取带签名/已对齐的 apk
-          find signed-apks/ -name "*-aligned-debugSigned.apk" -exec cp {} android-apks/ \; || true
-          find signed-apks/ -name "*-aligned-signed.apk" -exec cp {} android-apks/ \; || true
-          # 若没有对齐名则复制全部有效 apk
-          if [ -z "$(ls -A android-apks)" ]; then
-            find signed-apks/ -name "*.apk" -exec cp {} android-apks/ \;
-          fi
+          find signed-apks/ -maxdepth 1 -name "*.apk" ! -name "aligned-*" -exec cp {} android-apks/ \;
           ls -la android-apks
 
       - name: Upload APKs to Release
