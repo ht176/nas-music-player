@@ -80,7 +80,7 @@ onMounted(() => {
 <template>
   <div class="space-y-8 pb-12 animate-fade-in">
     <!-- 顶部流光迎宾横幅 (支持右上角自由收缩/展开，记忆偏好) -->
-    <div class="relative overflow-hidden rounded-3xl p-5 sm:p-7 bg-gradient-to-r from-emerald-950/70 via-teal-950/50 to-neutral-900/80 border border-emerald-500/25 shadow-[0_10px_35px_rgba(0,0,0,0.4)] transition-all duration-300">
+    <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-7 bg-gradient-to-r from-emerald-950/70 via-teal-950/50 to-neutral-900/80 border border-emerald-500/25 shadow-[0_10px_35px_rgba(0,0,0,0.4)] transition-all duration-300">
       <div class="absolute -right-10 -bottom-10 w-60 h-60 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none"></div>
       <ParticleBackground :density="25" class="opacity-60" />
 
@@ -103,7 +103,7 @@ onMounted(() => {
 
       <!-- 可展开/收起的详细迎宾文本 -->
       <div v-show="!isBannerCollapsed" class="relative z-10 mt-3 pt-1 transition-all">
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        <h1 class="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
           AuraMusic · <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300">极光音乐</span>
         </h1>
         <p class="text-xs sm:text-sm text-neutral-300/80 mt-1.5 max-w-lg leading-relaxed">
@@ -115,7 +115,7 @@ onMounted(() => {
     <!-- 🌟 智能推荐曲目 -->
     <div>
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold text-neutral-200 flex items-center gap-2">
+        <h2 class="text-base sm:text-lg font-semibold text-neutral-200 flex items-center gap-2">
           <Flame class="w-5 h-5 text-amber-400" /> 推荐曲目
         </h2>
         <div class="flex items-center gap-2">
@@ -155,14 +155,14 @@ onMounted(() => {
     <!-- 🕒 最近常听 (前置放置) -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-neutral-200 flex items-center gap-2">
+        <h2 class="text-base sm:text-lg font-semibold text-neutral-200 flex items-center gap-2">
           <Clock class="w-5 h-5 text-emerald-400" /> 最近常听
         </h2>
       </div>
-      <div v-if="loading && !recentAlbums.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        <div v-for="i in 4" :key="i" class="h-48 rounded-xl bg-neutral-900/60 animate-pulse" />
+      <div v-if="loading && !recentAlbums.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+        <div v-for="i in 4" :key="i" class="h-44 sm:h-48 rounded-xl bg-neutral-900/60 animate-pulse" />
       </div>
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
         <AlbumCard
           v-for="album in recentAlbums"
           :key="album.id"
@@ -175,14 +175,14 @@ onMounted(() => {
     <!-- 💿 最新添加专辑 (调整到最近常听下方) -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-neutral-200 flex items-center gap-2">
+        <h2 class="text-base sm:text-lg font-semibold text-neutral-200 flex items-center gap-2">
           <Disc class="w-5 h-5 text-teal-400" /> 最新添加专辑
         </h2>
       </div>
-      <div v-if="loading && !newestAlbums.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        <div v-for="i in 4" :key="i" class="h-48 rounded-xl bg-neutral-900/60 animate-pulse" />
+      <div v-if="loading && !newestAlbums.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+        <div v-for="i in 4" :key="i" class="h-44 sm:h-48 rounded-xl bg-neutral-900/60 animate-pulse" />
       </div>
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
         <AlbumCard
           v-for="album in newestAlbums"
           :key="album.id"

@@ -12,36 +12,46 @@ const formatTime = (sec: number) => {
 </script>
 
 <template>
-  <div
-    v-if="playerStore.showQueueDrawer"
-    class="fixed inset-y-0 right-0 w-80 sm:w-96 bg-neutral-900/95 border-l border-neutral-800 backdrop-blur-xl shadow-2xl z-60 flex flex-col animate-fade-in"
-  >
-    <!-- 头部栏 -->
-    <div class="p-4 border-b border-neutral-800 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <Music class="w-5 h-5 text-emerald-400" />
-        <h3 class="font-bold text-white text-base">当前播放队列</h3>
-        <span class="text-xs text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded-full font-mono">
-          {{ playerStore.queue.length }}
-        </span>
-      </div>
-      <div class="flex items-center gap-1">
-        <button
-          v-if="playerStore.queue.length > 0"
-          class="p-1.5 text-neutral-400 hover:text-rose-400 transition rounded-lg hover:bg-neutral-800 cursor-pointer"
-          title="清空队列"
-          @click="playerStore.clearQueue"
-        >
-          <Trash2 class="w-4 h-4" />
-        </button>
-        <button
-          class="p-1.5 text-neutral-400 hover:text-white transition rounded-lg hover:bg-neutral-800 cursor-pointer"
-          @click="playerStore.showQueueDrawer = false"
-        >
-          <X class="w-5 h-5" />
-        </button>
-      </div>
-    </div>
+  <Teleport to="body">
+    <div
+      v-if="playerStore.showQueueDrawer"
+      class="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex justify-end animate-fade-in"
+      @click="playerStore.showQueueDrawer = false"
+    >
+      <div
+        class="w-5/6 sm:w-96 max-w-sm h-full bg-[#13141d]/95 border-l border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col select-none"
+        :style="{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+        }"
+        @click.stop
+      >
+        <!-- 头部栏 -->
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <Music class="w-5 h-5 text-emerald-400" />
+            <h3 class="font-bold text-white text-base">当前播放队列</h3>
+            <span class="text-xs text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded-full font-mono">
+              {{ playerStore.queue.length }}
+            </span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              v-if="playerStore.queue.length > 0"
+              class="p-1.5 text-neutral-400 hover:text-rose-400 transition rounded-lg hover:bg-neutral-800 cursor-pointer active:scale-90"
+              title="清空队列"
+              @click="playerStore.clearQueue"
+            >
+              <Trash2 class="w-4 h-4" />
+            </button>
+            <button
+              class="p-1.5 text-neutral-400 hover:text-white transition rounded-lg hover:bg-neutral-800 cursor-pointer active:scale-90"
+              @click="playerStore.showQueueDrawer = false"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
     <!-- 队列内容列表 -->
     <div class="flex-1 overflow-y-auto p-2 space-y-1">
@@ -85,6 +95,8 @@ const formatTime = (sec: number) => {
       <div v-else class="h-full flex flex-col items-center justify-center text-neutral-500 text-sm">
         队列空空如也
       </div>
+      </div>
     </div>
   </div>
+  </Teleport>
 </template>

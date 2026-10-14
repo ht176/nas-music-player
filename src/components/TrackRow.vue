@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { Track } from '../api/types'
 import { usePlayerStore } from '../stores/player'
-import { Heart, Plus, Download, Check, ListPlus, CornerDownRight } from 'lucide-vue-next'
+import { Heart, Plus, Download, Check, ListPlus, CornerDownRight, MoreHorizontal } from 'lucide-vue-next'
 import { cacheService } from '../services/cache'
 import { onMounted, ref } from 'vue'
 import AddToPlaylistModal from './AddToPlaylistModal.vue'
@@ -22,6 +22,7 @@ const playerStore = usePlayerStore()
 const isCached = ref(false)
 const isDownloading = ref(false)
 const showAddToPlaylist = ref(false)
+const showMobileMenu = ref(false)
 
 const formattedDuration = computed(() => {
   const dur = props.track.duration || 0
@@ -103,8 +104,64 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 右侧操作与时长 -->
-    <div class="flex items-center gap-2.5 text-xs text-neutral-400 shrink-0">
+    <!-- 移动端专属右侧操作区 (触控优化，折叠菜单) -->
+    <div class="flex sm:hidden items-center gap-1.5 text-xs text-neutral-400 shrink-0 relative" @click.stop>
+      <!-- 收藏红心 (移动端常显轻透明度，触控即达) -->
+      <button
+        class="p-2 rounded-lg cursor-pointer transition active:scale-90"
+        :class="props.track.starred ? 'text-rose-500 scale-110' : 'text-neutral-500 hover:text-rose-400'"
+        title="收藏"
+        @click="onToggleHeart"
+      >
+        <Heart class="w-4 h-4" :class="{ 'fill-current': props.track.starred }" />
+      </button>
+
+      <!-- 移动端更多操作按钮 -->
+      <button
+        class="p-2 text-neutral-400 hover:text-white rounded-lg transition cursor-pointer active:scale-90"
+        title="更多操作"
+        @click="showMobileMenu = !showMobileMenu"
+      >
+        <MoreHorizontal class="w-4 h-4" />
+      </button>
+
+      <!-- 移动端弹出快捷操作菜单 -->
+      <div
+        v-if="showMobileMenu"
+        class="absolute right-0 top-10 bg-neutral-900/95 border border-neutral-700/80 rounded-2xl p-1.5 shadow-2xl space-y-1 w-36 z-50 backdrop-blur-xl animate-fade-in text-[11px]"
+      >
+        <button
+          class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+          @click="onPlayNext(); showMobileMenu = false"
+        >
+          <CornerDownRight class="w-3.5 h-3.5 text-teal-400" /> 下一首播放
+        </button>
+        <button
+          class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+          @click="onAddToQueue(); showMobileMenu = false"
+        >
+          <Plus class="w-3.5 h-3.5 text-neutral-300" /> 加入播放队列
+        </button>
+        <button
+          class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+          @click="showAddToPlaylist = true; showMobileMenu = false"
+        >
+          <ListPlus class="w-3.5 h-3.5 text-emerald-400" /> 添加到歌单
+        </button>
+        <button
+          class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+          @click="onDownload(); showMobileMenu = false"
+        >
+          <Check v-if="isCached" class="w-3.5 h-3.5 text-emerald-400" />
+          <Download v-else class="w-3.5 h-3.5 text-amber-400" /> {{ isCached ? '已在离线库' : '离线下载' }}
+        </button>
+      </div>
+
+      <span class="text-[11px] font-mono text-neutral-500 ml-1">{{ formattedDuration }}</span>
+    </div>
+
+    <!-- 桌面端专属右侧平铺操作与时长 (全功能 + hover 显示) -->
+    <div class="hidden sm:flex items-center gap-2.5 text-xs text-neutral-400 shrink-0">
       <!-- 收藏红心 -->
       <button
         class="transition-all p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"

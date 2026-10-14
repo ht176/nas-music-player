@@ -15,18 +15,29 @@ const navItems = [
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 h-14 bg-neutral-900 border-t border-neutral-800 flex items-center justify-around z-30 md:hidden">
-    <button
-      v-for="item in navItems"
-      :key="item.path"
-      class="flex flex-col items-center gap-1 text-[11px] py-1 transition cursor-pointer"
-      :class="[
-        route.path === item.path ? 'text-emerald-400 font-semibold' : 'text-neutral-400',
-      ]"
-      @click="router.push(item.path)"
-    >
-      <component :is="item.icon" class="w-4 h-4" />
-      <span>{{ item.name }}</span>
-    </button>
+  <nav
+    class="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-[#0e0e14]/90 backdrop-blur-2xl border-t border-white/10 select-none shadow-[0_-8px_25px_rgba(0,0,0,0.6)]"
+    :style="{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }"
+  >
+    <div class="h-14 flex items-center justify-around px-1">
+      <button
+        v-for="item in navItems"
+        :key="item.path"
+        class="flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer relative"
+        :class="[
+          route.path === item.path ? 'text-emerald-400 font-semibold' : 'text-neutral-400 hover:text-neutral-200',
+        ]"
+        @click="router.push(item.path)"
+      >
+        <div class="relative flex items-center justify-center p-1">
+          <component :is="item.icon" class="w-5 h-5 transition-transform duration-200" :class="{ 'scale-110 stroke-[2.2] drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]': route.path === item.path }" />
+          <span
+            v-if="route.path === item.path"
+            class="absolute -bottom-1 w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+          />
+        </div>
+        <span class="text-[10px] mt-0.5 tracking-tight">{{ item.name }}</span>
+      </button>
+    </div>
   </nav>
 </template>

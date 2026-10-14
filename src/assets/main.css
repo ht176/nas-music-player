@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
 @layer base {
+  html, body {
+    height: 100%;
+    width: 100%;
+    touch-action: pan-x pan-y;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
   body {
     @apply bg-[#060609] text-neutral-100 antialiased select-none overflow-hidden;
     font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;

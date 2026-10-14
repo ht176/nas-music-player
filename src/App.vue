@@ -134,8 +134,19 @@ onUnmounted(() => {
       />
 
       <!-- 主工作区 -->
-      <main class="flex-1 flex flex-col h-full overflow-hidden relative" :class="{ 'pt-8': isDesktop }">
-        <div class="flex-1 overflow-y-auto px-4 py-6 md:px-8" :class="{ 'pb-28': playerStore.currentTrack, 'pb-16': !playerStore.currentTrack }">
+      <main
+        class="flex-1 flex flex-col h-full overflow-hidden relative"
+        :class="{ 'pt-8': isDesktop }"
+        :style="{ paddingTop: !isDesktop ? 'env(safe-area-inset-top, 0px)' : undefined }"
+      >
+        <div
+          class="flex-1 overflow-y-auto px-3.5 py-4 sm:px-6 md:px-8"
+          :style="{
+            paddingBottom: playerStore.currentTrack
+              ? 'calc(3.5rem + 4.2rem + env(safe-area-inset-bottom, 0px) + 1.25rem)'
+              : 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 1rem)'
+          }"
+        >
           <router-view />
         </div>
 

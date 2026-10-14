@@ -20,7 +20,7 @@ const coverUrl = computed(() => {
 
 <template>
   <div
-    class="glass-card group cursor-pointer rounded-2xl p-3.5 relative overflow-hidden transition-all duration-300"
+    class="glass-card group cursor-pointer rounded-2xl p-2.5 sm:p-3.5 relative overflow-hidden transition-all duration-300 active:scale-95"
     @click="emit('click', props.album)"
   >
     <!-- 封面容器带黑胶露出视觉动效 -->
