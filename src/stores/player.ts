@@ -244,6 +244,26 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
+  function playNext(track: Track) {
+    // 如果已经在队列中，先移出旧位置
+    const existIdx = queue.value.findIndex((t) => t.id === track.id)
+    if (existIdx >= 0) {
+      if (existIdx === currentIndex.value) {
+        toastService.info(`「${track.title}」当前正在播放中`)
+        return
+      }
+      queue.value.splice(existIdx, 1)
+      if (existIdx < currentIndex.value) {
+        currentIndex.value--
+      }
+    }
+
+    const insertIdx = currentIndex.value >= 0 ? currentIndex.value + 1 : queue.value.length
+    queue.value.splice(insertIdx, 0, track)
+    savePlayerState()
+    toastService.success(`已将「${track.title}」设置为下一首播放 ⏭️`)
+  }
+
   function removeFromQueue(index: number) {
     const item = queue.value[index]
     if (index === currentIndex.value) {
@@ -313,6 +333,17 @@ export const usePlayerStore = defineStore('player', () => {
       eqPreset.value = presetName
       eqGains.value = [...EQ_PRESETS[presetName]]
       audioService.setEQGains(eqGains.value)
+      const presetLabels: Record<string, string> = {
+        default: '平直 (默认)',
+        pop: '流行 (Pop)',
+        rock: '摇滚 (Rock)',
+        jazz: '爵士 (Jazz)',
+        classical: '古典 (Classical)',
+        bass: '重低音增强',
+        vocal: '清澈人声',
+        treble: '高音增强',
+      }
+      toastService.info(`已切换音效预设: ${presetLabels[presetName] || presetName}`)
     }
   }
 
@@ -328,10 +359,12 @@ export const usePlayerStore = defineStore('player', () => {
     sleepTimerMinutes.value = minutes
     if (minutes <= 0) {
       sleepTimerSecondsLeft.value = 0
+      toastService.info('已取消定时停止播放')
       return
     }
 
     sleepTimerSecondsLeft.value = minutes * 60
+    toastService.success(`已设置 ${minutes} 分钟后自动停止播放`)
     sleepInterval = setInterval(() => {
       sleepTimerSecondsLeft.value--
       if (sleepTimerSecondsLeft.value <= 0) {
@@ -339,6 +372,7 @@ export const usePlayerStore = defineStore('player', () => {
         pause()
         sleepTimerMinutes.value = 0
         sleepTimerSecondsLeft.value = 0
+        toastService.info('睡眠定时已到，已自动停止播放')
       }
     }, 1000)
   }
@@ -448,6 +482,7 @@ export const usePlayerStore = defineStore('player', () => {
     downloadTrack,
     playTrack,
     addToQueue,
+    playNext,
     removeFromQueue,
     clearQueue,
     toggleStar,

@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { LyricsService, type OnlineLyricResult } from '../services/lyrics'
+import { toastService } from '../services/toast'
 import type { LyricLine } from '../api/types'
 import { Search, FileText, Check, RotateCcw, X, Loader2 } from 'lucide-vue-next'
 
@@ -67,6 +68,7 @@ function applyLyrics() {
   if (!previewLines.value.length || !playerStore.currentTrack) return
   playerStore.applyCustomLyrics(previewLines.value)
   hasCustomLyrics.value = true
+  toastService.success(`已为《${playerStore.currentTrack.title}》应用精准匹配歌词`)
   emit('update:modelValue', false)
 }
 
@@ -74,6 +76,7 @@ function resetToDefault() {
   if (!playerStore.currentTrack) return
   playerStore.resetTrackLyrics()
   hasCustomLyrics.value = false
+  toastService.info(`已恢复《${playerStore.currentTrack.title}》原始内嵌歌词`)
   emit('update:modelValue', false)
 }
 </script>

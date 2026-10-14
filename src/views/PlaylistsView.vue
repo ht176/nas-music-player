@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServerStore } from '../stores/server'
+import { toastService } from '../services/toast'
 import type { Playlist } from '../api/types'
 import { ListMusic, Plus, Trash2 } from 'lucide-vue-next'
 
@@ -25,24 +26,31 @@ async function loadPlaylists() {
 }
 
 async function handleCreate() {
-  if (!newPlaylistName.value.trim() || !serverStore.client) return
+  const name = newPlaylistName.value.trim()
+  if (!name || !serverStore.client) return
   try {
-    await serverStore.client.createPlaylist(newPlaylistName.value.trim())
+    await serverStore.client.createPlaylist(name)
+    toastService.success(`已成功创建歌单【${name}】`)
     newPlaylistName.value = ''
     showCreateModal.value = false
     loadPlaylists()
   } catch (e) {
+    toastService.error(`创建歌单【${name}】失败`)
     console.error('创建歌单失败', e)
   }
 }
 
 async function handleDelete(id: string, e: MouseEvent) {
   e.stopPropagation()
-  if (!confirm('确定要删除此歌单吗？') || !serverStore.client) return
+  const target = playlists.value.find((p) => p.id === id)
+  const name = target?.name || '该歌单'
+  if (!confirm(`确定要删除歌单【${name}】吗？`) || !serverStore.client) return
   try {
     await serverStore.client.deletePlaylist(id)
+    toastService.info(`已删除歌单【${name}】`)
     loadPlaylists()
   } catch (err) {
+    toastService.error(`删除歌单【${name}】失败`)
     console.error('删除歌单失败', err)
   }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useServerStore } from '../stores/server'
+import { toastService } from '../services/toast'
 import type { Playlist, Track } from '../api/types'
 import { X, Check, Plus, Music2, CheckCircle2 } from 'lucide-vue-next'
 
@@ -75,10 +76,12 @@ async function addToPlaylist(playlist: Playlist) {
 
   // 1. 重复加入拦截判断
   if (containingPlaylistIds.value.has(playlist.id)) {
+    const msg = `《${props.track.title}》已在歌单【${playlist.name}】中`
     feedbackMsg.value = {
       type: 'warn',
-      text: `歌曲《${props.track.title}》已在歌单【${playlist.name}】中，无需重复添加`,
+      text: msg,
     }
+    toastService.warning(msg)
     return
   }
 
@@ -89,16 +92,19 @@ async function addToPlaylist(playlist: Playlist) {
     successId.value = playlist.id
     containingPlaylistIds.value.add(playlist.id)
     playlist.songCount = (playlist.songCount || 0) + 1
+    const succMsg = `已将《${props.track.title}》加入歌单【${playlist.name}】`
     feedbackMsg.value = {
       type: 'success',
-      text: `已成功将歌曲收入【${playlist.name}】`,
+      text: succMsg,
     }
+    toastService.success(succMsg)
     emit('added')
     setTimeout(() => {
       emit('update:modelValue', false)
       successId.value = null
-    }, 700)
+    }, 500)
   } catch (err) {
+    toastService.error(`加入歌单【${playlist.name}】失败`)
     console.error('添加到歌单失败', err)
   } finally {
     operatingId.value = null
@@ -114,16 +120,19 @@ async function handleCreateAndAdd() {
     const pl = await serverStore.client.createPlaylist(trimmed, [props.track.id])
     successId.value = pl.id
     newName.value = ''
+    const succMsg = `已新建歌单【${trimmed}】并添加歌曲`
     feedbackMsg.value = {
       type: 'success',
-      text: `新建歌单【${trimmed}】并成功添加歌曲`,
+      text: succMsg,
     }
+    toastService.success(succMsg)
     emit('added')
     setTimeout(() => {
       emit('update:modelValue', false)
       successId.value = null
-    }, 700)
+    }, 500)
   } catch (err) {
+    toastService.error('新建歌单并添加失败')
     console.error('新建并添加失败', err)
   } finally {
     isCreating.value = false

@@ -7,6 +7,7 @@ import { SubsonicClient } from '../api/client'
 import { checkAppUpdate, installAppUpdate, type UpdateInfo } from '../services/updater'
 import { isTauriApp } from '../services/desktop'
 import { cacheService } from '../services/cache'
+import { toastService } from '../services/toast'
 import {
   Server,
   CheckCircle2,
@@ -101,16 +102,20 @@ async function onSwitch(id: string) {
   const ok = await serverStore.switchServer(id)
   loading.value = false
   if (ok) {
+    const srv = serverStore.servers.find(s => s.id === id)
+    toastService.success(`已切换至音乐库节点「${srv?.name || '未知节点'}」`)
     router.push('/')
   } else {
-    alert('该服务器连接超时或当前不可达')
+    toastService.error('该服务器连接超时或当前不可达，请检查网络配置')
   }
 }
 
 function onRemove(id: string, e: MouseEvent) {
   e.stopPropagation()
-  if (confirm('确定移除此服务器配置吗？')) {
+  const srv = serverStore.servers.find(s => s.id === id)
+  if (confirm(`确定移除服务器配置「${srv?.name || '该节点'}」吗？`)) {
     serverStore.removeServer(id)
+    toastService.info(`已移除节点「${srv?.name || ''}」配置`)
   }
 }
 
@@ -134,6 +139,7 @@ function loadPlaybackSettings() {
 function savePlaybackSettings() {
   try {
     localStorage.setItem(PLAYBACK_SETTINGS_KEY, JSON.stringify(playbackSettings.value))
+    toastService.success('播放与音效配置已保存')
   } catch {}
 }
 
@@ -155,11 +161,19 @@ async function refreshCacheStats() {
 }
 
 async function handleClearAllCache() {
+  if (cachedTracksCount.value === 0) {
+    toastService.info('当前离线缓存已为空')
+    return
+  }
   if (!confirm('确定要清空所有已离线下载的音频文件缓存吗？')) return
   clearingCache.value = true
   try {
+    const clearedCount = cachedTracksCount.value
     await cacheService.clearAll()
     await refreshCacheStats()
+    toastService.success(`已清空 ${clearedCount} 首本地离线音乐缓存`)
+  } catch (err) {
+    toastService.error('清空缓存失败')
   } finally {
     clearingCache.value = false
   }

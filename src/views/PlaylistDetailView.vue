@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useServerStore } from '../stores/server'
 import { usePlayerStore } from '../stores/player'
+import { toastService } from '../services/toast'
 import TrackRow from '../components/TrackRow.vue'
 import type { Playlist } from '../api/types'
 import { ListMusic, Play, Trash2 } from 'lucide-vue-next'
@@ -32,8 +33,10 @@ async function removeSong(index: number, songTitle?: string) {
   if (songTitle && !confirm(`确定要从歌单中移除《${songTitle}》吗？`)) return
   try {
     await serverStore.client.updatePlaylist(playlist.value.id, undefined, index)
+    toastService.info(songTitle ? `已从歌单移除《${songTitle}》` : '已从歌单移除歌曲')
     await loadPlaylistDetail()
   } catch (err) {
+    toastService.error('移除歌曲失败')
     console.error('移除曲目失败', err)
   }
 }

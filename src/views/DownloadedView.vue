@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { cacheService, type CachedTrackRecord } from '../services/cache'
 import { usePlayerStore } from '../stores/player'
+import { toastService } from '../services/toast'
 import TrackRow from '../components/TrackRow.vue'
 import { DownloadCloud, Play, Trash2, HardDrive } from 'lucide-vue-next'
 
@@ -38,9 +39,28 @@ function playAll() {
   }
 }
 
+async function removeSingleTrack(record: CachedTrackRecord) {
+  if (!confirm(`确定要从本地离线库移除《${record.track.title}》吗？`)) return
+  try {
+    await cacheService.removeCachedTrack(record.id)
+    const freedSize = formatSize(record.size || 0)
+    toastService.info(`已移除《${record.track.title}》，释放 ${freedSize} 本地存储`)
+    loadCachedTracks()
+  } catch (err) {
+    toastService.error(`移除《${record.track.title}》离线缓存失败`)
+  }
+}
+
 async function clearAllCache() {
+  if (cachedRecords.value.length === 0) {
+    toastService.info('当前离线缓存已为空')
+    return
+  }
   if (!confirm('确定清空所有本地离线音乐缓存吗？')) return
+  const freedSize = formatSize(totalSize.value)
+  const count = cachedRecords.value.length
   await cacheService.clearAll()
+  toastService.success(`已清空 ${count} 首离线音乐，共释放 ${freedSize} 存储空间`)
   loadCachedTracks()
 }
 
@@ -94,15 +114,34 @@ onMounted(() => {
     </div>
 
     <div v-else-if="cachedRecords.length" class="space-y-1">
-      <TrackRow
+      <div
         v-for="(record, idx) in cachedRecords"
         :key="record.id"
-        :track="record.track"
-        :index="idx"
-        :is-active="playerStore.currentTrack?.id === record.id"
-        :is-playing="playerStore.isPlaying"
-        @play="playerStore.playTrack(record.track, cachedRecords.map(r => r.track))"
-      />
+        class="group relative flex items-center justify-between"
+      >
+        <div class="flex-1 min-w-0">
+          <TrackRow
+            :track="record.track"
+            :index="idx"
+            :is-active="playerStore.currentTrack?.id === record.id"
+            :is-playing="playerStore.isPlaying"
+            @play="playerStore.playTrack(record.track, cachedRecords.map(r => r.track))"
+          />
+        </div>
+        <!-- 单曲离线文件大小与删除按钮 -->
+        <div class="hidden sm:flex items-center gap-2 pr-3 shrink-0">
+          <span class="text-[11px] font-mono text-neutral-500">
+            {{ formatSize(record.size || 0) }}
+          </span>
+          <button
+            class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800 transition cursor-pointer"
+            title="删除此歌曲离线缓存"
+            @click.stop="removeSingleTrack(record)"
+          >
+            <Trash2 class="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-else class="text-center py-20 text-neutral-500 text-sm">

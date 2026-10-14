@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { Track } from '../api/types'
 import { usePlayerStore } from '../stores/player'
-import { Heart, Plus, Download, Check, ListPlus } from 'lucide-vue-next'
+import { Heart, Plus, Download, Check, ListPlus, CornerDownRight } from 'lucide-vue-next'
 import { cacheService } from '../services/cache'
 import { onMounted, ref } from 'vue'
 import AddToPlaylistModal from './AddToPlaylistModal.vue'
@@ -38,6 +38,11 @@ const onToggleHeart = (e: MouseEvent) => {
 const onAddToQueue = (e: MouseEvent) => {
   e.stopPropagation()
   playerStore.addToQueue(props.track)
+}
+
+const onPlayNext = (e: MouseEvent) => {
+  e.stopPropagation()
+  playerStore.playNext(props.track)
 }
 
 const onDownload = async (e: MouseEvent) => {
@@ -130,10 +135,19 @@ onMounted(async () => {
         <ListPlus class="w-4 h-4" />
       </button>
 
-      <!-- 添加到播放队列 -->
+      <!-- 下一首插队播放 -->
+      <button
+        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-teal-300 cursor-pointer"
+        title="设置为下一首播放"
+        @click="onPlayNext"
+      >
+        <CornerDownRight class="w-4 h-4" />
+      </button>
+
+      <!-- 添加到播放队列末尾 -->
       <button
         class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-white cursor-pointer"
-        title="添加到接下来播放"
+        title="添加到播放队列末尾"
         @click="onAddToQueue"
       >
         <Plus class="w-4 h-4" />
