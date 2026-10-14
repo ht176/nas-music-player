@@ -707,9 +707,26 @@ onMounted(() => {
             <span>当前已是最新版本，无需更新。</span>
           </div>
 
-          <div v-if="updateError" class="text-xs text-rose-400 bg-rose-500/10 p-3 rounded-xl border border-rose-500/20 flex items-center gap-1.5">
-            <AlertCircle class="w-4 h-4 shrink-0" />
-            <span>{{ updateError }}</span>
+          <div v-if="updateError" class="text-xs text-rose-400 bg-rose-500/10 p-3 rounded-xl border border-rose-500/20 space-y-2">
+            <div class="flex items-start gap-1.5">
+              <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+              <span class="break-all">{{ updateError }}</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-rose-500/20 text-[11px]">
+              <button
+                class="text-neutral-300 hover:text-white underline cursor-pointer"
+                @click="handleInstallUpdate"
+              >
+                重试下载
+              </button>
+              <a
+                href="https://github.com/ht176/nas-music-player/releases/latest"
+                target="_blank"
+                class="text-emerald-400 hover:underline"
+              >
+                前往 GitHub 浏览器下载 &rarr;
+              </a>
+            </div>
           </div>
         </div>
 

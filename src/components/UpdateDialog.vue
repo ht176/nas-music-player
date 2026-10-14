@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Sparkles, DownloadCloud, X } from 'lucide-vue-next'
+import { Sparkles, DownloadCloud, X, AlertCircle } from 'lucide-vue-next'
 import { installAppUpdate, type UpdateInfo } from '../services/updater'
 
 const props = defineProps<{
@@ -86,8 +86,26 @@ async function handleInstall() {
       </button>
     </div>
 
-    <div v-if="error" class="text-xs text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
-      {{ error }}
+    <div v-if="error" class="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20 space-y-2">
+      <div class="flex items-start gap-1.5">
+        <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+        <span class="break-all">{{ error }}</span>
+      </div>
+      <div class="flex items-center justify-between pt-1 border-t border-rose-500/20 text-[11px]">
+        <button
+          class="text-neutral-300 hover:text-white underline cursor-pointer"
+          @click="handleInstall"
+        >
+          重试下载
+        </button>
+        <a
+          href="https://github.com/ht176/nas-music-player/releases/latest"
+          target="_blank"
+          class="text-emerald-400 hover:underline"
+        >
+          浏览器手动下载 &rarr;
+        </a>
+      </div>
     </div>
   </div>
 </template>
