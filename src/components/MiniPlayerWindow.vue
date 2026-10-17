@@ -11,6 +11,7 @@ import {
   Maximize2,
   Heart,
   FolderPlus,
+  Music2,
 } from 'lucide-vue-next'
 import { isDesktopApp, exitMiniMode, expandMiniWindow, collapseMiniWindow } from '../services/desktop'
 import AddToPlaylistModal from './AddToPlaylistModal.vue'
@@ -171,30 +172,16 @@ function handleOpenAddToPlaylist() {
       @dblclick.prevent.stop=""
       class="flex items-center gap-2.5 cursor-move flex-1 min-h-0"
     >
-      <!-- 唱片盒 + 黑胶滑出微交互容器 -->
-      <div class="relative w-11 h-10 shrink-0 pointer-events-none flex items-center">
-        <!-- 黑胶唱片：播放时向右滑出并旋转，暂停时停止 -->
-        <div
-          class="absolute left-1.5 w-8 h-8 rounded-full bg-neutral-950 border border-neutral-700/60 shadow-md flex items-center justify-center transition-all duration-500"
-          :class="[
-            playerStore.isPlaying ? 'translate-x-3.5 animate-mini-vinyl' : 'translate-x-0',
-          ]"
-        >
-          <!-- 胶木纹路圈 -->
-          <div class="w-6 h-6 rounded-full border border-neutral-800/80 flex items-center justify-center">
-            <div
-              class="w-3 h-3 rounded-full border border-white/20"
-              :style="{ backgroundColor: 'var(--theme-accent)' }"
-            />
-          </div>
-        </div>
-
-        <!-- 封面主图 -->
-        <div
-          class="relative z-10 w-9 h-9 rounded-lg bg-neutral-800 overflow-hidden shrink-0 shadow-lg border border-white/10"
-        >
-          <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" />
-        </div>
+      <!-- 封面主图 (独立圆角卡片，播放时伴随柔和声学微光晕) -->
+      <div
+        class="relative w-9 h-9 rounded-lg bg-neutral-800 overflow-hidden shrink-0 shadow-md border transition-all duration-300 pointer-events-none flex items-center justify-center"
+        :style="{
+          borderColor: playerStore.isPlaying ? 'var(--theme-accent)' : 'var(--theme-border)',
+          boxShadow: playerStore.isPlaying ? '0 0 10px var(--theme-glow)' : 'none',
+        }"
+      >
+        <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" alt="Cover" />
+        <Music2 v-else class="w-4 h-4 opacity-60 text-[var(--theme-text-muted)]" />
       </div>
 
       <!-- 歌名与实时动态歌词 -->
