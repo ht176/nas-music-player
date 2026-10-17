@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServerStore } from '../stores/server'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore, type ThemePreset } from '../stores/theme'
 import { SubsonicClient } from '../api/client'
 import { checkAppUpdate, installAppUpdate, type UpdateInfo } from '../services/updater'
 import { isTauriApp } from '../services/desktop'
 import { cacheService } from '../services/cache'
 import { toastService } from '../services/toast'
+import gsap from 'gsap'
 import {
   Server,
   CheckCircle2,
@@ -26,24 +28,67 @@ import {
   Music2,
   HardDrive,
   SlidersHorizontal,
+  Palette,
+  Activity,
+  Layers,
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const serverStore = useServerStore()
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
 
 // Tab 栏目定义
-type SettingsTab = 'connection' | 'playback' | 'cache' | 'shortcuts' | 'about'
+type SettingsTab = 'appearance' | 'connection' | 'playback' | 'cache' | 'shortcuts' | 'about'
 
-const currentTab = ref<SettingsTab>('connection')
+const currentTab = ref<SettingsTab>('appearance')
 
 const tabs = [
+  { id: 'appearance' as SettingsTab, name: '外观与主题', icon: Palette, desc: '专属音频调色、黑胶质感与视效' },
   { id: 'connection' as SettingsTab, name: '连接管理', icon: Server, desc: 'NAS 与 Navidrome 节点配置' },
   { id: 'playback' as SettingsTab, name: '播放与音效', icon: Sliders, desc: '高保真音频、淡入淡出与音质' },
   { id: 'cache' as SettingsTab, name: '缓存与存储', icon: Database, desc: '离线曲目与本地音质空间' },
   { id: 'shortcuts' as SettingsTab, name: '快捷键', icon: Keyboard, desc: '全局与窗口键盘快捷指令' },
   { id: 'about' as SettingsTab, name: '关于', icon: Info, desc: '客户端版本、更新与开源信息' },
 ]
+
+const appearanceContainer = ref<HTMLElement | null>(null)
+let appearanceCtx: gsap.Context | null = null
+
+function triggerAppearanceAnimation() {
+  if (appearanceContainer.value) {
+    appearanceCtx?.revert()
+    appearanceCtx = gsap.context(() => {
+      gsap.fromTo(
+        '.theme-card-stagger',
+        { y: 20, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          stagger: 0.06,
+          duration: 0.4,
+          ease: 'power2.out',
+          clearProps: 'all',
+        }
+      )
+    }, appearanceContainer.value)
+  }
+}
+
+watch(currentTab, async (newTab) => {
+  if (newTab === 'appearance') {
+    await nextTick()
+    triggerAppearanceAnimation()
+  }
+})
+
+function handleSelectTheme(preset: ThemePreset, e?: MouseEvent) {
+  themeStore.setTheme(preset.id)
+  toastService.success(`已应用「${preset.name}」主题`)
+  if (e?.currentTarget) {
+    gsap.fromTo(e.currentTarget, { scale: 0.97 }, { scale: 1, duration: 0.35, ease: 'back.out(2)' })
+  }
+}
 
 // 1. 连接管理状态
 const serverName = ref('家庭内网 NAS')
@@ -238,6 +283,15 @@ onMounted(() => {
   if (isTauriApp()) {
     handleCheckUpdate()
   }
+  if (currentTab.value === 'appearance') {
+    nextTick(() => {
+      triggerAppearanceAnimation()
+    })
+  }
+})
+
+onUnmounted(() => {
+  appearanceCtx?.revert()
 })
 </script>
 
@@ -246,12 +300,12 @@ onMounted(() => {
     <!-- 顶部标题与栏目切换选项卡 -->
     <div class="space-y-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+        <div class="w-10 h-10 rounded-2xl bg-[var(--theme-accent)]/15 border border-[var(--theme-accent)]/30 flex items-center justify-center text-[var(--theme-accent)] shadow-[0_0_15px_var(--theme-glow)]">
           <SlidersHorizontal class="w-5 h-5 stroke-[2.2]" />
         </div>
         <div>
           <h1 class="text-2xl font-extrabold text-white tracking-tight">系统设置</h1>
-          <p class="text-xs text-neutral-400 mt-0.5">定制专属音频偏好、网络连接节点与本地个性化选项</p>
+          <p class="text-xs text-neutral-400 mt-0.5">定制专属音频偏好、个性化主题与本地选项</p>
         </div>
       </div>
 
@@ -263,7 +317,7 @@ onMounted(() => {
           class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0"
           :class="[
             currentTab === t.id
-              ? 'bg-emerald-500 text-neutral-950 shadow-md font-bold'
+              ? 'bg-[var(--theme-accent)] text-neutral-950 shadow-md font-bold'
               : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50',
           ]"
           @click="currentTab = t.id"
@@ -274,8 +328,214 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- 栏目 0：外观与主题 (Appearance & Themes) -->
+    <div v-if="currentTab === 'appearance'" ref="appearanceContainer" class="space-y-6 animate-fade-in">
+      <!-- 1. 当前主题高光卡片 -->
+      <div class="glass-card p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl relative overflow-hidden">
+        <div
+          class="absolute -right-8 -top-8 w-44 h-44 rounded-full blur-3xl pointer-events-none opacity-40 transition-colors duration-500"
+          :style="{ background: themeStore.currentTheme.colors.accent }"
+        ></div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[var(--theme-border)] pb-4 relative z-10">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <span class="text-[10px] font-mono font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30">
+                ACTIVE THEME
+              </span>
+              <h2 class="text-xl font-black text-white flex items-center gap-2">
+                {{ themeStore.currentTheme.name }}
+                <span class="text-xs font-mono font-normal text-neutral-400">({{ themeStore.currentTheme.enName }})</span>
+              </h2>
+            </div>
+            <p class="text-xs text-neutral-400 mt-1.5">{{ themeStore.currentTheme.description }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-medium text-neutral-400">当前声学主色:</span>
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-950/60 border border-[var(--theme-border)]">
+              <span class="w-3.5 h-3.5 rounded-full shadow-sm" :style="{ background: themeStore.currentTheme.colors.accent }"></span>
+              <span class="text-xs font-mono font-semibold text-neutral-200">{{ themeStore.currentTheme.accentName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 当前主题色彩流光矩阵概览 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
+          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-neutral-500 block">背景底色 (BG)</span>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="w-3.5 h-3.5 rounded-full border border-white/20" :style="{ background: themeStore.currentTheme.colors.bg }"></span>
+              <span class="text-xs font-mono text-neutral-300 font-bold">{{ themeStore.currentTheme.colors.bg }}</span>
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-neutral-500 block">面板表面 (Surface)</span>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="w-3.5 h-3.5 rounded-full border border-white/20" :style="{ background: themeStore.currentTheme.colors.surface }"></span>
+              <span class="text-xs font-mono text-neutral-300 font-bold truncate">{{ themeStore.currentTheme.colors.surface }}</span>
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-neutral-500 block">核心强调色 (Accent)</span>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="w-3.5 h-3.5 rounded-full" :style="{ background: themeStore.currentTheme.colors.accent }"></span>
+              <span class="text-xs font-mono font-bold text-[var(--theme-accent)]">{{ themeStore.currentTheme.colors.accent }}</span>
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-neutral-500 block">辅助副色 (Secondary)</span>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="w-3.5 h-3.5 rounded-full" :style="{ background: themeStore.currentTheme.colors.accentSecondary }"></span>
+              <span class="text-xs font-mono font-bold text-neutral-200">{{ themeStore.currentTheme.colors.accentSecondary }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 主题预设画廊 -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <Layers class="w-4 h-4 text-[var(--theme-accent)]" /> 预设主题风格库
+            </h3>
+            <p class="text-xs text-neutral-400 mt-0.5">精心配比的高级声学调色板，专为夜间与多场景音乐倾听定制</p>
+          </div>
+          <span class="text-xs font-mono text-neutral-500 font-medium">共 {{ themeStore.presets.length }} 套声学主题</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="preset in themeStore.presets"
+            :key="preset.id"
+            class="theme-card-stagger rounded-2xl border p-5 transition-all duration-300 cursor-pointer relative overflow-hidden group select-none"
+            :class="[
+              themeStore.currentThemeId === preset.id
+                ? 'bg-[var(--theme-surface-active)] border-[var(--theme-accent)] shadow-[0_0_25px_var(--theme-glow)]'
+                : 'bg-neutral-900/60 border-neutral-800/80 hover:border-neutral-700 hover:bg-neutral-900/90 hover:scale-[1.01]'
+            ]"
+            @click="handleSelectTheme(preset, $event)"
+          >
+            <!-- 激活微光角标 -->
+            <div
+              v-if="themeStore.currentThemeId === preset.id"
+              class="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--theme-accent)] text-neutral-950 flex items-center gap-1 shadow-md z-10"
+            >
+              <Check class="w-3 h-3 stroke-[3]" /> 当前使用
+            </div>
+
+            <!-- 主题微型视觉预览展示条 -->
+            <div
+              class="h-24 rounded-xl mb-4 p-3 relative overflow-hidden flex flex-col justify-between border"
+              :style="{
+                background: `linear-gradient(135deg, ${preset.colors.bg} 0%, ${preset.colors.surface} 100%)`,
+                borderColor: preset.colors.border,
+              }"
+            >
+              <!-- 模拟播放条胶囊光晕 -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full" :style="{ background: preset.colors.accent }"></span>
+                  <span class="text-[10px] font-mono tracking-wider font-bold" :style="{ color: preset.colors.accent }">
+                    {{ preset.enName.toUpperCase() }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span
+                    class="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium"
+                    :style="{
+                      background: preset.category === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.7)',
+                      color: preset.colors.text
+                    }"
+                  >
+                    {{ preset.category === 'dark' ? 'DARK' : 'LIGHT' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- 模拟迷你音乐频谱条 -->
+              <div class="flex items-end gap-1 h-6">
+                <span class="w-1.5 rounded-full h-2" :style="{ background: preset.colors.accent }"></span>
+                <span class="w-1.5 rounded-full h-5" :style="{ background: preset.colors.accent }"></span>
+                <span class="w-1.5 rounded-full h-3" :style="{ background: preset.colors.accentSecondary }"></span>
+                <span class="w-1.5 rounded-full h-6" :style="{ background: preset.colors.accent }"></span>
+                <span class="w-1.5 rounded-full h-4" :style="{ background: preset.colors.accentSecondary }"></span>
+                <span class="w-1.5 rounded-full h-2" :style="{ background: preset.colors.accent }"></span>
+              </div>
+
+              <!-- 渐变极光背景装饰 -->
+              <div
+                class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-xl opacity-50 pointer-events-none"
+                :style="{ background: preset.colors.glow }"
+              ></div>
+            </div>
+
+            <!-- 主题名称与诗意标语 -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <h4 class="font-extrabold text-base text-white group-hover:text-[var(--theme-accent)] transition-colors">
+                  {{ preset.name }}
+                </h4>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full" :style="{ background: preset.colors.accent }"></span>
+                  <span class="w-2.5 h-2.5 rounded-full" :style="{ background: preset.colors.accentSecondary }"></span>
+                </div>
+              </div>
+              <div class="text-xs font-medium font-sans" :style="{ color: preset.colors.accent }">
+                {{ preset.tagline }}
+              </div>
+              <p class="text-xs text-neutral-400 leading-relaxed pt-1">
+                {{ preset.description }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 迷你播放器动效与沉浸细节设置 -->
+      <div class="bg-neutral-900/60 p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
+        <div class="border-b border-neutral-800 pb-3">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <Activity class="w-4 h-4 text-[var(--theme-accent)]" /> 交互微动效与沉浸视效
+          </h3>
+          <p class="text-xs text-neutral-400 mt-0.5">基于 GSAP 3 硬件加速引擎，享受黑胶旋转与流光光效</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+            <div>
+              <div class="text-sm font-semibold text-white">迷你播放器黑胶滑出与转动动效</div>
+              <div class="text-xs text-neutral-400 mt-0.5">播放音乐时，黑胶唱片将从封套优雅滑出并伴随 20s/圈真实物理平滑旋转</div>
+            </div>
+            <span class="text-xs font-mono font-bold text-[var(--theme-accent)] px-2.5 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20">
+              已启用
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+            <div>
+              <div class="text-sm font-semibold text-white">实时律动音频跳动频谱 (Equalizer Wave)</div>
+              <div class="text-xs text-neutral-400 mt-0.5">迷你窗与歌曲行播放时实时跳动的声波柱状律动动画</div>
+            </div>
+            <span class="text-xs font-mono font-bold text-[var(--theme-accent)] px-2.5 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20">
+              已启用
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+            <div>
+              <div class="text-sm font-semibold text-white">桌面原生反锯齿圆角适配</div>
+              <div class="text-xs text-neutral-400 mt-0.5">已完美解决 macOS 无边框窗口圆角黑边问题，在窗口化与最大化之间智能平滑切换</div>
+            </div>
+            <span class="text-xs font-mono font-bold text-[var(--theme-accent)] px-2.5 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20">
+              原生支持
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 栏目 1：连接管理 -->
-    <div v-if="currentTab === 'connection'" class="space-y-6 animate-fade-in">
+    <div v-else-if="currentTab === 'connection'" class="space-y-6 animate-fade-in">
       <!-- 已保存的服务器列表卡片 -->
       <div class="bg-neutral-900/60 p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
         <div class="flex items-center justify-between border-b border-neutral-800 pb-3">

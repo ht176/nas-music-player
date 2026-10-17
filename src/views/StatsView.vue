@@ -61,14 +61,14 @@ onMounted(() => {
     <div>
       <div class="flex items-center justify-between mb-4">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <BarChart3 class="w-6 h-6 text-emerald-400" /> 听歌足迹与统计
+          <h1 class="text-2xl font-bold tracking-tight text-[var(--theme-text-primary)] flex items-center gap-2">
+            <BarChart3 class="w-6 h-6 text-[var(--theme-accent)]" /> 听歌足迹与统计
           </h1>
-          <p class="text-sm text-neutral-400 mt-1">记录您在私有曲库中的每一次音乐旅途</p>
+          <p class="text-sm text-[var(--theme-text-secondary)] mt-1">记录您在私有曲库中的每一次音乐旅途</p>
         </div>
         <button
           v-if="stats.history.length"
-          class="text-xs text-neutral-400 hover:text-rose-400 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-800/60 hover:bg-neutral-800 transition cursor-pointer"
+          class="text-xs text-[var(--theme-text-secondary)] hover:text-rose-500 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-neutral-800/60 hover:bg-black/10 dark:hover:bg-neutral-800 border border-[var(--theme-border)] transition cursor-pointer"
           @click="clearAll"
         >
           <Trash2 class="w-3.5 h-3.5" /> 清空记录
@@ -77,33 +77,33 @@ onMounted(() => {
 
       <!-- 统计指标网格 -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800/80 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+        <div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 dark:text-emerald-400 shrink-0">
             <Flame class="w-6 h-6" />
           </div>
           <div>
-            <div class="text-xs text-neutral-400">累计播放曲目</div>
-            <div class="text-2xl font-bold text-white mt-0.5 font-mono">{{ stats.totalPlayCount }} <span class="text-xs font-normal text-neutral-500">次</span></div>
+            <div class="text-xs text-[var(--theme-text-secondary)]">累计播放曲目</div>
+            <div class="text-2xl font-bold text-[var(--theme-text-primary)] mt-0.5 font-mono">{{ stats.totalPlayCount }} <span class="text-xs font-normal text-[var(--theme-text-muted)]">次</span></div>
           </div>
         </div>
 
-        <div class="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800/80 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+        <div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 dark:text-teal-400 shrink-0">
             <Clock class="w-6 h-6" />
           </div>
           <div>
-            <div class="text-xs text-neutral-400">累计专注聆听</div>
-            <div class="text-2xl font-bold text-white mt-0.5 font-mono">{{ formatHours(stats.totalDurationSeconds) }}</div>
+            <div class="text-xs text-[var(--theme-text-secondary)]">累计专注聆听</div>
+            <div class="text-2xl font-bold text-[var(--theme-text-primary)] mt-0.5 font-mono">{{ formatHours(stats.totalDurationSeconds) }}</div>
           </div>
         </div>
 
-        <div class="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800/80 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+        <div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shrink-0">
             <User class="w-6 h-6" />
           </div>
           <div class="truncate">
-            <div class="text-xs text-neutral-400">最常听的歌手</div>
-            <div class="text-base font-bold text-white mt-0.5 truncate">
+            <div class="text-xs text-[var(--theme-text-secondary)]">最常听的歌手</div>
+            <div class="text-base font-bold text-[var(--theme-text-primary)] mt-0.5 truncate">
               {{ topArtists[0]?.name || '暂无数据' }}
             </div>
           </div>
@@ -112,12 +112,12 @@ onMounted(() => {
     </div>
 
     <!-- 24小时听歌时段活跃度分布 -->
-    <div class="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800/80">
+    <div class="glass-card p-5 rounded-2xl">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-neutral-200 flex items-center gap-2">
-          <Clock class="w-4 h-4 text-emerald-400" /> 24 小时聆听时段分布
+        <h2 class="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
+          <Clock class="w-4 h-4 text-[var(--theme-accent)]" /> 24 小时聆听时段分布
         </h2>
-        <span class="text-xs text-neutral-500 font-mono">0:00 - 23:00 活跃热度</span>
+        <span class="text-xs text-[var(--theme-text-muted)] font-mono">0:00 - 23:00 活跃热度</span>
       </div>
       <div class="h-20 flex items-end gap-1 sm:gap-1.5 pt-4">
         <div
@@ -127,12 +127,12 @@ onMounted(() => {
         >
           <div
             class="w-full rounded-t-sm transition-all duration-300"
-            :class="val > 0 ? 'bg-gradient-to-t from-emerald-500/40 to-teal-400 group-hover:to-emerald-300' : 'bg-neutral-800/40'"
+            :class="val > 0 ? 'bg-gradient-to-t from-[var(--theme-accent)]/50 to-[var(--theme-accent-secondary)]' : 'bg-black/5 dark:bg-neutral-800/40'"
             :style="{ height: `${Math.max(8, (val / Math.max(1, ...hourlyDistribution)) * 100)}%` }"
           ></div>
-          <span class="text-[9px] text-neutral-500 font-mono scale-90">{{ h % 4 === 0 ? `${h}h` : '' }}</span>
+          <span class="text-[9px] text-[var(--theme-text-muted)] font-mono scale-90">{{ h % 4 === 0 ? `${h}h` : '' }}</span>
           <!-- 悬停 Tooltip -->
-          <div class="absolute -top-7 opacity-0 group-hover:opacity-100 transition pointer-events-none bg-neutral-800 border border-neutral-700 text-[10px] text-white px-1.5 py-0.5 rounded font-mono z-10 whitespace-nowrap">
+          <div class="absolute -top-7 opacity-0 group-hover:opacity-100 transition pointer-events-none bg-neutral-900 border border-neutral-700 text-[10px] text-white px-1.5 py-0.5 rounded font-mono z-10 whitespace-nowrap preserve-contrast" data-preserve-theme="dark">
             {{ h }}:00 - {{ val }}次
           </div>
         </div>
@@ -141,18 +141,18 @@ onMounted(() => {
 
     <!-- 常听歌手榜 TOP -->
     <div v-if="topArtists.length">
-      <h2 class="text-lg font-semibold text-neutral-200 mb-3 flex items-center gap-2">
-        <User class="w-4 h-4 text-emerald-400" /> 常听歌手 TOP 榜
+      <h2 class="text-lg font-semibold text-[var(--theme-text-primary)] mb-3 flex items-center gap-2">
+        <User class="w-4 h-4 text-[var(--theme-accent)]" /> 常听歌手 TOP 榜
       </h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <div
           v-for="(item, idx) in topArtists"
           :key="item.name"
-          class="p-3.5 rounded-xl bg-neutral-900/60 border border-neutral-800/60 text-center"
+          class="glass-card p-3.5 rounded-2xl text-center"
         >
-          <div class="text-xs font-mono font-bold text-emerald-400 mb-1">#{{ idx + 1 }}</div>
-          <div class="text-sm font-semibold text-white truncate">{{ item.name }}</div>
-          <div class="text-xs text-neutral-500 mt-0.5 font-mono">{{ item.count }} 次聆听</div>
+          <div class="text-xs font-mono font-bold text-[var(--theme-accent)] mb-1">#{{ idx + 1 }}</div>
+          <div class="text-sm font-semibold text-[var(--theme-text-primary)] truncate">{{ item.name }}</div>
+          <div class="text-xs text-[var(--theme-text-secondary)] mt-0.5 font-mono">{{ item.count }} 次聆听</div>
         </div>
       </div>
     </div>
@@ -160,12 +160,12 @@ onMounted(() => {
     <!-- 最近播放时间轴历史 -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-neutral-200 flex items-center gap-2">
-          <Clock class="w-4 h-4 text-emerald-400" /> 最近播放历史 ({{ stats.history.length }})
+        <h2 class="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
+          <Clock class="w-4 h-4 text-[var(--theme-accent)]" /> 最近播放历史 ({{ stats.history.length }})
         </h2>
         <button
           v-if="stats.history.length"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-semibold text-xs transition cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--theme-accent)] hover:opacity-90 text-neutral-950 font-semibold text-xs transition cursor-pointer"
           @click="playAllHistory"
         >
           <Play class="w-3.5 h-3.5 fill-current" /> 重新播放全部

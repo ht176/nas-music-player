@@ -24,7 +24,7 @@ const coverUrl = computed(() => {
     @click="emit('click', props.album)"
   >
     <!-- 封面容器带黑胶露出视觉动效 -->
-    <div class="relative aspect-square w-full rounded-xl overflow-hidden bg-neutral-900 shadow-xl group-hover:shadow-emerald-500/10">
+    <div class="relative aspect-square w-full rounded-xl overflow-hidden bg-neutral-900 shadow-xl">
       <img
         v-if="coverUrl"
         :src="coverUrl"
@@ -38,7 +38,13 @@ const coverUrl = computed(() => {
 
       <!-- 悬浮微光蒙层与播放徽章 -->
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 justify-end">
-        <div class="w-10 h-10 rounded-full bg-emerald-500 text-neutral-950 flex items-center justify-center shadow-lg neon-glow-emerald transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300">
+        <div
+          class="w-10 h-10 rounded-full text-neutral-950 flex items-center justify-center shadow-lg transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300 font-bold"
+          :style="{
+            background: 'var(--theme-accent)',
+            boxShadow: '0 0 20px var(--theme-glow)'
+          }"
+        >
           <Play class="w-5 h-5 fill-current ml-0.5" />
         </div>
       </div>
@@ -46,12 +52,12 @@ const coverUrl = computed(() => {
 
     <!-- 文本信息 -->
     <div class="mt-3">
-      <div class="truncate text-sm font-semibold text-neutral-100 group-hover:text-emerald-400 transition-colors">
+      <div class="truncate text-sm font-semibold text-[var(--theme-text-primary)] group-hover:text-[var(--theme-accent)] transition-colors">
         {{ props.album.name }}
       </div>
-      <div class="truncate text-xs text-neutral-400 mt-0.5 flex items-center justify-between">
+      <div class="truncate text-xs text-[var(--theme-text-secondary)] mt-0.5 flex items-center justify-between">
         <span class="truncate">{{ props.album.artist }}</span>
-        <span v-if="props.album.year" class="text-[10px] text-neutral-500 font-mono shrink-0 ml-1">{{ props.album.year }}</span>
+        <span v-if="props.album.year" class="text-[10px] text-[var(--theme-text-muted)] font-mono shrink-0 ml-1">{{ props.album.year }}</span>
       </div>
     </div>
   </div>

@@ -28,6 +28,7 @@ import {
   MoreHorizontal,
   Disc,
   FileText,
+  ListMusic,
 } from 'lucide-vue-next'
 import type { VisualizerMode } from './AudioSpectrumVisualizer.vue'
 import VinylSpectrumVisualizer from './VinylSpectrumVisualizer.vue'
@@ -173,7 +174,8 @@ watch(
     <Transition name="fullscreen-slide">
       <div
         v-if="playerStore.showFullscreen && playerStore.currentTrack"
-        class="fixed inset-0 z-50 bg-[#07070b] flex flex-col justify-between px-4 py-3 sm:p-6 md:p-8 overflow-hidden select-none"
+        class="fixed inset-0 z-50 bg-[#07070b] flex flex-col justify-between px-4 py-3 sm:p-6 md:p-8 overflow-hidden select-none preserve-contrast"
+        data-preserve-theme="dark"
         :style="{
           paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))',
           paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',

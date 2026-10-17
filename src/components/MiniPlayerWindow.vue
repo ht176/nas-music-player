@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
 import {
@@ -14,6 +14,7 @@ import {
 } from 'lucide-vue-next'
 import { isDesktopApp, exitMiniMode, expandMiniWindow, collapseMiniWindow } from '../services/desktop'
 import AddToPlaylistModal from './AddToPlaylistModal.vue'
+import gsap from 'gsap'
 
 const props = defineProps<{
   isCompactDesktop?: boolean
@@ -23,6 +24,12 @@ const playerStore = usePlayerStore()
 const serverStore = useServerStore()
 const showAddToPlaylist = ref(false)
 
+const miniPlayerRoot = ref<HTMLElement | null>(null)
+const lyricEl = ref<HTMLElement | null>(null)
+const heartBtnRef = ref<HTMLElement | null>(null)
+const playBtnRef = ref<HTMLElement | null>(null)
+let ctx: gsap.Context | undefined
+
 const coverUrl = computed(() => {
   return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 160) || ''
 })
@@ -31,8 +38,57 @@ const currentLyric = computed(() => {
   if (playerStore.lyrics.length && playerStore.currentLyricIndex >= 0) {
     return playerStore.lyrics[playerStore.currentLyricIndex]?.text || ''
   }
-  return playerStore.currentTrack?.artist || '暂无歌词'
+  return playerStore.currentTrack?.artist || '享受纯粹私有音乐'
 })
+
+// 当歌词文本更新时，触发平滑上浮动画 (GSAP)
+watch(currentLyric, async () => {
+  await nextTick()
+  if (lyricEl.value) {
+    gsap.fromTo(
+      lyricEl.value,
+      { y: 5, autoAlpha: 0.3 },
+      { y: 0, autoAlpha: 1, duration: 0.35, ease: 'power2.out' }
+    )
+  }
+})
+
+// 收藏按钮点击爆弹回弹触觉反馈 (GSAP)
+function handleToggleStar() {
+  if (playerStore.currentTrack) {
+    playerStore.toggleStar(playerStore.currentTrack)
+    if (heartBtnRef.value) {
+      gsap.fromTo(
+        heartBtnRef.value,
+        { scale: 0.75 },
+        {
+          scale: 1.35,
+          duration: 0.16,
+          ease: 'power2.out',
+          onComplete: () => {
+            gsap.to(heartBtnRef.value, { scale: 1, duration: 0.28, ease: 'elastic.out(1.2, 0.4)' })
+          },
+        }
+      )
+    }
+  }
+}
+
+// 播放/暂停按钮轻微缩放呼吸微动效
+function handleTogglePlay() {
+  if (playBtnRef.value) {
+    gsap.fromTo(playBtnRef.value, { scale: 0.88 }, { scale: 1, duration: 0.24, ease: 'back.out(2.5)' })
+  }
+  playerStore.togglePlay()
+}
+
+function handleSeekProgress(e: MouseEvent) {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  if (rect.width > 0 && playerStore.duration) {
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    playerStore.seek(playerStore.duration * ratio)
+  }
+}
 
 // 当加入歌单弹窗打开/关闭时，在桌面迷你模式下动态扩展/收缩窗口高度
 watch(showAddToPlaylist, async (val) => {
@@ -43,6 +99,24 @@ watch(showAddToPlaylist, async (val) => {
       await collapseMiniWindow()
     }
   }
+})
+
+onMounted(() => {
+  if (miniPlayerRoot.value) {
+    ctx = gsap.context(() => {
+      gsap.from('.mini-fade-in', {
+        autoAlpha: 0,
+        y: 8,
+        stagger: 0.04,
+        duration: 0.4,
+        ease: 'power2.out',
+      })
+    }, miniPlayerRoot.value)
+  }
+})
+
+onUnmounted(() => {
+  ctx?.revert()
 })
 
 async function handleRestore() {
@@ -67,39 +141,90 @@ function handleOpenAddToPlaylist() {
 <template>
   <div
     v-if="playerStore.currentTrack"
+    ref="miniPlayerRoot"
     @dblclick.prevent.stop=""
     :class="[
       isCompactDesktop
-        ? 'w-full h-full bg-[#111116] border border-white/10 rounded-xl px-3 py-2 flex flex-col justify-between select-none shadow-2xl relative overflow-hidden'
-        : 'fixed bottom-24 right-6 w-80 bg-neutral-900/95 border border-neutral-700/80 rounded-2xl shadow-2xl backdrop-blur-xl px-3 py-2.5 z-50 animate-fade-in flex flex-col gap-1.5 select-none'
+        ? 'w-full h-full rounded-2xl px-3 py-2 flex flex-col justify-between select-none shadow-[0_16px_36px_rgba(0,0,0,0.65)] relative overflow-hidden transition-colors duration-500'
+        : 'fixed bottom-24 right-6 w-84 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.7)] backdrop-blur-2xl px-3 py-2.5 z-50 animate-fade-in flex flex-col gap-1.5 select-none transition-colors duration-500'
     ]"
+    :style="{
+      backgroundColor: 'var(--theme-bg-translucent)',
+      backdropFilter: 'blur(28px) saturate(180%)',
+      borderColor: 'var(--theme-border)',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+    }"
   >
-    <!-- 上半部分：左侧封面 + 中间歌曲名与实时歌词(可拖拽区域) + 右上角还原与关闭 -->
+    <!-- 背景流光呼吸光晕 (随音频/主题自适应微光) -->
+    <div
+      class="absolute -inset-4 pointer-events-none -z-10 blur-[40px] opacity-40 transition-opacity duration-700"
+      :class="{ 'opacity-65 animate-pulse': playerStore.isPlaying }"
+      :style="{
+        background: `radial-gradient(circle at 30% 50%, var(--theme-accent) 0%, transparent 70%)`,
+      }"
+    />
+
+    <!-- 上半部分：黑胶微缩滑出封面 + 中间歌曲名与实时歌词 + 动态音浪 + 右上角控制 -->
     <div
       data-tauri-drag-region
       @dblclick.prevent.stop=""
       class="flex items-center gap-2.5 cursor-move flex-1 min-h-0"
     >
-      <!-- 封面 -->
-      <div class="w-9 h-9 rounded-lg bg-neutral-800 overflow-hidden shrink-0 shadow pointer-events-none border border-white/10">
-        <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" />
+      <!-- 唱片盒 + 黑胶滑出微交互容器 -->
+      <div class="relative w-11 h-10 shrink-0 pointer-events-none flex items-center">
+        <!-- 黑胶唱片：播放时向右滑出并旋转，暂停时停止 -->
+        <div
+          class="absolute left-1.5 w-8 h-8 rounded-full bg-neutral-950 border border-neutral-700/60 shadow-md flex items-center justify-center transition-all duration-500"
+          :class="[
+            playerStore.isPlaying ? 'translate-x-3.5 animate-mini-vinyl' : 'translate-x-0',
+          ]"
+        >
+          <!-- 胶木纹路圈 -->
+          <div class="w-6 h-6 rounded-full border border-neutral-800/80 flex items-center justify-center">
+            <div
+              class="w-3 h-3 rounded-full border border-white/20"
+              :style="{ backgroundColor: 'var(--theme-accent)' }"
+            />
+          </div>
+        </div>
+
+        <!-- 封面主图 -->
+        <div
+          class="relative z-10 w-9 h-9 rounded-lg bg-neutral-800 overflow-hidden shrink-0 shadow-lg border border-white/10"
+        >
+          <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" />
+        </div>
       </div>
 
-      <!-- 歌名与歌词 -->
-      <div class="truncate flex-1 pointer-events-none min-w-0">
-        <div class="text-xs font-bold text-white truncate leading-tight">
-          {{ playerStore.currentTrack.title }}
+      <!-- 歌名与实时动态歌词 -->
+      <div class="truncate flex-1 pointer-events-none min-w-0 pr-1">
+        <div class="flex items-center gap-1.5 truncate">
+          <span class="text-xs font-bold text-[var(--theme-text-primary)] truncate leading-tight">
+            {{ playerStore.currentTrack.title }}
+          </span>
+          <!-- 动态迷你声波柱状图 (播放中跳动) -->
+          <div v-if="playerStore.isPlaying" class="flex items-end gap-0.5 h-3 shrink-0">
+            <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-1" />
+            <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-2" />
+            <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-3" />
+            <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-4" />
+          </div>
         </div>
-        <!-- 动态悬浮歌词展示 -->
-        <div class="text-[11px] text-emerald-400 truncate mt-0.5 font-medium transition-all leading-tight">
+        <!-- 动态悬浮歌词 -->
+        <div
+          ref="lyricEl"
+          class="text-[11px] truncate mt-0.5 font-medium leading-tight lyric-text"
+          :style="{ color: 'var(--theme-accent)' }"
+        >
           {{ currentLyric }}
         </div>
       </div>
 
       <!-- 右上角快捷操作：还原窗口与关闭迷你播放器 -->
-      <div class="flex items-center gap-0.5 shrink-0 text-neutral-400 self-start pointer-events-auto">
+      <div class="flex items-center gap-0.5 shrink-0 self-start pointer-events-auto text-[var(--theme-text-muted)]">
         <button
-          class="p-1 hover:text-white rounded hover:bg-white/10 transition cursor-pointer"
+          class="p-1 hover:text-[var(--theme-text-primary)] rounded hover:bg-white/10 transition cursor-pointer"
           title="还原并展开主界面"
           @click.stop="handleRestore"
         >
@@ -115,54 +240,84 @@ function handleOpenAddToPlaylist() {
       </div>
     </div>
 
-    <!-- 下半部分：极简进度条 + 核心播放控制 + 右侧快捷功能(收藏 / 加入歌单) -->
-    <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 gap-2">
-      <!-- 极简进度条 -->
-      <div class="flex-1 min-w-[45px]">
-        <div class="w-full h-1 bg-neutral-800 rounded-full overflow-hidden">
+    <!-- 下半部分：极简流光进度条 + 核心播放控制 + 右侧快捷功能(收藏 / 加入歌单) -->
+    <div
+      class="flex items-center justify-between pt-1 gap-2"
+      :style="{
+        borderTop: '1px solid var(--theme-border)',
+      }"
+    >
+      <!-- 极简流光渐变进度条 -->
+      <div class="flex-1 min-w-[50px] relative group/prog cursor-pointer" @click="handleSeekProgress">
+        <div
+          class="w-full h-1 rounded-full overflow-hidden"
+          :style="{ backgroundColor: 'rgba(255, 255, 255, 0.08)' }"
+        >
           <div
-            class="h-full bg-emerald-500 rounded-full transition-all duration-300"
-            :style="{ width: `${(playerStore.currentTime / (playerStore.duration || 1)) * 100}%` }"
+            class="h-full rounded-full transition-all duration-300 relative"
+            :style="{
+              width: `${(playerStore.currentTime / (playerStore.duration || 1)) * 100}%`,
+              background: `linear-gradient(90deg, var(--theme-accent), var(--theme-accent-secondary))`,
+              boxShadow: '0 0 10px var(--theme-glow)',
+            }"
           />
         </div>
       </div>
 
       <!-- 核心播放控制 (上一首 / 播放暂停 / 下一首) -->
       <div class="flex items-center gap-1.5 shrink-0">
-        <button class="text-neutral-400 hover:text-white p-1 transition cursor-pointer" @click="playerStore.prev" title="上一首">
+        <button
+          class="text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1 transition cursor-pointer active:scale-95"
+          @click="playerStore.prev"
+          title="上一首"
+        >
           <SkipBack class="w-3.5 h-3.5 fill-current" />
         </button>
         <button
-          class="w-6 h-6 rounded-full bg-emerald-500 text-neutral-950 flex items-center justify-center shadow hover:scale-105 active:scale-95 transition cursor-pointer font-bold"
-          @click="playerStore.togglePlay"
+          ref="playBtnRef"
+          class="w-6.5 h-6.5 rounded-full flex items-center justify-center shadow-md hover:scale-105 active:scale-90 transition-all cursor-pointer font-bold"
+          :style="{
+            backgroundColor: 'var(--theme-accent)',
+            color: 'var(--theme-bg)',
+            boxShadow: '0 0 14px var(--theme-glow)',
+          }"
+          @click="handleTogglePlay"
           title="播放/暂停"
         >
           <Pause v-if="playerStore.isPlaying" class="w-3 h-3 fill-current" />
           <Play v-else class="w-3 h-3 fill-current ml-0.5" />
         </button>
-        <button class="text-neutral-400 hover:text-white p-1 transition cursor-pointer" @click="playerStore.next" title="下一首">
+        <button
+          class="text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1 transition cursor-pointer active:scale-95"
+          @click="playerStore.next"
+          title="下一首"
+        >
           <SkipForward class="w-3.5 h-3.5 fill-current" />
         </button>
       </div>
 
       <!-- 右侧音乐快捷操作 (收藏 / 加入歌单) -->
-      <div class="flex items-center gap-1 pl-1.5 border-l border-neutral-800 shrink-0 text-neutral-400">
-        <!-- 收藏按钮 -->
+      <div
+        class="flex items-center gap-1 pl-1.5 shrink-0"
+        :style="{ borderLeft: '1px solid var(--theme-border)' }"
+      >
+        <!-- 收藏按钮 (带弹跳动效) -->
         <button
-          class="p-1 rounded hover:bg-neutral-800 transition cursor-pointer"
+          ref="heartBtnRef"
+          class="p-1 rounded hover:bg-white/5 transition cursor-pointer"
           :class="{
-            'text-rose-500 hover:text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.4)]': playerStore.currentTrack.starred,
-            'text-neutral-400 hover:text-rose-400': !playerStore.currentTrack.starred
+            'text-rose-500 hover:text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]': playerStore.currentTrack.starred,
+            'text-[var(--theme-text-muted)] hover:text-rose-400': !playerStore.currentTrack.starred,
           }"
           :title="playerStore.currentTrack.starred ? '取消收藏' : '收藏'"
-          @click.stop="playerStore.toggleStar(playerStore.currentTrack)"
+          @click.stop="handleToggleStar"
         >
           <Heart class="w-3.5 h-3.5" :class="{ 'fill-current': playerStore.currentTrack.starred }" />
         </button>
 
         <!-- 加入歌单按钮 -->
         <button
-          class="p-1 text-neutral-400 hover:text-emerald-400 rounded hover:bg-neutral-800 transition cursor-pointer"
+          class="p-1 text-[var(--theme-text-muted)] hover:text-[var(--theme-accent)] rounded hover:bg-white/5 transition cursor-pointer"
           title="加入歌单"
           @click.stop="handleOpenAddToPlaylist"
         >

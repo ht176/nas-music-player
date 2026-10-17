@@ -226,10 +226,10 @@ onUnmounted(() => {
     <!-- 顶部标题与播放全量操作 -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <Music class="w-6 h-6 text-emerald-400" /> 全部歌曲
+        <h1 class="text-2xl font-bold tracking-tight text-[var(--theme-text-primary)] flex items-center gap-2">
+          <Music class="w-6 h-6 text-[var(--theme-accent)]" /> 全部歌曲
         </h1>
-        <p class="text-xs text-neutral-400 mt-1">
+        <p class="text-xs text-[var(--theme-text-secondary)] mt-1">
           曲库已载入 {{ filteredSongs.length }} 首曲目 · 支持多维检索筛选与流体上拉分页
         </p>
       </div>
@@ -237,14 +237,14 @@ onUnmounted(() => {
       <!-- 快捷操作按钮组 -->
       <div class="flex items-center gap-3">
         <button
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-semibold text-xs sm:text-sm transition shadow-lg cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--theme-accent)] hover:opacity-90 text-neutral-950 font-semibold text-xs sm:text-sm transition shadow-lg cursor-pointer disabled:opacity-50"
           :disabled="!filteredSongs.length"
           @click="playAllSequence"
         >
           <Play class="w-4 h-4 fill-current" /> 顺序播放全部
         </button>
         <button
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs sm:text-sm transition border border-neutral-700/80 cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black/5 dark:bg-neutral-800 hover:bg-black/10 dark:hover:bg-neutral-700 text-[var(--theme-text-primary)] font-semibold text-xs sm:text-sm transition border border-black/10 dark:border-neutral-700/80 cursor-pointer disabled:opacity-50"
           :disabled="!filteredSongs.length"
           @click="playAllRandom"
         >
@@ -254,20 +254,20 @@ onUnmounted(() => {
     </div>
 
     <!-- 综合筛选与搜索控制面板 -->
-    <div class="p-4 rounded-2xl bg-neutral-900/70 border border-neutral-800/80 backdrop-blur-md space-y-3">
+    <div class="p-4 rounded-2xl glass-card border border-[var(--theme-border)] space-y-3">
       <!-- 第一行：搜索框与重置 -->
       <div class="flex flex-col sm:flex-row items-center gap-3">
         <div class="relative flex-1 w-full">
-          <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+          <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--theme-text-muted)]" />
           <input
             v-model="searchKeyword"
             type="text"
             placeholder="搜索歌曲名 / 歌手 / 专辑..."
-            class="w-full bg-neutral-800/60 border border-neutral-700/70 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition"
+            class="w-full bg-black/5 dark:bg-neutral-800/60 border border-black/10 dark:border-neutral-700/70 rounded-xl pl-10 pr-4 py-2 text-xs text-[var(--theme-text-primary)] placeholder-[var(--theme-text-muted)] focus:outline-none focus:border-[var(--theme-accent)] transition"
           />
         </div>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-800/60 hover:bg-neutral-800 text-neutral-400 hover:text-white text-xs border border-neutral-700/60 transition cursor-pointer shrink-0 self-end sm:self-auto"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/5 dark:bg-neutral-800/60 hover:bg-black/10 dark:hover:bg-neutral-800 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] text-xs border border-black/10 dark:border-neutral-700/60 transition cursor-pointer shrink-0 self-end sm:self-auto"
           title="重置所有筛选"
           @click="resetFilters"
         >
@@ -278,56 +278,56 @@ onUnmounted(() => {
       <!-- 第二行：多维筛选器 (收藏、年代、评分、排序规则) -->
       <div class="flex flex-wrap items-center gap-3 pt-1 text-xs">
         <!-- 收藏状态 -->
-        <div class="flex items-center gap-1.5 bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-neutral-700/50">
-          <Heart class="w-3.5 h-3.5 text-rose-400" />
-          <span class="text-neutral-400 text-[11px]">收藏:</span>
-          <select v-model="selectedStarred" class="bg-transparent text-neutral-200 focus:outline-none cursor-pointer">
-            <option value="all" class="bg-neutral-900 text-neutral-200">全部</option>
-            <option value="starred" class="bg-neutral-900 text-neutral-200">仅已收藏</option>
-            <option value="unstarred" class="bg-neutral-900 text-neutral-200">未收藏</option>
+        <div class="flex items-center gap-1.5 bg-black/5 dark:bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-neutral-700/50">
+          <Heart class="w-3.5 h-3.5 text-rose-500" />
+          <span class="text-[var(--theme-text-secondary)] text-[11px]">收藏:</span>
+          <select v-model="selectedStarred" class="bg-transparent text-[var(--theme-text-primary)] focus:outline-none cursor-pointer">
+            <option value="all">全部</option>
+            <option value="starred">仅已收藏</option>
+            <option value="unstarred">未收藏</option>
           </select>
         </div>
 
         <!-- 年代区间 -->
-        <div class="flex items-center gap-1.5 bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-neutral-700/50">
-          <Calendar class="w-3.5 h-3.5 text-emerald-400" />
-          <span class="text-neutral-400 text-[11px]">年代:</span>
-          <select v-model="selectedYearRange" class="bg-transparent text-neutral-200 focus:outline-none cursor-pointer">
-            <option value="all" class="bg-neutral-900 text-neutral-200">全部年代</option>
-            <option value="2020s" class="bg-neutral-900 text-neutral-200">2020 年代</option>
-            <option value="2010s" class="bg-neutral-900 text-neutral-200">2010 年代</option>
-            <option value="2000s" class="bg-neutral-900 text-neutral-200">2000 年代</option>
-            <option value="classic" class="bg-neutral-900 text-neutral-200">经典老歌 (2000前)</option>
+        <div class="flex items-center gap-1.5 bg-black/5 dark:bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-neutral-700/50">
+          <Calendar class="w-3.5 h-3.5 text-[var(--theme-accent)]" />
+          <span class="text-[var(--theme-text-secondary)] text-[11px]">年代:</span>
+          <select v-model="selectedYearRange" class="bg-transparent text-[var(--theme-text-primary)] focus:outline-none cursor-pointer">
+            <option value="all">全部年代</option>
+            <option value="2020s">2020 年代</option>
+            <option value="2010s">2010 年代</option>
+            <option value="2000s">2000 年代</option>
+            <option value="classic">经典老歌 (2000前)</option>
           </select>
         </div>
 
         <!-- 用户评分 -->
-        <div class="flex items-center gap-1.5 bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-neutral-700/50">
-          <Star class="w-3.5 h-3.5 text-amber-400" />
-          <span class="text-neutral-400 text-[11px]">评分:</span>
-          <select v-model="selectedRating" class="bg-transparent text-neutral-200 focus:outline-none cursor-pointer">
-            <option value="all" class="bg-neutral-900 text-neutral-200">全部</option>
-            <option :value="5" class="bg-neutral-900 text-neutral-200">5 星推荐</option>
-            <option :value="4" class="bg-neutral-900 text-neutral-200">4 星及以上</option>
-            <option :value="3" class="bg-neutral-900 text-neutral-200">3 星及以上</option>
+        <div class="flex items-center gap-1.5 bg-black/5 dark:bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-neutral-700/50">
+          <Star class="w-3.5 h-3.5 text-amber-500" />
+          <span class="text-[var(--theme-text-secondary)] text-[11px]">评分:</span>
+          <select v-model="selectedRating" class="bg-transparent text-[var(--theme-text-primary)] focus:outline-none cursor-pointer">
+            <option value="all">全部</option>
+            <option :value="5">5 星推荐</option>
+            <option :value="4">4 星及以上</option>
+            <option :value="3">3 星及以上</option>
           </select>
         </div>
 
         <!-- 排序方式 -->
-        <div class="flex items-center gap-1.5 bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-neutral-700/50">
-          <ArrowUpDown class="w-3.5 h-3.5 text-cyan-400" />
-          <span class="text-neutral-400 text-[11px]">排序:</span>
-          <select v-model="sortBy" class="bg-transparent text-neutral-200 focus:outline-none cursor-pointer">
-            <option value="default" class="bg-neutral-900 text-neutral-200">默认排序</option>
-            <option value="title" class="bg-neutral-900 text-neutral-200">歌曲名称</option>
-            <option value="artist" class="bg-neutral-900 text-neutral-200">歌手名字</option>
-            <option value="album" class="bg-neutral-900 text-neutral-200">所属专辑</option>
-            <option value="year" class="bg-neutral-900 text-neutral-200">发行年份</option>
-            <option value="duration" class="bg-neutral-900 text-neutral-200">歌曲时长</option>
-            <option value="rating" class="bg-neutral-900 text-neutral-200">个人评分</option>
+        <div class="flex items-center gap-1.5 bg-black/5 dark:bg-neutral-800/40 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-neutral-700/50">
+          <ArrowUpDown class="w-3.5 h-3.5 text-[var(--theme-accent-secondary)]" />
+          <span class="text-[var(--theme-text-secondary)] text-[11px]">排序:</span>
+          <select v-model="sortBy" class="bg-transparent text-[var(--theme-text-primary)] focus:outline-none cursor-pointer">
+            <option value="default">默认排序</option>
+            <option value="title">歌曲名称</option>
+            <option value="artist">歌手名字</option>
+            <option value="album">所属专辑</option>
+            <option value="year">发行年份</option>
+            <option value="duration">歌曲时长</option>
+            <option value="rating">个人评分</option>
           </select>
           <button
-            class="ml-1 text-neutral-400 hover:text-white transition cursor-pointer text-[11px] font-mono px-1 rounded hover:bg-neutral-700/50"
+            class="ml-1 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] transition cursor-pointer text-[11px] font-mono px-1 rounded hover:bg-black/5 dark:hover:bg-neutral-700/50"
             :title="sortOrder === 'asc' ? '当前：升序，点击切换降序' : '当前：降序，点击切换升序'"
             @click="toggleSortOrder"
           >

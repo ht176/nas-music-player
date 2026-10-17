@@ -6,6 +6,7 @@ import { Heart, Plus, Download, Check, ListPlus, CornerDownRight, MoreHorizontal
 import { cacheService } from '../services/cache'
 import { onMounted, ref } from 'vue'
 import AddToPlaylistModal from './AddToPlaylistModal.vue'
+import gsap from 'gsap'
 
 const props = defineProps<{
   track: Track
@@ -33,6 +34,10 @@ const formattedDuration = computed(() => {
 
 const onToggleHeart = (e: MouseEvent) => {
   e.stopPropagation()
+  const el = e.currentTarget as HTMLElement
+  if (el) {
+    gsap.fromTo(el, { scale: 1.35, rotate: -15 }, { scale: 1, rotate: 0, duration: 0.45, ease: 'elastic.out(1, 0.4)' })
+  }
   playerStore.toggleStar(props.track)
 }
 
@@ -69,8 +74,8 @@ onMounted(async () => {
   <div
     class="group flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border border-transparent"
     :class="props.isActive 
-      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.08)]' 
-      : 'hover:bg-white/[0.04] hover:border-white/5 text-neutral-300'"
+      ? 'bg-[var(--theme-accent)]/15 border-[var(--theme-accent)]/30 text-[var(--theme-accent)] shadow-[0_0_15px_var(--theme-glow)]' 
+      : 'hover:bg-black/5 dark:hover:bg-white/[0.04] hover:border-black/5 dark:hover:border-white/5 text-[var(--theme-text-primary)]'"
     @click="emit('play', props.track)"
   >
     <div class="flex items-center gap-3.5 overflow-hidden">
@@ -78,27 +83,27 @@ onMounted(async () => {
       <div class="w-6 flex items-center justify-center shrink-0">
         <template v-if="props.isActive && props.isPlaying">
           <div class="flex items-end gap-[2px] h-3.5">
-            <span class="w-[3px] bg-emerald-400 rounded-full wave-bar-1"></span>
-            <span class="w-[3px] bg-emerald-400 rounded-full wave-bar-2"></span>
-            <span class="w-[3px] bg-emerald-400 rounded-full wave-bar-3"></span>
-            <span class="w-[3px] bg-emerald-400 rounded-full wave-bar-4"></span>
+            <span class="w-[3px] rounded-full wave-bar-1" :style="{ background: 'var(--theme-accent)' }"></span>
+            <span class="w-[3px] rounded-full wave-bar-2" :style="{ background: 'var(--theme-accent)' }"></span>
+            <span class="w-[3px] rounded-full wave-bar-3" :style="{ background: 'var(--theme-accent)' }"></span>
+            <span class="w-[3px] rounded-full wave-bar-4" :style="{ background: 'var(--theme-accent)' }"></span>
           </div>
         </template>
         <template v-else-if="props.isActive">
-          <span class="text-xs text-emerald-400 font-bold">▶</span>
+          <span class="text-xs font-bold" :style="{ color: 'var(--theme-accent)' }">▶</span>
         </template>
         <template v-else>
-          <span class="text-xs text-neutral-500 font-mono group-hover:hidden">{{ props.index + 1 }}</span>
-          <span class="text-xs text-neutral-300 hidden group-hover:inline-block">▶</span>
+          <span class="text-xs text-[var(--theme-text-muted)] font-mono group-hover:hidden">{{ props.index + 1 }}</span>
+          <span class="text-xs text-[var(--theme-accent)] hidden group-hover:inline-block">▶</span>
         </template>
       </div>
 
       <!-- 歌曲信息 -->
       <div class="truncate">
-        <div class="truncate text-sm font-medium transition-colors" :class="props.isActive ? 'text-emerald-400 font-semibold' : 'text-neutral-200 group-hover:text-white'">
+        <div class="truncate text-sm font-medium transition-colors" :class="props.isActive ? 'text-[var(--theme-accent)] font-semibold' : 'text-[var(--theme-text-primary)] group-hover:text-[var(--theme-accent)]'">
           {{ props.track.title }}
         </div>
-        <div class="truncate text-xs text-neutral-400/80 group-hover:text-neutral-400">
+        <div class="truncate text-xs text-[var(--theme-text-secondary)] mt-0.5">
           {{ props.track.artist }} · {{ props.track.album }}
         </div>
       </div>
@@ -161,10 +166,10 @@ onMounted(async () => {
     </div>
 
     <!-- 桌面端专属右侧平铺操作与时长 (全功能 + hover 显示) -->
-    <div class="hidden sm:flex items-center gap-2.5 text-xs text-neutral-400 shrink-0">
+    <div class="hidden sm:flex items-center gap-2.5 text-xs text-[var(--theme-text-secondary)] shrink-0">
       <!-- 收藏红心 -->
       <button
-        class="transition-all p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+        class="transition-all p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
         :class="props.track.starred ? 'text-rose-500 opacity-100 scale-110 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'opacity-0 group-hover:opacity-100 hover:text-rose-400'"
         title="收藏"
         @click="onToggleHeart"
@@ -174,18 +179,20 @@ onMounted(async () => {
 
       <!-- 离线下载按钮 -->
       <button
-        class="transition-all p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
-        :class="isCached ? 'text-emerald-400 opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'opacity-0 group-hover:opacity-100 hover:text-white'"
+        class="transition-all p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+        :class="isCached ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 hover:text-[var(--theme-text-primary)]'"
+        :style="isCached ? { color: 'var(--theme-accent)' } : undefined"
         :title="isCached ? '已离线下载' : '离线下载到本地'"
         @click="onDownload"
       >
         <Check v-if="isCached" class="w-4 h-4 stroke-[2.5]" />
-        <Download v-else class="w-4 h-4" :class="{ 'animate-bounce text-emerald-400': isDownloading }" />
+        <Download v-else class="w-4 h-4" :class="{ 'animate-bounce': isDownloading }" :style="isDownloading ? { color: 'var(--theme-accent)' } : undefined" />
       </button>
 
       <!-- 添加到指定歌单 -->
       <button
-        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-emerald-400 cursor-pointer"
+        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+        :class="'hover:text-[var(--theme-accent)]'"
         title="添加到歌单"
         @click.stop="showAddToPlaylist = true"
       >
@@ -194,7 +201,8 @@ onMounted(async () => {
 
       <!-- 下一首插队播放 -->
       <button
-        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-teal-300 cursor-pointer"
+        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+        :class="'hover:text-[var(--theme-accent-secondary)]'"
         title="设置为下一首播放"
         @click="onPlayNext"
       >
@@ -203,7 +211,7 @@ onMounted(async () => {
 
       <!-- 添加到播放队列末尾 -->
       <button
-        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-white/10 hover:text-white cursor-pointer"
+        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 hover:text-[var(--theme-text-primary)] cursor-pointer"
         title="添加到播放队列末尾"
         @click="onAddToQueue"
       >
@@ -211,11 +219,11 @@ onMounted(async () => {
       </button>
 
       <!-- 格式标签 (FLAC/MP3) -->
-      <span v-if="props.track.suffix" class="uppercase text-[10px] px-1.5 py-0.5 rounded font-mono font-medium tracking-wider bg-white/5 border border-white/10 text-neutral-400">
+      <span v-if="props.track.suffix" class="uppercase text-[10px] px-1.5 py-0.5 rounded font-mono font-medium tracking-wider bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[var(--theme-text-secondary)]">
         {{ props.track.suffix }}
       </span>
 
-      <span class="w-11 text-right font-mono text-neutral-400">{{ formattedDuration }}</span>
+      <span class="w-11 text-right font-mono text-[var(--theme-text-secondary)]">{{ formattedDuration }}</span>
     </div>
 
     <!-- 歌单添加弹窗 -->

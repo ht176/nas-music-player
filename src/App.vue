@@ -14,17 +14,27 @@ import ParticleBackground from './components/ParticleBackground.vue'
 import GlobalToast from './components/GlobalToast.vue'
 import { usePlayerStore } from './stores/player'
 import { useServerStore } from './stores/server'
-import { isDesktopApp, isTauriApp, listenTrayActions } from './services/desktop'
+import { useThemeStore } from './stores/theme'
+import { isDesktopApp, isTauriApp, listenTrayActions, isWindowMaximized, listenWindowResize } from './services/desktop'
 import { checkAppUpdate, type UpdateInfo } from './services/updater'
 import { initGlobalShortcuts } from './services/shortcuts'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
+const themeStore = useThemeStore()
 const showSearch = ref(false)
 const isDesktop = ref(isDesktopApp())
+const isMaximized = ref(false)
 const autoUpdateInfo = ref<UpdateInfo | null>(null)
 let unlistenTray: (() => void) | undefined
+let unlistenResize: (() => void) | undefined
 let cleanupShortcuts: (() => Promise<void>) | undefined
+
+async function updateMaximizedState() {
+  if (isDesktop.value) {
+    isMaximized.value = await isWindowMaximized()
+  }
+}
 
 // 键盘快捷键监听
 function handleKeyDown(e: KeyboardEvent) {
@@ -54,12 +64,16 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 onMounted(async () => {
+  themeStore.initTheme()
   serverStore.loadConfig()
   playerStore.initRestoredState()
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('contextmenu', handleContextMenu)
 
   if (isDesktop.value) {
+    unlistenResize = await listenWindowResize(updateMaximizedState)
+    await updateMaximizedState()
+
     unlistenTray = await listenTrayActions((action) => {
       if (action === 'toggle_play') {
         playerStore.togglePlay()
@@ -102,16 +116,25 @@ function handleContextMenu(e: MouseEvent) {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('contextmenu', handleContextMenu)
+  unlistenResize?.()
   unlistenTray?.()
   cleanupShortcuts?.()
 })
 </script>
 
 <template>
-  <div class="flex h-screen w-screen overflow-hidden bg-[#12131a] text-neutral-100 relative">
+  <div
+    :class="[
+      'flex h-screen w-screen overflow-hidden text-[var(--theme-text-primary)] relative select-none transition-colors duration-500',
+      isDesktop && !isMaximized && !playerStore.showMiniPlayer ? 'rounded-2xl border border-[var(--theme-border)] shadow-[0_20px_50px_rgba(0,0,0,0.65)]' : 'rounded-none'
+    ]"
+    :style="{ backgroundColor: 'var(--theme-bg)' }"
+  >
     <!-- 桌面极简迷你悬浮窗模式 (仅显示悬浮窗内容，彻底隐藏主界面) -->
     <template v-if="isDesktop && playerStore.showMiniPlayer">
-      <MiniPlayerWindow :is-compact-desktop="true" />
+      <div class="w-screen h-screen bg-transparent p-0 flex items-center justify-center overflow-hidden">
+        <MiniPlayerWindow :is-compact-desktop="true" />
+      </div>
     </template>
 
     <!-- 正常播放器界面 -->
@@ -120,20 +143,20 @@ onUnmounted(() => {
       <header
         v-if="isDesktop"
         data-tauri-drag-region
-        class="absolute top-0 left-0 right-0 h-8 flex items-center justify-between z-50 select-none bg-gradient-to-b from-[#12131a]/95 to-transparent backdrop-blur-xs cursor-move"
+        class="absolute top-0 left-0 right-0 h-8 flex items-center justify-between z-50 select-none bg-gradient-to-b from-[var(--theme-bg)]/95 to-transparent backdrop-blur-xs cursor-move"
       >
-        <div data-tauri-drag-region class="flex items-center gap-2 pl-3 text-[11px] text-neutral-300 font-medium pointer-events-none">
+        <div data-tauri-drag-region class="flex items-center gap-2 pl-3 text-[11px] text-[var(--theme-text-secondary)] font-medium pointer-events-none">
           <img src="/favicon.svg" class="w-4.5 h-4.5 rounded-sm object-cover" alt="AuraMusic" />
           <span>AuraMusic · 私有云音乐播放器</span>
         </div>
         <WindowControls class="pointer-events-auto" />
       </header>
 
-      <!-- 全局炫彩流光氛围背景与互动音频星空粒子 (微调提高透明度与层次明度，避免死黑沉闷) -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div class="absolute -top-[25%] -left-[10%] w-[650px] h-[650px] rounded-full bg-emerald-500/15 blur-[120px] animate-pulse" />
-        <div class="absolute top-[35%] -right-[15%] w-[550px] h-[550px] rounded-full bg-indigo-500/15 blur-[130px]" />
-        <div class="absolute -bottom-[15%] left-[25%] w-[650px] h-[650px] rounded-full bg-teal-500/12 blur-[140px]" />
+      <!-- 全局炫彩流光氛围背景与互动音频星空粒子 -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden -z-10 transition-colors duration-700">
+        <div class="absolute -top-[25%] -left-[10%] w-[650px] h-[650px] rounded-full blur-[130px] animate-pulse" :style="{ backgroundColor: 'var(--theme-aurora-1)' }" />
+        <div class="absolute top-[35%] -right-[15%] w-[550px] h-[550px] rounded-full blur-[140px]" :style="{ backgroundColor: 'var(--theme-aurora-2)' }" />
+        <div class="absolute -bottom-[15%] left-[25%] w-[650px] h-[650px] rounded-full blur-[150px]" :style="{ backgroundColor: 'var(--theme-aurora-3)' }" />
         <ParticleBackground :density="45" />
       </div>
 
@@ -162,7 +185,7 @@ onUnmounted(() => {
         </div>
 
         <!-- 桌面端常驻底栏 (高度 80px，仅桌面显示) -->
-        <PlayerBar class="hidden md:flex" :desktop-only="true" />
+        <PlayerBar :desktop-only="true" />
 
         <!-- 移动端一体化底部停靠系统 (胶囊播放器 + 底部Tab栏联动，绝对物理防重叠) -->
         <div class="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none flex flex-col justify-end">

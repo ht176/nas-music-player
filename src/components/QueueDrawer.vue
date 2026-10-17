@@ -19,7 +19,7 @@ const formatTime = (sec: number) => {
       @click="playerStore.showQueueDrawer = false"
     >
       <div
-        class="w-5/6 sm:w-96 max-w-sm h-full bg-[#13141d]/95 border-l border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col select-none"
+        class="w-5/6 sm:w-96 max-w-sm h-full bg-[var(--theme-surface-solid)] border-l border-[var(--theme-border)] backdrop-blur-2xl shadow-2xl flex flex-col select-none"
         :style="{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)'
@@ -27,25 +27,25 @@ const formatTime = (sec: number) => {
         @click.stop
       >
         <!-- 头部栏 -->
-        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+        <div class="p-4 border-b border-[var(--theme-border)] flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Music class="w-5 h-5 text-emerald-400" />
-            <h3 class="font-bold text-white text-base">当前播放队列</h3>
-            <span class="text-xs text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded-full font-mono">
+            <Music class="w-5 h-5 text-[var(--theme-accent)]" />
+            <h3 class="font-bold text-[var(--theme-text-primary)] text-base">当前播放队列</h3>
+            <span class="text-xs text-[var(--theme-text-secondary)] bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded-full font-mono">
               {{ playerStore.queue.length }}
             </span>
           </div>
           <div class="flex items-center gap-1">
             <button
               v-if="playerStore.queue.length > 0"
-              class="p-1.5 text-neutral-400 hover:text-rose-400 transition rounded-lg hover:bg-neutral-800 cursor-pointer active:scale-90"
+              class="p-1.5 text-[var(--theme-text-secondary)] hover:text-rose-500 transition rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer active:scale-90"
               title="清空队列"
               @click="playerStore.clearQueue"
             >
               <Trash2 class="w-4 h-4" />
             </button>
             <button
-              class="p-1.5 text-neutral-400 hover:text-white transition rounded-lg hover:bg-neutral-800 cursor-pointer active:scale-90"
+              class="p-1.5 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] transition rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer active:scale-90"
               @click="playerStore.showQueueDrawer = false"
             >
               <X class="w-5 h-5" />
@@ -62,28 +62,28 @@ const formatTime = (sec: number) => {
           class="group flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition text-xs"
           :class="[
             idx === playerStore.currentIndex
-              ? 'bg-neutral-800 text-emerald-400'
-              : 'text-neutral-300 hover:bg-neutral-800/50',
+              ? 'bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] font-semibold shadow-sm'
+              : 'text-[var(--theme-text-primary)] hover:bg-black/5 dark:hover:bg-white/5',
           ]"
           @click="playerStore.playTrack(track)"
         >
           <div class="flex items-center gap-2.5 overflow-hidden">
-            <span class="w-4 text-center font-mono text-neutral-500">
+            <span class="w-4 text-center font-mono text-[var(--theme-text-muted)]">
               <template v-if="idx === playerStore.currentIndex && playerStore.isPlaying">▶</template>
               <template v-else>{{ idx + 1 }}</template>
             </span>
             <div class="truncate">
-              <div class="font-medium truncate" :class="{ 'text-emerald-400': idx === playerStore.currentIndex }">
+              <div class="font-medium truncate" :class="{ 'text-[var(--theme-accent)] font-semibold': idx === playerStore.currentIndex }">
                 {{ track.title }}
               </div>
-              <div class="text-[11px] text-neutral-500 truncate">{{ track.artist }}</div>
+              <div class="text-[11px] text-[var(--theme-text-secondary)] truncate">{{ track.artist }}</div>
             </div>
           </div>
 
           <div class="flex items-center gap-2 shrink-0">
-            <span class="font-mono text-neutral-500">{{ formatTime(track.duration) }}</span>
+            <span class="font-mono text-[var(--theme-text-secondary)]">{{ formatTime(track.duration) }}</span>
             <button
-              class="opacity-60 hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 hover:text-rose-400 text-neutral-400 hover:bg-white/10 rounded transition cursor-pointer"
+              class="opacity-60 hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 hover:text-rose-500 text-[var(--theme-text-secondary)] hover:bg-black/10 dark:hover:bg-white/10 rounded transition cursor-pointer"
               title="移出队列"
               @click.stop="playerStore.removeFromQueue(idx)"
             >
@@ -92,7 +92,7 @@ const formatTime = (sec: number) => {
           </div>
         </div>
       </template>
-      <div v-else class="h-full flex flex-col items-center justify-center text-neutral-500 text-sm">
+      <div v-else class="h-full flex flex-col items-center justify-center text-[var(--theme-text-muted)] text-sm">
         队列空空如也
       </div>
       </div>

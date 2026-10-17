@@ -66,6 +66,20 @@ export async function isWindowMaximized(): Promise<boolean> {
   }
 }
 
+export async function listenWindowResize(cb: () => void): Promise<(() => void) | undefined> {
+  if (!isDesktopApp()) return
+  try {
+    const win = getCurrentWindow()
+    const unlisten = await win.onResized(() => {
+      cb()
+    })
+    return unlisten
+  } catch {
+    window.addEventListener('resize', cb)
+    return () => window.removeEventListener('resize', cb)
+  }
+}
+
 export const DEFAULT_WINDOW_WIDTH = 1100
 export const DEFAULT_WINDOW_HEIGHT = 720
 export const MINI_WINDOW_WIDTH = 340

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { audioService } from '../services/audio'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 
 const props = withDefaults(
   defineProps<{
@@ -15,6 +16,7 @@ const props = withDefaults(
 )
 
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animId: number | null = null
 
@@ -31,13 +33,12 @@ interface Particle {
 }
 
 const particles: Particle[] = []
-const colors = [
-  'rgba(16, 185, 129,',   // Emerald
-  'rgba(20, 184, 166,',   // Teal
-  'rgba(56, 189, 248,',   // Sky
-  'rgba(99, 102, 241,',   // Indigo
-  'rgba(168, 85, 247,',   // Purple
-]
+
+watch(() => themeStore.currentThemeId, () => {
+  if (canvasRef.value) {
+    initParticles(canvasRef.value.width, canvasRef.value.height)
+  }
+})
 
 let mouse = { x: -1000, y: -1000 }
 
@@ -66,7 +67,7 @@ function initParticles(width: number, height: number) {
       vx: (Math.random() - 0.5) * 0.45,
       vy: (Math.random() - 0.5) * 0.45,
       alpha: Math.random() * 0.45 + 0.15,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: themeStore.currentTheme.colors.particles[Math.floor(Math.random() * themeStore.currentTheme.colors.particles.length)],
       pulsePhase: Math.random() * Math.PI * 2,
     })
   }

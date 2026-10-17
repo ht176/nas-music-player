@@ -72,24 +72,24 @@ onMounted(() => {
 <template>
   <div class="space-y-6 pb-12">
     <!-- 头部信息 -->
-    <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-6 bg-gradient-to-b from-emerald-950/40 via-neutral-900/40 to-transparent p-6 rounded-2xl border border-emerald-500/10">
+    <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-6 bg-gradient-to-b from-emerald-500/10 via-[var(--theme-surface)]/60 to-transparent p-6 rounded-2xl border border-emerald-500/20 glass-card">
       <div class="flex flex-col sm:flex-row items-center gap-6">
-        <div class="w-36 h-36 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-neutral-950 shadow-xl shrink-0">
-          <DownloadCloud class="w-16 h-16 stroke-[1.5]" />
+        <div class="w-36 h-36 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-xl shrink-0">
+          <DownloadCloud class="w-16 h-16 stroke-[1.5] preserve-contrast" />
         </div>
         <div class="space-y-2 text-center sm:text-left">
-          <div class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">本地存储</div>
-          <h1 class="text-3xl font-bold text-white">已下载音乐</h1>
-          <div class="flex items-center gap-3 text-xs text-neutral-400">
+          <div class="text-xs uppercase tracking-wider text-[var(--theme-accent)] font-semibold">本地存储</div>
+          <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">已下载音乐</h1>
+          <div class="flex items-center gap-3 text-xs text-[var(--theme-text-secondary)]">
             <span>{{ cachedRecords.length }} 首离线曲目</span>
             <span>·</span>
-            <span class="flex items-center gap-1 font-mono text-neutral-300">
-              <HardDrive class="w-3.5 h-3.5 text-emerald-400" /> {{ formatSize(totalSize) }}
+            <span class="flex items-center gap-1 font-mono text-[var(--theme-text-primary)]">
+              <HardDrive class="w-3.5 h-3.5 text-[var(--theme-accent)]" /> {{ formatSize(totalSize) }}
             </span>
           </div>
           <div class="pt-2">
             <button
-              class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-semibold text-sm transition shadow-lg cursor-pointer disabled:opacity-50"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--theme-accent)] hover:opacity-90 text-neutral-950 font-semibold text-sm transition shadow-lg cursor-pointer disabled:opacity-50"
               :disabled="!cachedRecords.length"
               @click="playAll"
             >
@@ -101,7 +101,7 @@ onMounted(() => {
 
       <button
         v-if="cachedRecords.length"
-        class="text-xs text-neutral-400 hover:text-rose-400 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-800/60 hover:bg-neutral-800 transition cursor-pointer self-center sm:self-start"
+        class="text-xs text-[var(--theme-text-secondary)] hover:text-rose-500 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/5 dark:bg-neutral-800/60 hover:bg-black/10 dark:hover:bg-neutral-800 border border-[var(--theme-border)] transition cursor-pointer self-center sm:self-start"
         @click="clearAllCache"
       >
         <Trash2 class="w-4 h-4" /> 清空全部缓存
@@ -109,7 +109,7 @@ onMounted(() => {
     </div>
 
     <!-- 歌曲列表 -->
-    <div v-if="loading" class="text-center py-12 text-neutral-500 text-sm">
+    <div v-if="loading" class="text-center py-12 text-[var(--theme-text-muted)] text-sm">
       正在读取本地离线库...
     </div>
 
@@ -130,11 +130,11 @@ onMounted(() => {
         </div>
         <!-- 单曲离线文件大小与删除按钮 -->
         <div class="hidden sm:flex items-center gap-2 pr-3 shrink-0">
-          <span class="text-[11px] font-mono text-neutral-500">
+          <span class="text-[11px] font-mono text-[var(--theme-text-secondary)]">
             {{ formatSize(record.size || 0) }}
           </span>
           <button
-            class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800 transition cursor-pointer"
+            class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-[var(--theme-text-secondary)] hover:text-rose-500 hover:bg-black/10 dark:hover:bg-neutral-800 transition cursor-pointer"
             title="删除此歌曲离线缓存"
             @click.stop="removeSingleTrack(record)"
           >
