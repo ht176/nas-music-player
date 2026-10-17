@@ -12,7 +12,7 @@ export interface UpdateInfo {
 let updaterInstance: any = null
 
 export async function checkAppUpdate(): Promise<UpdateInfo> {
-  const currentVersion = '1.0.9'
+  const currentVersion = '1.0.10'
 
   // 纯网页端 (Web/Docker 部署) 由服务端发布与浏览器刷新维护，不参与客户端版本检测与弹窗
   if (!isTauriApp()) {
