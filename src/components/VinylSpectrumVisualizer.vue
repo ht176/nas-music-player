@@ -28,6 +28,17 @@ for (let i = freqIndexMap.length - 1; i > 0; i--) {
 
 let rotationAngle = 0
 
+function getThemeColors() {
+  if (typeof document === 'undefined') {
+    return { accent: '#10b981', accentSec: '#06b6d4', glow: 'rgba(16, 185, 129, 0.4)' }
+  }
+  const rootStyle = getComputedStyle(document.documentElement)
+  const accent = rootStyle.getPropertyValue('--theme-accent').trim() || '#10b981'
+  const accentSec = rootStyle.getPropertyValue('--theme-accent-secondary').trim() || '#06b6d4'
+  const glow = rootStyle.getPropertyValue('--theme-glow').trim() || 'rgba(16, 185, 129, 0.4)'
+  return { accent, accentSec, glow }
+}
+
 function render() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -84,12 +95,12 @@ function render() {
     }
   }
 
-  // 2. 绘制环绕唱片的径向脉冲柱 (参考 toolka 博客特效，向外扩散)
+  // 2. 绘制环绕唱片的径向脉冲柱 (按当前主题配色辐射发散)
   const cx = width / 2
   const cy = height / 2
-  // 内半径贴合黑胶唱盘的外边缘 (唱盘直径约 280px，半径 140px，在 420x420 画布下取 148px)
   const baseRadius = 145
   const angleStep = (Math.PI * 2) / barCount
+  const { accent, accentSec } = getThemeColors()
 
   ctx.save()
   ctx.translate(cx, cy)
@@ -100,11 +111,11 @@ function render() {
     ctx.save()
     ctx.rotate(angleStep * i)
 
-    // 渐变光柱 (从贴近唱片的碧绿/翡翠过渡到向外扩散的天青/白亮)
+    // 渐变光柱 (从贴近唱片的主题主色过渡到外圈副色与白亮高光)
     const barGrad = ctx.createLinearGradient(0, baseRadius, 0, baseRadius + val)
-    barGrad.addColorStop(0, 'rgba(16, 185, 129, 0.4)')
-    barGrad.addColorStop(0.6, 'rgba(20, 184, 166, 0.85)')
-    barGrad.addColorStop(1, 'rgba(56, 189, 248, 1)')
+    barGrad.addColorStop(0, accent)
+    barGrad.addColorStop(0.6, accentSec)
+    barGrad.addColorStop(1, '#ffffff')
 
     ctx.fillStyle = barGrad
     ctx.beginPath()
@@ -112,12 +123,12 @@ function render() {
     ctx.roundRect(-1.75, baseRadius, 3.5, val, [1.75])
     ctx.fill()
 
-    // 外边缘白色高光发光浮点
+    // 外边缘高光发光浮点
     if (val > 6) {
       ctx.beginPath()
       ctx.arc(0, baseRadius + val + 2.5, 1.6, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
-      ctx.shadowColor = '#38bdf8'
+      ctx.fillStyle = '#ffffff'
+      ctx.shadowColor = accentSec
       ctx.shadowBlur = 6
       ctx.fill()
       ctx.shadowBlur = 0
@@ -146,7 +157,8 @@ onUnmounted(() => {
       ref="canvasRef"
       width="420"
       height="420"
-      class="w-[155%] h-[155%] max-w-none max-h-none object-contain filter drop-shadow-[0_0_15px_rgba(20,184,166,0.5)]"
+      class="w-[155%] h-[155%] max-w-none max-h-none object-contain transition-all duration-500"
+      :style="{ filter: 'drop-shadow(0 0 16px var(--theme-glow))' }"
     />
   </div>
 </template>

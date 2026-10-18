@@ -218,26 +218,37 @@ async function toggleMiniPlayer() {
         :style="{ background: 'linear-gradient(to right, transparent, var(--theme-glow), transparent)' }"
       ></div>
 
-      <!-- 主界面浮动实时歌词胶囊 (与底部控制栏显著拉开间距: -top-16 / -top-22，支持单/双行显示) -->
+      <!-- 主界面浮动实时歌词胶囊 (与底部控制栏拉开舒适间距，丝滑平滑过渡，支持单/双行显示) -->
       <div
         v-if="currentLyricText"
-        class="absolute left-1/2 -translate-x-1/2 rounded-2xl sm:rounded-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border-highlight)] backdrop-blur-md shadow-lg flex items-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all max-w-[88vw] group overflow-hidden"
-        :class="playerStore.lyricDisplayLines === 2 ? '-top-24 px-6 py-2.5' : '-top-16 px-6 py-2.5 rounded-full'"
-        :style="{ boxShadow: '0 8px 24px -4px var(--theme-glow)' }"
+        class="absolute left-1/2 -translate-x-1/2 rounded-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border-highlight)] backdrop-blur-md shadow-lg flex items-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 max-w-[88vw] group overflow-hidden"
+        :class="playerStore.lyricDisplayLines === 2 ? '-top-22 px-5 py-2' : '-top-15 px-5 py-2'"
+        :style="{
+          boxShadow: '0 8px 24px -4px var(--theme-glow)',
+          minWidth: '180px'
+        }"
         @click="playerStore.showFullscreen = true"
         title="点击进入全屏沉浸歌词"
       >
+        <!-- 动态律动音浪指示标 (播放时跳动，暂停时静态微光) -->
+        <div v-if="playerStore.isPlaying" class="flex items-end gap-0.5 h-3 shrink-0">
+          <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-1" />
+          <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-2" />
+          <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-3" />
+        </div>
         <span
-          class="w-2.5 h-2.5 rounded-full animate-pulse shrink-0"
-          :style="{ background: 'var(--theme-accent)', boxShadow: '0 0 10px var(--theme-glow)' }"
+          v-else
+          class="w-2 h-2 rounded-full shrink-0"
+          :style="{ background: 'var(--theme-accent)', opacity: 0.7 }"
         ></span>
+
         <div class="relative overflow-hidden flex flex-col justify-center max-w-[72vw] text-left">
-          <!-- 当前行歌词（平滑滚动翻滚） -->
-          <div class="h-6 flex items-center overflow-hidden">
-            <Transition name="lyric-scroll" mode="out-in">
+          <!-- 当前行歌词（平滑无缝滚动置换） -->
+          <div class="h-6 relative flex items-center overflow-hidden min-w-[120px]">
+            <Transition name="lyric-scroll">
               <span
                 :key="currentLyricText"
-                class="truncate tracking-wide block select-none text-sm sm:text-base font-bold"
+                class="truncate tracking-wide block select-none text-sm sm:text-base font-bold whitespace-nowrap"
                 :style="{ color: 'var(--theme-accent)' }"
               >
                 {{ currentLyricText }}
@@ -245,9 +256,9 @@ async function toggleMiniPlayer() {
             </Transition>
           </div>
           <!-- 双行模式下的下一句微透明预览歌词 -->
-          <div v-if="playerStore.lyricDisplayLines === 2" class="h-5 flex items-center overflow-hidden mt-0.5">
-            <Transition name="lyric-scroll" mode="out-in">
-              <span :key="nextLyricText" class="truncate tracking-wide block select-none text-xs sm:text-sm text-[var(--theme-text-secondary)] font-medium">
+          <div v-if="playerStore.lyricDisplayLines === 2" class="h-5 relative flex items-center overflow-hidden mt-0.5 min-w-[120px]">
+            <Transition name="lyric-scroll">
+              <span :key="nextLyricText" class="truncate tracking-wide block select-none text-xs sm:text-sm text-[var(--theme-text-secondary)] font-medium whitespace-nowrap">
                 {{ nextLyricText || '⋯' }}
               </span>
             </Transition>
@@ -421,18 +432,29 @@ async function toggleMiniPlayer() {
 </template>
 
 <style scoped>
-.lyric-scroll-enter-active,
+.lyric-scroll-enter-active {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease, filter 0.32s ease;
+}
+
 .lyric-scroll-leave-active {
-  transition: all 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, filter 0.28s ease;
+  pointer-events: none;
 }
 
 .lyric-scroll-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(12px);
+  filter: blur(2px);
 }
 
 .lyric-scroll-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-12px);
+  filter: blur(2px);
 }
 </style>

@@ -32,9 +32,11 @@ import {
 } from 'lucide-vue-next'
 import type { VisualizerMode } from './AudioSpectrumVisualizer.vue'
 import VinylSpectrumVisualizer from './VinylSpectrumVisualizer.vue'
+import { useThemeStore } from '../stores/theme'
 
 const playerStore = usePlayerStore()
 const serverStore = useServerStore()
+const themeStore = useThemeStore()
 const lyricsContainer = ref<HTMLElement | null>(null)
 const mobileLyricsContainer = ref<HTMLElement | null>(null)
 const showSleepMenu = ref(false)
@@ -174,27 +176,36 @@ watch(
     <Transition name="fullscreen-slide">
       <div
         v-if="playerStore.showFullscreen && playerStore.currentTrack"
-        class="fixed inset-0 z-50 bg-[#07070b] flex flex-col justify-between px-4 py-3 sm:p-6 md:p-8 overflow-hidden select-none preserve-contrast"
-        data-preserve-theme="dark"
+        class="fixed inset-0 z-50 flex flex-col justify-between px-4 py-3 sm:p-6 md:p-8 overflow-hidden select-none transition-colors duration-500"
         :style="{
+          backgroundColor: 'var(--theme-bg)',
+          color: 'var(--theme-text-primary)',
           paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))',
           paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
         }"
       >
-        <!-- Apple Music 风格动态极光背景与粒子流光 -->
-        <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+        <!-- Apple Music 风格动态极光背景与粒子流光 (随主题自适应光色与背景) -->
+        <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none transition-colors duration-700">
           <div
             class="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] bg-cover bg-center opacity-30 blur-[100px] scale-125 animate-pulse-slow"
             :style="{ backgroundImage: `url(${coverUrl})` }"
           />
-          <div class="absolute inset-0 bg-neutral-950/75 backdrop-blur-2xl" />
+          <div class="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] rounded-full blur-[140px] opacity-60 animate-pulse" :style="{ backgroundColor: 'var(--theme-aurora-1)' }" />
+          <div class="absolute top-[30%] -right-[15%] w-[550px] h-[550px] rounded-full blur-[140px] opacity-50" :style="{ backgroundColor: 'var(--theme-aurora-2)' }" />
+          <div class="absolute -bottom-[20%] left-[20%] w-[650px] h-[650px] rounded-full blur-[150px] opacity-40" :style="{ backgroundColor: 'var(--theme-aurora-3)' }" />
+          <div
+            class="absolute inset-0 backdrop-blur-2xl transition-colors duration-500"
+            :style="{
+              backgroundColor: themeStore.isLight ? 'rgba(255, 255, 255, 0.76)' : 'rgba(7, 9, 15, 0.82)'
+            }"
+          />
           <ParticleBackground :density="45" />
         </div>
 
         <!-- 顶部导航与功能栏 -->
         <div class="flex items-center justify-between relative z-20">
           <button
-            class="p-2 rounded-full hover:bg-white/10 active:scale-90 transition cursor-pointer text-neutral-300"
+            class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition cursor-pointer text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]"
             title="收起播放器"
             @click="playerStore.showFullscreen = false"
           >
@@ -203,27 +214,36 @@ watch(
 
           <!-- 桌面端音质徽章 -->
           <div class="hidden md:flex items-center gap-2">
-            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-sm">
+            <span
+              class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase border shadow-sm"
+              :style="{
+                backgroundColor: 'var(--theme-surface)',
+                borderColor: 'var(--theme-border-highlight)',
+                color: 'var(--theme-accent)'
+              }"
+            >
               <Sparkles class="w-3 h-3" />
               {{ playerStore.currentTrack.suffix || 'FLAC' }} LOSSLESS
             </span>
-            <span v-if="playerStore.currentTrack.bitRate" class="text-[11px] text-neutral-400 font-mono">
+            <span v-if="playerStore.currentTrack.bitRate" class="text-[11px] text-[var(--theme-text-secondary)] font-mono">
               {{ playerStore.currentTrack.bitRate }} kbps
             </span>
           </div>
 
           <!-- 移动端专属：【唱片 / 歌词】快速切换药丸胶囊 -->
-          <div class="flex md:hidden items-center p-0.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-md">
+          <div class="flex md:hidden items-center p-0.5 rounded-full bg-black/5 dark:bg-white/10 border border-[var(--theme-border)] backdrop-blur-md">
             <button
               class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer"
-              :class="mobileView === 'vinyl' ? 'bg-emerald-500 text-neutral-950 font-bold shadow-md' : 'text-neutral-400 hover:text-white'"
+              :class="mobileView === 'vinyl' ? 'font-bold shadow-md' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'"
+              :style="mobileView === 'vinyl' ? { background: 'var(--theme-accent)', color: themeStore.isLight ? '#ffffff' : '#0a0c13' } : {}"
               @click="mobileView = 'vinyl'"
             >
               <Disc class="w-3.5 h-3.5" /> 歌曲
             </button>
             <button
               class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer"
-              :class="mobileView === 'lyrics' ? 'bg-emerald-500 text-neutral-950 font-bold shadow-md' : 'text-neutral-400 hover:text-white'"
+              :class="mobileView === 'lyrics' ? 'font-bold shadow-md' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'"
+              :style="mobileView === 'lyrics' ? { background: 'var(--theme-accent)', color: themeStore.isLight ? '#ffffff' : '#0a0c13' } : {}"
               @click="mobileView = 'lyrics'"
             >
               <FileText class="w-3.5 h-3.5" /> 歌词
@@ -233,31 +253,31 @@ watch(
           <!-- 桌面端右上角工具栏 (平铺) -->
           <div class="hidden md:flex items-center gap-2 relative">
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
               title="加入歌单"
               @click="showAddToPlaylistModal = true"
             >
-              <FolderPlus class="w-5 h-5 text-neutral-300 hover:text-emerald-400" />
+              <FolderPlus class="w-5 h-5" />
             </button>
 
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
               title="查看歌曲文件属性与物理存储信息"
               @click="showTrackInfoModal = true"
             >
-              <Info class="w-5 h-5 text-neutral-300 hover:text-emerald-400" />
+              <Info class="w-5 h-5" />
             </button>
 
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
               title="搜索替换当前歌词"
               @click="showLyricSearchModal = true"
             >
-              <FileSearch class="w-5 h-5 text-emerald-400" />
+              <FileSearch class="w-5 h-5" />
             </button>
 
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
               title="音效均衡器"
               @click="playerStore.showEQModal = true"
             >
@@ -266,15 +286,16 @@ watch(
 
             <!-- 睡眠定时器按钮 -->
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer relative"
-              :class="{ 'text-emerald-400': playerStore.sleepTimerSecondsLeft > 0 }"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer relative"
+              :style="playerStore.sleepTimerSecondsLeft > 0 ? { color: 'var(--theme-accent)' } : {}"
               title="睡眠定时器"
               @click="showSleepMenu = !showSleepMenu"
             >
               <Moon class="w-5 h-5" />
               <span
                 v-if="playerStore.sleepTimerSecondsLeft > 0"
-                class="absolute -top-1 -right-1 text-[9px] bg-emerald-500 text-neutral-950 font-bold px-1 rounded-full font-mono"
+                class="absolute -top-1 -right-1 text-[9px] font-bold px-1 rounded-full font-mono"
+                :style="{ background: 'var(--theme-accent)', color: themeStore.isLight ? '#ffffff' : '#0a0c13' }"
               >
                 {{ Math.ceil(playerStore.sleepTimerSecondsLeft / 60) }}m
               </span>
@@ -284,22 +305,23 @@ watch(
           <!-- 移动端右上角工具栏 (睡眠定时器 + 更多菜单折叠) -->
           <div class="flex md:hidden items-center gap-1 relative">
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white active:scale-90 transition cursor-pointer relative"
-              :class="{ 'text-emerald-400': playerStore.sleepTimerSecondsLeft > 0 }"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] active:scale-90 transition cursor-pointer relative"
+              :style="playerStore.sleepTimerSecondsLeft > 0 ? { color: 'var(--theme-accent)' } : {}"
               title="睡眠定时器"
               @click="showSleepMenu = !showSleepMenu; showMobileMore = false"
             >
               <Moon class="w-5 h-5" />
               <span
                 v-if="playerStore.sleepTimerSecondsLeft > 0"
-                class="absolute -top-0.5 -right-0.5 text-[8px] bg-emerald-500 text-neutral-950 font-bold px-1 rounded-full font-mono"
+                class="absolute -top-0.5 -right-0.5 text-[8px] font-bold px-1 rounded-full font-mono"
+                :style="{ background: 'var(--theme-accent)', color: themeStore.isLight ? '#ffffff' : '#0a0c13' }"
               >
                 {{ Math.ceil(playerStore.sleepTimerSecondsLeft / 60) }}m
               </span>
             </button>
 
             <button
-              class="p-2 rounded-full text-neutral-300 hover:text-white active:scale-90 transition cursor-pointer"
+              class="p-2 rounded-full text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)] active:scale-90 transition cursor-pointer"
               title="更多操作"
               @click="showMobileMore = !showMobileMore; showSleepMenu = false"
             >
@@ -309,31 +331,31 @@ watch(
             <!-- 移动端更多操作折叠弹窗 -->
             <div
               v-if="showMobileMore"
-              class="absolute top-12 right-0 bg-neutral-900/95 border border-neutral-700/80 rounded-2xl p-2 shadow-2xl space-y-1 w-44 z-50 backdrop-blur-xl animate-fade-in"
+              class="absolute top-12 right-0 bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-2xl p-2 shadow-2xl space-y-1 w-44 z-50 backdrop-blur-xl animate-fade-in"
             >
               <button
-                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 text-[var(--theme-text-primary)] cursor-pointer"
                 @click="showAddToPlaylistModal = true; showMobileMore = false"
               >
-                <FolderPlus class="w-4 h-4 text-emerald-400" /> 加入歌单
+                <FolderPlus class="w-4 h-4 text-[var(--theme-accent)]" /> 加入歌单
               </button>
               <button
-                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 text-[var(--theme-text-primary)] cursor-pointer"
                 @click="showLyricSearchModal = true; showMobileMore = false"
               >
-                <FileSearch class="w-4 h-4 text-emerald-400" /> 搜索替换歌词
+                <FileSearch class="w-4 h-4 text-[var(--theme-accent)]" /> 搜索替换歌词
               </button>
               <button
-                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 text-[var(--theme-text-primary)] cursor-pointer"
                 @click="playerStore.showEQModal = true; showMobileMore = false"
               >
-                <Sliders class="w-4 h-4 text-emerald-400" /> 音效均衡器
+                <Sliders class="w-4 h-4 text-[var(--theme-accent)]" /> 音效均衡器
               </button>
               <button
-                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-neutral-800 text-neutral-200 cursor-pointer"
+                class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 text-[var(--theme-text-primary)] cursor-pointer"
                 @click="showTrackInfoModal = true; showMobileMore = false"
               >
-                <Info class="w-4 h-4 text-neutral-400" /> 歌曲属性详情
+                <Info class="w-4 h-4 text-[var(--theme-text-secondary)]" /> 歌曲属性详情
               </button>
             </div>
           </div>
@@ -341,16 +363,14 @@ watch(
           <!-- 睡眠定时器选择下拉 (共用) -->
           <div
             v-if="showSleepMenu"
-            class="absolute top-12 right-0 bg-neutral-900/95 border border-neutral-700/80 rounded-2xl p-2 shadow-2xl space-y-1 w-36 z-50 backdrop-blur-xl animate-fade-in"
+            class="absolute top-12 right-0 bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-2xl p-2 shadow-2xl space-y-1 w-36 z-50 backdrop-blur-xl animate-fade-in"
           >
-            <div class="text-[10px] text-neutral-400 font-bold px-2 py-1">定时关闭</div>
+            <div class="text-[10px] text-[var(--theme-text-secondary)] font-bold px-2 py-1">定时关闭</div>
             <button
               v-for="min in [0, 15, 30, 45, 60]"
               :key="min"
-              class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-neutral-800 transition cursor-pointer"
-              :class="[
-                playerStore.sleepTimerMinutes === min ? 'text-emerald-400 font-bold' : 'text-neutral-300',
-              ]"
+              class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
+              :style="playerStore.sleepTimerMinutes === min ? { color: 'var(--theme-accent)', fontWeight: 'bold' } : { color: 'var(--theme-text-secondary)' }"
               @click="playerStore.setSleepTimer(min); showSleepMenu = false"
             >
               {{ min === 0 ? '关闭定时器' : `${min} 分钟后停止` }}
@@ -371,14 +391,13 @@ watch(
               title="点击切换全屏歌词"
               @click="mobileView = 'lyrics'"
             >
-              <!-- 环境律动光晕 -->
+              <!-- 环境律动光晕 (随主题动态变幻) -->
               <div
                 class="absolute -inset-2 rounded-full blur-xl pointer-events-none transition-all duration-700"
-                :class="[
-                  playerStore.isPlaying
-                    ? 'bg-gradient-to-tr from-emerald-500/30 via-teal-400/25 to-sky-500/30 opacity-100 scale-105'
-                    : 'bg-emerald-500/5 opacity-40 scale-100'
-                ]"
+                :style="{
+                  background: playerStore.isPlaying ? 'radial-gradient(circle, var(--theme-glow) 0%, transparent 70%)' : 'transparent',
+                  opacity: playerStore.isPlaying ? 1 : 0.2
+                }"
               />
 
               <!-- 黑胶唱片环形辐射律动特效 -->
@@ -386,9 +405,12 @@ watch(
 
               <!-- 黑胶唱盘圆盘 -->
               <div
-                class="w-full h-full rounded-full bg-neutral-950 p-2 shadow-[0_15px_40px_rgba(0,0,0,0.9)] border border-white/10 relative flex items-center justify-center"
-                :class="[playerStore.isPlaying ? 'animate-vinyl shadow-[0_0_30px_rgba(16,185,129,0.3)]' : '']"
-                style="background: radial-gradient(circle, #1a1a1a 0%, #0d0d0d 40%, #151515 70%, #000 100%);"
+                class="w-full h-full rounded-full bg-neutral-950 p-2 border border-white/10 relative flex items-center justify-center transition-all duration-500"
+                :class="[playerStore.isPlaying ? 'animate-vinyl' : '']"
+                :style="{
+                  background: 'radial-gradient(circle, #1a1a1a 0%, #0d0d0d 40%, #151515 70%, #000 100%)',
+                  boxShadow: playerStore.isPlaying ? '0 0 32px var(--theme-glow)' : '0 15px 40px rgba(0,0,0,0.6)'
+                }"
               >
                 <div class="absolute inset-1.5 rounded-full border border-white/[0.04] pointer-events-none" />
                 <div class="absolute inset-4 rounded-full border border-white/[0.03] pointer-events-none" />
@@ -406,8 +428,8 @@ watch(
 
             <!-- 歌曲标题与歌手 -->
             <div class="text-center px-4 max-w-sm mt-2">
-              <h2 class="text-lg font-bold text-white tracking-tight truncate leading-tight">{{ playerStore.currentTrack.title }}</h2>
-              <p class="text-xs font-medium text-neutral-400 mt-1 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
+              <h2 class="text-lg font-bold text-[var(--theme-text-primary)] tracking-tight truncate leading-tight">{{ playerStore.currentTrack.title }}</h2>
+              <p class="text-xs font-medium text-[var(--theme-text-secondary)] mt-1 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
             </div>
 
             <!-- 动态律动频谱仪 -->
@@ -418,13 +440,14 @@ watch(
             <!-- 唱片下方实时歌词浮动胶囊 (轻触直接切入全屏歌词模式) -->
             <div
               v-if="currentLyricText"
-              class="mx-4 px-4 py-2 rounded-full bg-neutral-900/90 border border-emerald-500/30 flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition max-w-[85vw]"
+              class="mx-4 px-4 py-2 rounded-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border-highlight)] flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition max-w-[85vw]"
+              :style="{ boxShadow: '0 4px 16px -2px var(--theme-glow)' }"
               @click="mobileView = 'lyrics'"
             >
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-              <span class="text-xs text-emerald-300 font-medium truncate select-none">{{ currentLyricText }}</span>
+              <span class="w-2 h-2 rounded-full animate-pulse shrink-0" :style="{ background: 'var(--theme-accent)' }" />
+              <span class="text-xs font-semibold truncate select-none" :style="{ color: 'var(--theme-accent)' }">{{ currentLyricText }}</span>
             </div>
-            <div v-else class="text-[11px] text-neutral-500">轻触唱片进入歌词视图</div>
+            <div v-else class="text-[11px] text-[var(--theme-text-muted)]">轻触唱片进入歌词视图</div>
           </div>
 
           <!-- 移动端视图 B: 沉浸式多行高亮滚动歌词 -->
@@ -441,19 +464,28 @@ watch(
                 class="transition-all duration-300 cursor-pointer font-medium max-w-md leading-relaxed lyric-text w-full text-center"
                 :class="[
                   idx === playerStore.currentLyricIndex
-                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white text-lg sm:text-xl font-extrabold scale-105 drop-shadow-[0_0_15px_rgba(16,185,129,0.4)]'
-                    : 'text-neutral-500 text-sm sm:text-base opacity-40 font-normal hover:opacity-80',
+                    ? 'text-transparent bg-clip-text font-extrabold scale-105 origin-center text-lg sm:text-xl drop-shadow-md'
+                    : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] text-sm sm:text-base opacity-45 font-normal hover:opacity-85',
                 ]"
+                :style="idx === playerStore.currentLyricIndex ? {
+                  backgroundImage: 'linear-gradient(to right, var(--theme-accent), var(--theme-accent-secondary), var(--theme-text-primary))',
+                  filter: 'drop-shadow(0 0 16px var(--theme-glow))'
+                } : {}"
                 @click="playerStore.seek(line.time)"
               >
                 {{ line.text }}
               </div>
             </template>
-            <div v-else class="text-neutral-500 text-sm my-auto flex flex-col items-center gap-3">
-              <Sparkles class="w-6 h-6 text-emerald-500/50 animate-pulse" />
+            <div v-else class="text-[var(--theme-text-muted)] text-sm my-auto flex flex-col items-center gap-3">
+              <Sparkles class="w-6 h-6 animate-pulse" :style="{ color: 'var(--theme-accent)' }" />
               <span>暂无歌词或为纯音乐</span>
               <button
-                class="mt-1 px-3 py-1 rounded-full text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 transition cursor-pointer flex items-center gap-1"
+                class="mt-1 px-3 py-1 rounded-full text-xs border transition cursor-pointer flex items-center gap-1"
+                :style="{
+                  color: 'var(--theme-accent)',
+                  borderColor: 'var(--theme-border-highlight)',
+                  backgroundColor: 'var(--theme-glow)'
+                }"
                 @click="showLyricSearchModal = true"
               >
                 <FileSearch class="w-3.5 h-3.5" /> 搜索在线歌词
@@ -469,17 +501,19 @@ watch(
             <div class="relative w-[34vmin] h-[34vmin] min-w-[180px] min-h-[180px] max-w-[280px] max-h-[280px] flex items-center justify-center shrink-0">
               <div
                 class="absolute -inset-3 rounded-full blur-xl pointer-events-none transition-all duration-700"
-                :class="[
-                  playerStore.isPlaying
-                    ? 'bg-gradient-to-tr from-emerald-500/25 via-teal-400/20 to-sky-500/25 opacity-100 scale-105'
-                    : 'bg-emerald-500/5 opacity-40 scale-100'
-                ]"
+                :style="{
+                  background: playerStore.isPlaying ? 'radial-gradient(circle, var(--theme-glow) 0%, transparent 70%)' : 'transparent',
+                  opacity: playerStore.isPlaying ? 1 : 0.2
+                }"
               />
               <VinylSpectrumVisualizer />
               <div
-                class="w-full h-full rounded-full bg-neutral-950 p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 relative flex items-center justify-center transition-transform duration-500"
-                :class="[playerStore.isPlaying ? 'animate-vinyl shadow-[0_0_35px_rgba(16,185,129,0.25)]' : '']"
-                style="background: radial-gradient(circle, #1a1a1a 0%, #0d0d0d 40%, #151515 70%, #000 100%);"
+                class="w-full h-full rounded-full bg-neutral-950 p-2.5 border border-white/10 relative flex items-center justify-center transition-all duration-500"
+                :class="[playerStore.isPlaying ? 'animate-vinyl' : '']"
+                :style="{
+                  background: 'radial-gradient(circle, #1a1a1a 0%, #0d0d0d 40%, #151515 70%, #000 100%)',
+                  boxShadow: playerStore.isPlaying ? '0 0 35px var(--theme-glow)' : '0 20px 50px rgba(0,0,0,0.6)'
+                }"
               >
                 <div class="absolute inset-2 rounded-full border border-white/[0.04] pointer-events-none" />
                 <div class="absolute inset-6 rounded-full border border-white/[0.03] pointer-events-none" />
@@ -499,8 +533,8 @@ watch(
             </div>
 
             <div class="mt-4 text-center max-w-sm px-2">
-              <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate drop-shadow-md">{{ playerStore.currentTrack.title }}</h2>
-              <p class="text-xs sm:text-sm font-medium text-neutral-400 mt-1 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--theme-text-primary)] tracking-tight truncate drop-shadow-md">{{ playerStore.currentTrack.title }}</h2>
+              <p class="text-xs sm:text-sm font-medium text-[var(--theme-text-secondary)] mt-1 truncate">{{ playerStore.currentTrack.artist }} · {{ playerStore.currentTrack.album }}</p>
             </div>
 
             <div
@@ -509,7 +543,10 @@ watch(
               :title="`当前动效: ${visualizerModeLabels[visualizerMode]} (点击切换)`"
             >
               <AudioSpectrumVisualizer :mode="visualizerMode" />
-              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-emerald-400/80 font-mono flex items-center gap-1 select-none pointer-events-none">
+              <div
+                class="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-mono flex items-center gap-1 select-none pointer-events-none"
+                :style="{ color: 'var(--theme-accent)' }"
+              >
                 <Activity class="w-2.5 h-2.5" /> 点击切换律动风格
               </div>
             </div>
@@ -528,19 +565,28 @@ watch(
                 class="transition-all duration-300 cursor-pointer font-medium max-w-xl leading-relaxed lyric-text w-full text-center"
                 :class="[
                   idx === playerStore.currentLyricIndex
-                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white text-xl sm:text-2xl font-extrabold scale-105 origin-center drop-shadow-[0_0_16px_rgba(16,185,129,0.35)] tracking-normal'
-                    : 'text-neutral-500 hover:text-neutral-300 text-base sm:text-lg scale-100 opacity-40 font-normal hover:opacity-80',
+                    ? 'text-transparent bg-clip-text font-extrabold scale-105 origin-center text-xl sm:text-2xl tracking-normal drop-shadow-md'
+                    : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] text-base sm:text-lg scale-100 opacity-45 font-normal hover:opacity-85',
                 ]"
+                :style="idx === playerStore.currentLyricIndex ? {
+                  backgroundImage: 'linear-gradient(to right, var(--theme-accent), var(--theme-accent-secondary), var(--theme-text-primary))',
+                  filter: 'drop-shadow(0 0 16px var(--theme-glow))'
+                } : {}"
                 @click="playerStore.seek(line.time)"
               >
                 {{ line.text }}
               </div>
             </template>
-            <div v-else class="text-neutral-500 text-base my-auto mx-auto flex flex-col items-center gap-3">
-              <Sparkles class="w-7 h-7 text-emerald-500/50 animate-pulse" />
+            <div v-else class="text-[var(--theme-text-muted)] text-base my-auto mx-auto flex flex-col items-center gap-3">
+              <Sparkles class="w-7 h-7 animate-pulse" :style="{ color: 'var(--theme-accent)' }" />
               <span class="font-medium tracking-wide">沉浸纯音乐旋律</span>
               <button
-                class="mt-1 px-3 py-1 rounded-full text-xs text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition cursor-pointer flex items-center gap-1"
+                class="mt-1 px-3 py-1 rounded-full text-xs border transition cursor-pointer flex items-center gap-1"
+                :style="{
+                  color: 'var(--theme-accent)',
+                  borderColor: 'var(--theme-border-highlight)',
+                  backgroundColor: 'var(--theme-glow)'
+                }"
                 @click="showLyricSearchModal = true"
               >
                 <FileSearch class="w-3.5 h-3.5" /> 搜索在线歌词
@@ -552,7 +598,7 @@ watch(
         <!-- ==================== 底部：全功能控制条 (桌面端与移动端按需分流) ==================== -->
         <div class="max-w-xl mx-auto w-full space-y-3 pt-2">
           <!-- 进度条 -->
-          <div class="flex items-center gap-2.5 w-full text-xs text-neutral-400 font-mono">
+          <div class="flex items-center gap-2.5 w-full text-xs text-[var(--theme-text-secondary)] font-mono">
             <span class="w-9 text-right text-[11px]">{{ formatTime(playerStore.currentTime) }}</span>
             <input
               type="range"
@@ -560,9 +606,10 @@ watch(
               :max="(playerStore.duration && isFinite(playerStore.duration) && playerStore.duration > 0) ? playerStore.duration : (playerStore.currentTrack?.duration || 100)"
               :value="playerStore.currentTime"
               @input="onProgressChange"
-              class="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
+              class="w-full h-1.5 rounded-lg appearance-none cursor-pointer hover:h-2 transition-all shadow-inner"
               :style="{
-                background: `linear-gradient(to right, #10b981 0%, #10b981 ${progressPercent}%, rgba(255, 255, 255, 0.18) ${progressPercent}%, rgba(255, 255, 255, 0.18) 100%)`
+                accentColor: 'var(--theme-accent)',
+                background: `linear-gradient(to right, var(--theme-accent) 0%, var(--theme-accent) ${progressPercent}%, var(--theme-border) ${progressPercent}%, var(--theme-border) 100%)`
               }"
             />
             <span class="w-9 text-[11px]">{{ formatTime(playerStore.duration || playerStore.currentTrack?.duration) }}</span>
@@ -572,30 +619,35 @@ watch(
           <div class="flex items-center justify-between px-2">
             <!-- 播放模式切换 -->
             <button
-              class="text-neutral-400 hover:text-white transition-all cursor-pointer p-2 rounded-xl active:scale-90"
-              :class="{ 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]': playerStore.playMode !== 'sequence' }"
+              class="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] transition-all cursor-pointer p-2 rounded-xl active:scale-90"
+              :style="playerStore.playMode !== 'sequence' ? { color: 'var(--theme-accent)', filter: 'drop-shadow(0 0 8px var(--theme-glow))' } : {}"
               @click="playerStore.togglePlayMode"
               :title="playerStore.playMode === 'sequence' ? '列表循环' : (playerStore.playMode === 'single' ? '单曲循环' : '随机播放')"
             >
               <Shuffle v-if="playerStore.playMode === 'random'" class="w-5 h-5" />
-              <Repeat1 v-else-if="playerStore.playMode === 'single'" class="w-5 h-5 text-emerald-400" />
+              <Repeat1 v-else-if="playerStore.playMode === 'single'" class="w-5 h-5" />
               <Repeat v-else class="w-5 h-5" />
             </button>
 
             <!-- 核心播放三联键 -->
             <div class="flex items-center gap-6 sm:gap-7">
-              <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev" title="上一首">
+              <button class="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.prev" title="上一首">
                 <SkipBack class="w-7 h-7 fill-current" />
               </button>
               <button
-                class="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-neutral-950 flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:shadow-[0_0_35px_rgba(16,185,129,0.8)] hover:scale-105 active:scale-90 transition duration-200 cursor-pointer font-bold"
+                class="h-14 w-14 rounded-full flex items-center justify-center hover:scale-105 active:scale-90 transition duration-200 cursor-pointer font-bold"
+                :style="{
+                  background: 'linear-gradient(135deg, var(--theme-accent), var(--theme-accent-secondary))',
+                  color: themeStore.isLight ? '#ffffff' : '#0a0c13',
+                  boxShadow: '0 0 25px var(--theme-glow)'
+                }"
                 @click="playerStore.togglePlay"
                 :title="playerStore.isPlaying ? '暂停' : '播放'"
               >
                 <Pause v-if="playerStore.isPlaying" class="w-7 h-7 fill-current" />
                 <Play v-else class="w-7 h-7 fill-current ml-1" />
               </button>
-              <button class="text-neutral-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next" title="下一首">
+              <button class="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:scale-110 active:scale-95 transition cursor-pointer p-1" @click="playerStore.next" title="下一首">
                 <SkipForward class="w-7 h-7 fill-current" />
               </button>
             </div>
@@ -604,12 +656,12 @@ watch(
             <div class="flex items-center gap-2">
               <div class="hidden md:flex items-center gap-2">
                 <button
-                  class="text-neutral-400 hover:text-white transition-colors cursor-pointer p-1"
+                  class="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] transition-colors cursor-pointer p-1"
                   @click="toggleMute"
                   :title="playerStore.volume === 0 ? '取消静音' : '静音'"
                 >
                   <VolumeX v-if="playerStore.volume === 0" class="w-4 h-4 text-rose-400" />
-                  <Volume2 v-else class="w-4 h-4 text-neutral-400 hover:text-emerald-400" />
+                  <Volume2 v-else class="w-4 h-4 text-[var(--theme-text-secondary)] hover:text-[var(--theme-accent)]" />
                 </button>
                 <input
                   type="range"
@@ -618,15 +670,16 @@ watch(
                   step="0.01"
                   :value="playerStore.volume"
                   @input="onVolumeChange"
-                  class="w-20 h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:h-2 transition-all shadow-inner"
+                  class="w-20 h-1.5 rounded-lg appearance-none cursor-pointer hover:h-2 transition-all shadow-inner"
                   :style="{
-                    background: `linear-gradient(to right, #10b981 0%, #10b981 ${playerStore.volume * 100}%, rgba(255, 255, 255, 0.18) ${playerStore.volume * 100}%, rgba(255, 255, 255, 0.18) 100%)`
+                    accentColor: 'var(--theme-accent)',
+                    background: `linear-gradient(to right, var(--theme-accent) 0%, var(--theme-accent) ${playerStore.volume * 100}%, var(--theme-border) ${playerStore.volume * 100}%, var(--theme-border) 100%)`
                   }"
                 />
               </div>
 
               <button
-                class="text-neutral-400 hover:text-white transition-all cursor-pointer p-2 rounded-xl hover:bg-white/5 active:scale-90"
+                class="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] transition-all cursor-pointer p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 active:scale-90"
                 @click="playerStore.showQueueDrawer = true"
                 title="播放队列"
               >

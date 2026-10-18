@@ -47,6 +47,17 @@ for (let i = 0; i < 40; i++) {
 
 let flowPhase = 0
 
+function getThemeColors() {
+  if (typeof document === 'undefined') {
+    return { accent: '#10b981', accentSec: '#06b6d4', glow: 'rgba(16, 185, 129, 0.4)' }
+  }
+  const rootStyle = getComputedStyle(document.documentElement)
+  const accent = rootStyle.getPropertyValue('--theme-accent').trim() || '#10b981'
+  const accentSec = rootStyle.getPropertyValue('--theme-accent-secondary').trim() || '#06b6d4'
+  const glow = rootStyle.getPropertyValue('--theme-glow').trim() || 'rgba(16, 185, 129, 0.4)'
+  return { accent, accentSec, glow }
+}
+
 function render() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -142,9 +153,11 @@ function renderNeonLightFloor(
   const baseLineY = height * 0.65
   const stepX = width / barCount
   const barWidth = stepX * 0.48
+  const { accent, accentSec } = getThemeColors()
 
   // 1. 地坪流星扩散线
-  for (let s of sparks) {
+  for (let i = 0; i < sparks.length; i++) {
+    const s = sparks[i]
     if (playerStore.isPlaying) {
       s.y += s.speed
       if (s.y > height) {
@@ -157,26 +170,26 @@ function renderNeonLightFloor(
     ctx.beginPath()
     ctx.moveTo(s.x, s.y)
     ctx.lineTo(s.x, s.y + rayLength)
-    ctx.strokeStyle = s.color
+    ctx.strokeStyle = i % 2 === 0 ? accent : accentSec
     ctx.lineWidth = 1.2 * perspectiveScale
     ctx.stroke()
   }
 
   // 2. 地坪对称激光基线
   const baseGrad = ctx.createLinearGradient(0, baseLineY, width, baseLineY)
-  baseGrad.addColorStop(0, 'rgba(168, 85, 247, 0.3)')
-  baseGrad.addColorStop(0.3, 'rgba(236, 72, 153, 0.95)')
-  baseGrad.addColorStop(0.5, 'rgba(255, 255, 255, 1)')
-  baseGrad.addColorStop(0.7, 'rgba(236, 72, 153, 0.95)')
-  baseGrad.addColorStop(1, 'rgba(168, 85, 247, 0.3)')
+  baseGrad.addColorStop(0, 'transparent')
+  baseGrad.addColorStop(0.3, accentSec)
+  baseGrad.addColorStop(0.5, '#ffffff')
+  baseGrad.addColorStop(0.7, accentSec)
+  baseGrad.addColorStop(1, 'transparent')
 
   ctx.beginPath()
   ctx.moveTo(0, baseLineY)
   ctx.lineTo(width, baseLineY)
   ctx.strokeStyle = baseGrad
-  ctx.lineWidth = 3
-  ctx.shadowColor = '#ec4899'
-  ctx.shadowBlur = 12
+  ctx.lineWidth = 2.5
+  ctx.shadowColor = accent
+  ctx.shadowBlur = 10
   ctx.stroke()
   ctx.shadowBlur = 0
 
@@ -187,9 +200,9 @@ function renderNeonLightFloor(
     const topY = baseLineY - val
 
     const colGrad = ctx.createLinearGradient(0, topY, 0, baseLineY)
-    colGrad.addColorStop(0, i % 2 === 0 ? 'rgba(56, 189, 248, 1)' : 'rgba(244, 63, 94, 1)')
-    colGrad.addColorStop(0.7, i % 2 === 0 ? 'rgba(168, 85, 247, 0.85)' : 'rgba(236, 72, 153, 0.85)')
-    colGrad.addColorStop(1, 'rgba(255, 255, 255, 1)')
+    colGrad.addColorStop(0, i % 2 === 0 ? accent : accentSec)
+    colGrad.addColorStop(0.7, i % 2 === 0 ? accentSec : accent)
+    colGrad.addColorStop(1, '#ffffff')
 
     ctx.fillStyle = colGrad
     ctx.beginPath()
@@ -201,7 +214,7 @@ function renderNeonLightFloor(
       ctx.beginPath()
       ctx.arc(x + barWidth / 2, topY, barWidth * 0.65, 0, Math.PI * 2)
       ctx.fillStyle = '#ffffff'
-      ctx.shadowColor = i % 2 === 0 ? '#38bdf8' : '#f43f5e'
+      ctx.shadowColor = i % 2 === 0 ? accent : accentSec
       ctx.shadowBlur = 8
       ctx.fill()
       ctx.shadowBlur = 0
@@ -221,6 +234,7 @@ function renderNeonGlowLine(
 ) {
   const stepX = width / barCount
   const barWidth = stepX * 0.45
+  const { accent, accentSec } = getThemeColors()
 
   // 1. 底层密集频柱
   for (let i = 0; i < barCount; i++) {
@@ -229,16 +243,18 @@ function renderNeonGlowLine(
     const topY = centerY - val
 
     const grad = ctx.createLinearGradient(0, topY, 0, centerY)
-    grad.addColorStop(0, 'rgba(244, 63, 94, 0.95)')
-    grad.addColorStop(0.5, 'rgba(217, 70, 239, 0.75)')
-    grad.addColorStop(1, 'rgba(168, 85, 247, 0.3)')
+    grad.addColorStop(0, accent)
+    grad.addColorStop(0.5, accentSec)
+    grad.addColorStop(1, 'transparent')
 
     ctx.fillStyle = grad
     ctx.fillRect(x, topY, barWidth, val)
 
     // 水面倒影
-    ctx.fillStyle = 'rgba(217, 70, 239, 0.15)'
+    ctx.fillStyle = accentSec
+    ctx.globalAlpha = 0.15
     ctx.fillRect(x, centerY, barWidth, val * 0.35)
+    ctx.globalAlpha = 1.0
   }
 
   // 2. 表层贯穿白亮发光轮廓曲线
@@ -255,7 +271,7 @@ function renderNeonGlowLine(
 
   ctx.strokeStyle = '#ffffff'
   ctx.lineWidth = 2.2
-  ctx.shadowColor = '#d946ef'
+  ctx.shadowColor = accentSec
   ctx.shadowBlur = 12
   ctx.stroke()
   ctx.shadowBlur = 0
@@ -264,7 +280,7 @@ function renderNeonGlowLine(
   ctx.beginPath()
   ctx.moveTo(0, centerY)
   ctx.lineTo(width, centerY)
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'
   ctx.lineWidth = 1
   ctx.stroke()
 }
@@ -281,6 +297,7 @@ function renderAuroraMirror(
   const totalBarWidthRatio = 0.65
   const barWidth = (width / barCount) * totalBarWidthRatio
   const gap = (width / barCount) * (1 - totalBarWidthRatio)
+  const { accent, accentSec } = getThemeColors()
 
   for (let i = 0; i < barCount; i++) {
     const val = Math.max(2.0, smoothedHeights[i])
@@ -289,11 +306,9 @@ function renderAuroraMirror(
     const barTotalHeight = val * 2
 
     const grad = ctx.createLinearGradient(0, topY, 0, topY + barTotalHeight)
-    grad.addColorStop(0, 'rgba(56, 189, 248, 0.95)')
-    grad.addColorStop(0.25, 'rgba(20, 184, 166, 0.95)')
-    grad.addColorStop(0.5, 'rgba(16, 185, 129, 1)')
-    grad.addColorStop(0.75, 'rgba(20, 184, 166, 0.95)')
-    grad.addColorStop(1, 'rgba(56, 189, 248, 0.95)')
+    grad.addColorStop(0, accentSec)
+    grad.addColorStop(0.5, accent)
+    grad.addColorStop(1, accentSec)
 
     ctx.fillStyle = grad
     ctx.beginPath()
