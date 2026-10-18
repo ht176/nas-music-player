@@ -898,7 +898,7 @@ onUnmounted(() => {
             <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
               <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">AuraMusic · 极光私有音乐</h2>
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 whitespace-nowrap">
-                v1.0.7
+                v1.0.11
               </span>
             </div>
             <p class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">
