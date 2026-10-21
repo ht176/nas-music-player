@@ -259,17 +259,17 @@ async function handleClearAllCache() {
 
 // 4. 快捷键清单
 const shortcutList = [
-  { key: 'MediaPlayPause / ⌘+Alt+Space', desc: '播放 / 暂停', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
-  { key: 'MediaTrackNext / ⌘+Alt+→', desc: '下一首曲目', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
-  { key: 'MediaTrackPrevious / ⌘+Alt+←', desc: '上一首曲目', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
-  { key: 'Ctrl / ⌘ + Alt + ↑', desc: '全局音量增加 5%', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
-  { key: 'Ctrl / ⌘ + Alt + ↓', desc: '全局音量减小 5%', scope: '系统全局 (任何后台/失焦/迷你窗生效)', isGlobal: true },
-  { key: 'Space (空格键)', desc: '播放 / 暂停', scope: '窗口聚焦', isGlobal: false },
-  { key: 'Ctrl / ⌘ + K', desc: '快速呼出全局搜索弹窗', scope: '窗口聚焦', isGlobal: false },
-  { key: 'Ctrl / ⌘ + →', desc: '切换到下一首曲目', scope: '窗口聚焦', isGlobal: false },
-  { key: 'Ctrl / ⌘ + ←', desc: '切换到上一首曲目', scope: '窗口聚焦', isGlobal: false },
-  { key: 'Ctrl / ⌘ + ↑', desc: '音量增加 5%', scope: '窗口聚焦', isGlobal: false },
-  { key: 'Ctrl / ⌘ + ↓', desc: '音量减小 5%', scope: '窗口聚焦', isGlobal: false },
+  { key: 'MediaPlayPause / ⌘+Alt+Space', desc: '播放 / 暂停', scope: '系统全局', isGlobal: true },
+  { key: 'MediaTrackNext / ⌘+Alt+→', desc: '下一首曲目', scope: '系统全局', isGlobal: true },
+  { key: 'MediaTrackPrevious / ⌘+Alt+←', desc: '上一首曲目', scope: '系统全局', isGlobal: true },
+  { key: 'Ctrl / ⌘ + Alt + ↑', desc: '全局音量增加 5%', scope: '系统全局', isGlobal: true },
+  { key: 'Ctrl / ⌘ + Alt + ↓', desc: '全局音量减小 5%', scope: '系统全局', isGlobal: true },
+  { key: 'Space (空格键)', desc: '播放 / 暂停', scope: '窗口内', isGlobal: false },
+  { key: 'Ctrl / ⌘ + K', desc: '快速呼出全局搜索弹窗', scope: '窗口内', isGlobal: false },
+  { key: 'Ctrl / ⌘ + →', desc: '切换到下一首曲目', scope: '窗口内', isGlobal: false },
+  { key: 'Ctrl / ⌘ + ←', desc: '切换到上一首曲目', scope: '窗口内', isGlobal: false },
+  { key: 'Ctrl / ⌘ + ↑', desc: '音量增加 5%', scope: '窗口内', isGlobal: false },
+  { key: 'Ctrl / ⌘ + ↓', desc: '音量减小 5%', scope: '窗口内', isGlobal: false },
 ]
 
 // 5. 版本检查与更新状态
@@ -915,28 +915,28 @@ onUnmounted(() => {
       <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
         <div class="border-b border-neutral-800 pb-3">
           <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <Keyboard class="w-4 h-4 text-emerald-400 shrink-0" /> 键盘快捷键指南
+            <Keyboard class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 键盘快捷键指南
           </h2>
-          <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">在键盘上随心操控播放、切歌、全局秒级检索</p>
+          <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">系统全局快捷键支持在任何第三方应用、失焦或迷你窗下随心操控</p>
         </div>
 
         <div class="divide-y divide-neutral-800/80">
           <div
             v-for="(item, idx) in shortcutList"
             :key="idx"
-            class="flex items-center justify-between py-3 text-xs gap-3"
+            class="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:py-3.5 text-xs gap-2 sm:gap-4"
           >
             <div class="flex items-center gap-2 min-w-0 flex-wrap">
-              <span class="text-neutral-200 font-medium text-sm">{{ item.desc }}</span>
+              <span class="text-neutral-200 font-semibold text-sm">{{ item.desc }}</span>
               <span
                 class="px-2 py-0.5 rounded text-[10px] font-medium shrink-0 whitespace-nowrap"
-                :class="item.isGlobal ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60'"
+                :class="item.isGlobal ? 'bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60'"
               >
                 {{ item.scope }}
               </span>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="px-2.5 py-1 rounded-lg bg-neutral-950 border border-neutral-800 font-mono text-emerald-400 font-bold tracking-wide shadow-inner text-right shrink-0 whitespace-nowrap">
+            <div class="flex items-center self-start sm:self-center shrink-0">
+              <span class="px-2.5 py-1 rounded-lg bg-neutral-950/80 border border-neutral-800 font-mono text-[var(--theme-accent)] font-bold tracking-wide shadow-inner text-xs whitespace-nowrap">
                 {{ item.key }}
               </span>
             </div>
