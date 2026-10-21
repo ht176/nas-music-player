@@ -217,8 +217,7 @@ async function toggleMiniPlayer() {
         class="absolute left-1/2 -translate-x-1/2 rounded-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border-highlight)] backdrop-blur-md shadow-lg flex items-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 max-w-[88vw] group overflow-hidden"
         :class="playerStore.lyricDisplayLines === 2 ? '-top-22 px-5 py-2.5' : '-top-15 px-5 py-2'"
         :style="{
-          boxShadow: '0 8px 24px -4px var(--theme-glow)',
-          minWidth: '180px'
+          boxShadow: '0 8px 24px -4px var(--theme-glow)'
         }"
         @click="playerStore.showFullscreen = true"
         title="点击进入全屏沉浸歌词"
@@ -235,8 +234,8 @@ async function toggleMiniPlayer() {
           :style="{ background: 'var(--theme-accent)', opacity: 0.7 }"
         ></span>
 
-        <!-- 丝滑连续滚动歌词组件 -->
-        <div class="relative overflow-hidden flex flex-col justify-center max-w-[72vw] text-left min-w-[140px]">
+        <!-- 丝滑连续滚动歌词组件 (放宽歌词栏宽度，杜绝长歌词截断省略号) -->
+        <div class="relative overflow-hidden flex flex-col justify-center w-[280px] sm:w-[380px] md:w-[480px] lg:w-[580px] max-w-[76vw] text-left">
           <LyricTicker
             :lyrics="playerStore.lyrics"
             :active-index="playerStore.currentLyricIndex"

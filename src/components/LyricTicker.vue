@@ -39,7 +39,45 @@ let prevIndex = -1
 
 // 尺寸规范
 const line1H = computed(() => (props.size === 'sm' ? 18 : 24))
-const line2H = computed(() => (props.size === 'sm' ? 15 : 20))
+const line2H = computed(() => {
+  if (props.size === 'sm') {
+    return props.displayLines === 2 ? 15 : 18
+  }
+  return props.displayLines === 2 ? 20 : 24
+})
+
+const typography = computed(() => {
+  if (props.size === 'sm') {
+    if (props.displayLines === 2) {
+      return {
+        line1: 'text-[11px] leading-[18px] font-semibold',
+        line2: 'text-[10px] leading-[15px] font-medium',
+        line3: 'text-[10px] leading-[15px] font-medium',
+      }
+    }
+    return {
+      line1: 'text-[11px] leading-[18px] font-semibold',
+      line2: 'text-[11px] leading-[18px] font-semibold',
+      line3: 'text-[11px] leading-[18px] font-semibold',
+    }
+  }
+
+  // size === 'md'
+  if (props.displayLines === 2) {
+    return {
+      line1: 'text-xs sm:text-sm leading-[20px] font-bold',
+      line2: 'text-xs sm:text-sm leading-[20px] font-medium',
+      line3: 'text-xs sm:text-sm leading-[20px] font-medium',
+    }
+  }
+
+  // 单行模式：line 1 与 line 2 必须具备完全一致的字号、行高与字重，杜绝切换时文字先小后大跳变
+  return {
+    line1: 'text-sm sm:text-base leading-[24px] font-bold',
+    line2: 'text-sm sm:text-base leading-[24px] font-bold',
+    line3: 'text-sm sm:text-base leading-[24px] font-bold',
+  }
+})
 
 const viewportHeight = computed(() => {
   if (props.displayLines === 2) {
@@ -286,9 +324,7 @@ onUnmounted(() => {
     <div
       ref="line1Ref"
       class="absolute left-0 right-0 truncate whitespace-nowrap will-change-transform"
-      :class="[
-        size === 'sm' ? 'text-[11px] leading-[18px] font-semibold' : 'text-sm sm:text-base leading-[24px] font-bold',
-      ]"
+      :class="typography.line1"
       :style="{
         color: 'var(--theme-accent)',
       }"
@@ -300,9 +336,7 @@ onUnmounted(() => {
     <div
       ref="line2Ref"
       class="absolute left-0 right-0 truncate whitespace-nowrap will-change-transform"
-      :class="[
-        size === 'sm' ? 'text-[10px] leading-[15px] font-medium' : 'text-xs sm:text-sm leading-[20px] font-medium',
-      ]"
+      :class="typography.line2"
       :style="{
         color: 'var(--theme-accent)',
         opacity: displayLines === 2 ? 0.6 : 0,
@@ -316,9 +350,7 @@ onUnmounted(() => {
       v-if="displayLines === 2"
       ref="line3Ref"
       class="absolute left-0 right-0 truncate whitespace-nowrap will-change-transform opacity-0"
-      :class="[
-        size === 'sm' ? 'text-[10px] leading-[15px] font-medium' : 'text-xs sm:text-sm leading-[20px] font-medium',
-      ]"
+      :class="typography.line3"
       :style="{
         color: 'var(--theme-accent)',
       }"

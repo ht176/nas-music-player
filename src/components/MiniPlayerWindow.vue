@@ -128,7 +128,7 @@ function handleOpenAddToPlaylist() {
     :class="[
       isCompactDesktop
         ? 'w-full h-full rounded-2xl px-3 py-2 flex flex-col justify-between select-none shadow-[0_16px_36px_rgba(0,0,0,0.65)] relative overflow-hidden transition-colors duration-500'
-        : 'fixed bottom-24 right-6 w-84 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.7)] backdrop-blur-2xl px-3 py-2.5 z-50 animate-fade-in flex flex-col gap-1.5 select-none transition-colors duration-500'
+        : 'fixed bottom-24 right-6 w-92 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.7)] backdrop-blur-2xl px-3.5 py-2.5 z-50 animate-fade-in flex flex-col gap-1.5 select-none transition-colors duration-500'
     ]"
     :style="{
       backgroundColor: 'var(--theme-bg-translucent)',

@@ -360,13 +360,13 @@ onUnmounted(() => {
           <SlidersHorizontal class="w-5 h-5 stroke-[2.2]" />
         </div>
         <div class="min-w-0">
-          <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">系统设置</h1>
-          <p class="text-xs text-neutral-400 mt-0.5 truncate">定制专属音频偏好、个性化主题与本地选项</p>
+          <h1 class="text-xl sm:text-2xl font-extrabold text-[var(--theme-text-primary)] tracking-tight">系统设置</h1>
+          <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 truncate">定制专属音频偏好、个性化主题与本地选项</p>
         </div>
       </div>
 
       <!-- 紧凑分类导航选项卡 (Tabs) -->
-      <div class="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-neutral-900/80 border border-neutral-800/80 overflow-x-auto no-scrollbar">
+      <div class="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-[var(--theme-surface-solid)]/80 border border-[var(--theme-border)] overflow-x-auto no-scrollbar">
         <button
           v-for="t in tabs"
           :key="t.id"
@@ -374,7 +374,7 @@ onUnmounted(() => {
           :class="[
             currentTab === t.id
               ? 'bg-[var(--theme-accent)] text-neutral-950 shadow-md font-bold'
-              : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50',
+              : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-surface-hover)]',
           ]"
           @click="currentTab = t.id"
         >
@@ -387,7 +387,7 @@ onUnmounted(() => {
     <!-- 栏目 0：外观与主题 (Appearance & Themes) -->
     <div v-if="currentTab === 'appearance'" ref="appearanceContainer" class="space-y-5 sm:space-y-6 animate-fade-in">
       <!-- 1. 当前主题高光卡片 -->
-      <div class="glass-card p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl relative overflow-hidden">
+      <div class="glass-card p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl relative overflow-hidden" :style="{ backgroundColor: 'var(--theme-surface)' }">
         <div
           class="absolute -right-8 -top-8 w-44 h-44 rounded-full blur-3xl pointer-events-none opacity-40 transition-colors duration-500"
           :style="{ background: themeStore.currentTheme.colors.accent }"
@@ -398,50 +398,50 @@ onUnmounted(() => {
               <span class="text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30 shrink-0 whitespace-nowrap">
                 ACTIVE THEME
               </span>
-              <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2 flex-wrap">
+              <h2 class="text-lg sm:text-xl font-black text-[var(--theme-text-primary)] flex items-center gap-2 flex-wrap">
                 <span>{{ themeStore.currentTheme.name }}</span>
-                <span class="text-xs font-mono font-normal text-neutral-400 whitespace-nowrap">({{ themeStore.currentTheme.enName }})</span>
+                <span class="text-xs font-mono font-normal text-[var(--theme-text-secondary)] whitespace-nowrap">({{ themeStore.currentTheme.enName }})</span>
               </h2>
             </div>
-            <p class="text-xs text-neutral-400 mt-1.5 leading-relaxed break-words">{{ themeStore.currentTheme.description }}</p>
+            <p class="text-xs text-[var(--theme-text-secondary)] mt-1.5 leading-relaxed break-words">{{ themeStore.currentTheme.description }}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0 self-start sm:self-center">
-            <span class="text-xs font-medium text-neutral-400 whitespace-nowrap">当前主色:</span>
-            <div class="flex items-center gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-neutral-950/60 border border-[var(--theme-border)] shrink-0">
+            <span class="text-xs font-medium text-[var(--theme-text-secondary)] whitespace-nowrap">当前主色:</span>
+            <div class="flex items-center gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-[var(--theme-surface-solid)]/70 border border-[var(--theme-border)] shrink-0">
               <span class="w-3.5 h-3.5 rounded-full shadow-sm shrink-0" :style="{ background: themeStore.currentTheme.colors.accent }"></span>
-              <span class="text-xs font-mono font-semibold text-neutral-200 whitespace-nowrap">{{ themeStore.currentTheme.accentName }}</span>
+              <span class="text-xs font-mono font-semibold text-[var(--theme-text-primary)] whitespace-nowrap">{{ themeStore.currentTheme.accentName }}</span>
             </div>
           </div>
         </div>
 
         <!-- 当前主题色彩流光矩阵概览 -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 relative z-10">
-          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
-            <span class="text-[10px] uppercase font-mono text-neutral-500 block">背景底色 (BG)</span>
+          <div class="p-3 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-[var(--theme-text-muted)] block">背景底色 (BG)</span>
             <div class="flex items-center gap-2 mt-1">
-              <span class="w-3.5 h-3.5 rounded-full border border-white/20" :style="{ background: themeStore.currentTheme.colors.bg }"></span>
-              <span class="text-xs font-mono text-neutral-300 font-bold">{{ themeStore.currentTheme.colors.bg }}</span>
+              <span class="w-3.5 h-3.5 rounded-full border border-[var(--theme-border)]" :style="{ background: themeStore.currentTheme.colors.bg }"></span>
+              <span class="text-xs font-mono text-[var(--theme-text-primary)] font-bold">{{ themeStore.currentTheme.colors.bg }}</span>
             </div>
           </div>
-          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
-            <span class="text-[10px] uppercase font-mono text-neutral-500 block">面板表面 (Surface)</span>
+          <div class="p-3 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-[var(--theme-text-muted)] block">面板表面 (Surface)</span>
             <div class="flex items-center gap-2 mt-1">
-              <span class="w-3.5 h-3.5 rounded-full border border-white/20" :style="{ background: themeStore.currentTheme.colors.surface }"></span>
-              <span class="text-xs font-mono text-neutral-300 font-bold truncate">{{ themeStore.currentTheme.colors.surface }}</span>
+              <span class="w-3.5 h-3.5 rounded-full border border-[var(--theme-border)]" :style="{ background: themeStore.currentTheme.colors.surface }"></span>
+              <span class="text-xs font-mono text-[var(--theme-text-primary)] font-bold truncate">{{ themeStore.currentTheme.colors.surface }}</span>
             </div>
           </div>
-          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
-            <span class="text-[10px] uppercase font-mono text-neutral-500 block">核心强调色 (Accent)</span>
+          <div class="p-3 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-[var(--theme-text-muted)] block">核心强调色 (Accent)</span>
             <div class="flex items-center gap-2 mt-1">
               <span class="w-3.5 h-3.5 rounded-full" :style="{ background: themeStore.currentTheme.colors.accent }"></span>
               <span class="text-xs font-mono font-bold text-[var(--theme-accent)]">{{ themeStore.currentTheme.colors.accent }}</span>
             </div>
           </div>
-          <div class="p-3 rounded-xl bg-neutral-950/50 border border-[var(--theme-border)]">
-            <span class="text-[10px] uppercase font-mono text-neutral-500 block">辅助副色 (Secondary)</span>
+          <div class="p-3 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
+            <span class="text-[10px] uppercase font-mono text-[var(--theme-text-muted)] block">辅助副色 (Secondary)</span>
             <div class="flex items-center gap-2 mt-1">
               <span class="w-3.5 h-3.5 rounded-full" :style="{ background: themeStore.currentTheme.colors.accentSecondary }"></span>
-              <span class="text-xs font-mono font-bold text-neutral-200">{{ themeStore.currentTheme.colors.accentSecondary }}</span>
+              <span class="text-xs font-mono font-bold text-[var(--theme-text-primary)]">{{ themeStore.currentTheme.colors.accentSecondary }}</span>
             </div>
           </div>
         </div>
@@ -451,12 +451,12 @@ onUnmounted(() => {
       <div class="space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <h3 class="text-base font-bold text-[var(--theme-text-primary)] flex items-center gap-2">
               <Layers class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 预设主题风格库
             </h3>
-            <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">精心配比的高级声学调色板，专为夜间与多场景音乐倾听定制</p>
+            <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 leading-relaxed break-words">精心配比的高级声学调色板，专为夜间与多场景音乐倾听定制</p>
           </div>
-          <span class="text-xs font-mono text-neutral-500 font-medium shrink-0 whitespace-nowrap self-start sm:self-center">共 {{ themeStore.presets.length }} 套声学主题</span>
+          <span class="text-xs font-mono text-[var(--theme-text-muted)] font-medium shrink-0 whitespace-nowrap self-start sm:self-center">共 {{ themeStore.presets.length }} 套声学主题</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -467,7 +467,7 @@ onUnmounted(() => {
             :class="[
               themeStore.currentThemeId === preset.id
                 ? 'bg-[var(--theme-surface-active)] border-[var(--theme-accent)] shadow-[0_0_25px_var(--theme-glow)]'
-                : 'bg-neutral-900/60 border-neutral-800/80 hover:border-neutral-700 hover:bg-neutral-900/90 hover:scale-[1.01]'
+                : 'bg-[var(--theme-surface)] border-[var(--theme-border)] hover:border-[var(--theme-border-highlight)] hover:bg-[var(--theme-surface-hover)] hover:scale-[1.01]'
             ]"
             @click="handleSelectTheme(preset, $event)"
           >
@@ -528,7 +528,7 @@ onUnmounted(() => {
             <!-- 主题名称与诗意标语 -->
             <div class="space-y-1">
               <div class="flex items-center justify-between gap-2">
-                <h4 class="font-extrabold text-base text-white group-hover:text-[var(--theme-accent)] transition-colors truncate">
+                <h4 class="font-extrabold text-base text-[var(--theme-text-primary)] group-hover:text-[var(--theme-accent)] transition-colors truncate">
                   {{ preset.name }}
                 </h4>
                 <div class="flex items-center gap-1.5 shrink-0">
@@ -539,7 +539,7 @@ onUnmounted(() => {
               <div class="text-xs font-medium font-sans break-words" :style="{ color: preset.colors.accent }">
                 {{ preset.tagline }}
               </div>
-              <p class="text-xs text-neutral-400 leading-relaxed pt-1 break-words">
+              <p class="text-xs text-[var(--theme-text-secondary)] leading-relaxed pt-1 break-words">
                 {{ preset.description }}
               </p>
             </div>
@@ -548,39 +548,39 @@ onUnmounted(() => {
       </div>
 
       <!-- 3. 迷你播放器动效与沉浸细节设置 -->
-      <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
-        <div class="border-b border-neutral-800 pb-3">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
+      <div class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl" :style="{ backgroundColor: 'var(--theme-surface)' }">
+        <div class="border-b border-[var(--theme-border)] pb-3">
+          <h3 class="text-base font-bold text-[var(--theme-text-primary)] flex items-center gap-2">
             <Activity class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 交互微动效与沉浸视效
           </h3>
-          <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">基于 GSAP 3 硬件加速引擎，享受黑胶旋转与流光光效</p>
+          <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 leading-relaxed break-words">基于 GSAP 3 硬件加速引擎，享受黑胶旋转与流光光效</p>
         </div>
 
         <div class="space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
             <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-white break-words">迷你播放器黑胶滑出与转动动效</div>
-              <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">播放音乐时，黑胶唱片将从封套优雅滑出并伴随 20s/圈真实物理平滑旋转</div>
+              <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">迷你播放器黑胶滑出与转动动效</div>
+              <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">播放音乐时，黑胶唱片将从封套优雅滑出并伴随 20s/圈真实物理平滑旋转</div>
             </div>
             <span class="self-start sm:self-center text-xs font-mono font-bold text-[var(--theme-accent)] px-2.5 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20 shrink-0 whitespace-nowrap">
               已启用
             </span>
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
             <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-white break-words">实时律动音频跳动频谱 (Equalizer Wave)</div>
-              <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">迷你窗与歌曲行播放时实时跳动的声波柱状律动动画</div>
+              <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">实时律动音频跳动频谱 (Equalizer Wave)</div>
+              <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">迷你窗与歌曲行播放时实时跳动的声波柱状律动动画</div>
             </div>
             <span class="self-start sm:self-center text-xs font-mono font-bold text-[var(--theme-accent)] px-2.5 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20 shrink-0 whitespace-nowrap">
               已启用
             </span>
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
             <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-white break-words">桌面原生反锯齿圆角适配</div>
-              <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">已完美解决 macOS 无边框窗口圆角黑边问题，在窗口化与最大化之间智能平滑切换</div>
+              <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">桌面原生反锯齿圆角适配</div>
+              <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">已完美解决 macOS 无边框窗口圆角黑边问题，在窗口化与最大化之间智能平滑切换</div>
             </div>
             <span class="self-start sm:self-center text-xs font-mono font-bold text-[var(--theme-accent)] px-2.5 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20 shrink-0 whitespace-nowrap">
               原生支持
@@ -593,17 +593,17 @@ onUnmounted(() => {
     <!-- 栏目 1：连接管理 -->
     <div v-else-if="currentTab === 'connection'" class="space-y-5 sm:space-y-6 animate-fade-in">
       <!-- 已保存的服务器列表卡片 -->
-      <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 border-b border-neutral-800 pb-3">
+      <div class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl" :style="{ backgroundColor: 'var(--theme-surface)' }">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 border-b border-[var(--theme-border)] pb-3">
           <div>
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <Server class="w-4 h-4 text-emerald-400 shrink-0" /> 已配置的服务器 ({{ serverStore.servers.length }})
+            <h2 class="text-base font-bold text-[var(--theme-text-primary)] flex items-center gap-2">
+              <Server class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 已配置的服务器 ({{ serverStore.servers.length }})
             </h2>
-            <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">支持配置多个 Navidrome 实例（如内网直连、外网穿透等），随时一键热切换</p>
+            <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 leading-relaxed break-words">支持配置多个 Navidrome 实例（如内网直连、外网穿透等），随时一键热切换</p>
           </div>
           <button
             v-if="!showAddForm"
-            class="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-sm shrink-0 whitespace-nowrap"
+            class="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--theme-accent)] hover:opacity-90 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-sm shrink-0 whitespace-nowrap"
             @click="showAddForm = true"
           >
             <Plus class="w-4 h-4" /> 添加新节点
@@ -617,50 +617,50 @@ onUnmounted(() => {
             class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition cursor-pointer gap-3"
             :class="[
               srv.id === serverStore.activeServerId
-                ? 'bg-neutral-950/80 border-emerald-500/50 shadow-lg'
-                : 'bg-neutral-950/40 border-neutral-800/80 hover:bg-neutral-950',
+                ? 'bg-[var(--theme-surface-active)] border-[var(--theme-accent)] shadow-lg'
+                : 'bg-[var(--theme-surface-solid)]/40 border-[var(--theme-border)] hover:bg-[var(--theme-surface-hover)]',
             ]"
             @click="onSwitch(srv.id)"
           >
             <div class="flex items-center gap-3 min-w-0">
               <div
                 class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                :class="srv.id === serverStore.activeServerId ? 'bg-emerald-500/20 text-emerald-400' : 'bg-neutral-800 text-neutral-500'"
+                :class="srv.id === serverStore.activeServerId ? 'bg-[var(--theme-accent)]/20 text-[var(--theme-accent)]' : 'bg-[var(--theme-surface-solid)] text-[var(--theme-text-muted)] border border-[var(--theme-border)]'"
               >
                 <Radio class="w-5 h-5" />
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-bold text-sm text-white truncate">{{ srv.name }}</span>
+                  <span class="font-bold text-sm text-[var(--theme-text-primary)] truncate">{{ srv.name }}</span>
                   <span
                     v-if="srv.id === serverStore.activeServerId"
-                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-neutral-950 shrink-0 whitespace-nowrap"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--theme-accent)] text-neutral-950 shrink-0 whitespace-nowrap"
                   >
                     当前使用
                   </span>
                 </div>
-                <div class="text-xs text-neutral-400 font-mono truncate mt-0.5">{{ srv.url }}</div>
+                <div class="text-xs text-[var(--theme-text-secondary)] font-mono truncate mt-0.5">{{ srv.url }}</div>
               </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 shrink-0 self-end sm:self-center">
               <button
                 v-if="srv.id === serverStore.activeServerId"
-                class="p-2 text-emerald-400 rounded-lg shrink-0"
+                class="p-2 text-[var(--theme-accent)] rounded-lg shrink-0"
                 title="当前已连接"
               >
-                <Check class="w-5 h-5" />
+                <Check class="w-5 h-5 stroke-[2.5]" />
               </button>
               <button
                 v-else
-                class="px-3 py-1.5 rounded-xl text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium transition cursor-pointer shrink-0 whitespace-nowrap"
+                class="px-3 py-1.5 rounded-xl text-xs bg-[var(--theme-surface-solid)] hover:bg-[var(--theme-surface-hover)] text-[var(--theme-text-primary)] border border-[var(--theme-border)] font-medium transition cursor-pointer shrink-0 whitespace-nowrap"
                 @click.stop="onSwitch(srv.id)"
               >
                 连接
               </button>
 
               <button
-                class="p-2 text-neutral-500 hover:text-rose-400 rounded-xl hover:bg-neutral-800 transition cursor-pointer shrink-0"
+                class="p-2 text-[var(--theme-text-muted)] hover:text-rose-400 rounded-xl hover:bg-[var(--theme-surface-hover)] transition cursor-pointer shrink-0"
                 title="删除此配置"
                 @click="onRemove(srv.id, $event)"
               >
@@ -670,18 +670,18 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-else class="text-center py-8 bg-neutral-950/40 rounded-xl border border-neutral-800/60 text-neutral-500 text-sm">
+        <div v-else class="text-center py-8 bg-[var(--theme-surface-solid)]/30 rounded-xl border border-[var(--theme-border)] text-[var(--theme-text-muted)] text-sm">
           暂未保存任何服务器配置，请在下方添加您的首个音乐库实例
         </div>
       </div>
 
       <!-- 添加新服务器表单 -->
-      <div v-if="showAddForm || !serverStore.servers.length" class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
-          <h3 class="font-bold text-white text-base">添加 Navidrome 音乐库节点</h3>
+      <div v-if="showAddForm || !serverStore.servers.length" class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl" :style="{ backgroundColor: 'var(--theme-surface)' }">
+        <div class="flex items-center justify-between border-b border-[var(--theme-border)] pb-3">
+          <h3 class="font-bold text-[var(--theme-text-primary)] text-base">添加 Navidrome 音乐库节点</h3>
           <button
             v-if="serverStore.servers.length"
-            class="text-xs text-neutral-400 hover:text-white cursor-pointer"
+            class="text-xs text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] cursor-pointer"
             @click="showAddForm = false"
           >
             收起表单
@@ -689,46 +689,46 @@ onUnmounted(() => {
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1.5">节点备注名称</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-secondary)] mb-1.5">节点备注名称</label>
           <input
             v-model="serverName"
             type="text"
             placeholder="例如: 家庭内网 NAS / 异地穿透节点"
-            class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+            class="w-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-muted)] focus:outline-none focus:border-[var(--theme-accent)]"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1.5">服务器访问地址 *</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-secondary)] mb-1.5">服务器访问地址 *</label>
           <input
             v-model="serverUrl"
             type="url"
             required
             placeholder="例如: http://192.168.1.100:4533 或 https://music.yourdomain.com"
-            class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+            class="w-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-muted)] focus:outline-none focus:border-[var(--theme-accent)]"
           />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1.5">用户名 *</label>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-secondary)] mb-1.5">用户名 *</label>
             <input
               v-model="username"
               type="text"
               required
               placeholder="例如: admin"
-              class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+              class="w-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-muted)] focus:outline-none focus:border-[var(--theme-accent)]"
             />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1.5">密码 *</label>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-secondary)] mb-1.5">密码 *</label>
             <input
               v-model="password"
               type="password"
               required
               placeholder="••••••••"
-              class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+              class="w-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-muted)] focus:outline-none focus:border-[var(--theme-accent)]"
             />
           </div>
         </div>
@@ -737,14 +737,14 @@ onUnmounted(() => {
           <AlertCircle class="w-4 h-4 shrink-0" /> {{ errorMsg }}
         </div>
 
-        <div v-if="successMsg" class="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
+        <div v-if="successMsg" class="flex items-center gap-2 text-[var(--theme-accent)] text-xs bg-[var(--theme-accent)]/10 p-3 rounded-xl border border-[var(--theme-accent)]/20">
           <CheckCircle2 class="w-4 h-4 shrink-0" /> {{ successMsg }}
         </div>
 
         <button
           type="button"
           :disabled="loading"
-          class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 font-bold text-sm transition shadow-lg cursor-pointer"
+          class="w-full py-2.5 rounded-xl bg-[var(--theme-accent)] hover:opacity-90 disabled:opacity-50 text-neutral-950 font-bold text-sm transition shadow-lg cursor-pointer"
           @click="handleAddServer"
         >
           <span v-if="loading">正在测试连接并保存...</span>
@@ -755,21 +755,21 @@ onUnmounted(() => {
 
     <!-- 栏目 2：播放与音效设置 -->
     <div v-else-if="currentTab === 'playback'" class="space-y-5 sm:space-y-6 animate-fade-in">
-      <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 sm:space-y-5 shadow-xl">
-        <div class="border-b border-neutral-800 pb-3">
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <Sliders class="w-4 h-4 text-emerald-400 shrink-0" /> 音频输出与播放策略
+      <div class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 sm:space-y-5 shadow-xl" :style="{ backgroundColor: 'var(--theme-surface)' }">
+        <div class="border-b border-[var(--theme-border)] pb-3">
+          <h2 class="text-base font-bold text-[var(--theme-text-primary)] flex items-center gap-2">
+            <Sliders class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 音频输出与播放策略
           </h2>
-          <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">调控切歌淡入淡出、智能缓冲流及播放恢复行为</p>
+          <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 leading-relaxed break-words">调控切歌淡入淡出、智能缓冲流及播放恢复行为</p>
         </div>
 
         <!-- 1. 平滑交叉淡入淡出时长 -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-white break-words">切歌平滑淡入淡出 (Crossfade)</div>
-            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">在切换上一首/下一首歌曲时自动应用渐变衰减，消除杂音爆音</div>
+            <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">切歌平滑淡入淡出 (Crossfade)</div>
+            <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">在切换上一首/下一首歌曲时自动应用渐变衰减，消除杂音爆音</div>
           </div>
-          <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-800/50">
+          <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--theme-border)]/50">
             <input
               type="range"
               min="0"
@@ -777,50 +777,53 @@ onUnmounted(() => {
               step="100"
               v-model.number="playbackSettings.fadeDuration"
               @change="savePlaybackSettings"
-              class="w-full sm:w-36 accent-emerald-400 cursor-pointer"
+              class="w-full sm:w-36 cursor-pointer"
+              :style="{ accentColor: 'var(--theme-accent)' }"
             />
-            <span class="text-xs font-mono font-bold text-emerald-400 w-16 text-right shrink-0 whitespace-nowrap">
+            <span class="text-xs font-mono font-bold text-[var(--theme-accent)] w-16 text-right shrink-0 whitespace-nowrap">
               {{ playbackSettings.fadeDuration }} ms
             </span>
           </div>
         </div>
 
         <!-- 2. 预加载下一首歌曲音频流 -->
-        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-white break-words">智能音频流预加载 (Preload)</div>
-            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">在当前曲目接近播放结束时自动预缓冲下一首流媒体，实现无缝连续播放</div>
+            <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">智能音频流预加载 (Preload)</div>
+            <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">在当前曲目接近播放结束时自动预缓冲下一首流媒体，实现无缝连续播放</div>
           </div>
           <input
             type="checkbox"
             v-model="playbackSettings.preloadNext"
             @change="savePlaybackSettings"
-            class="w-5 h-5 rounded accent-emerald-500 cursor-pointer shrink-0"
+            class="w-5 h-5 rounded cursor-pointer shrink-0"
+            :style="{ accentColor: 'var(--theme-accent)' }"
           />
         </div>
 
         <!-- 3. 启动恢复播放 -->
-        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-white break-words">启动时恢复播放进度与队列</div>
-            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">每次重新打开软件时自动定位到上次未听完的曲目与时间点</div>
+            <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">启动时恢复播放进度与队列</div>
+            <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">每次重新打开软件时自动定位到上次未听完的曲目与时间点</div>
           </div>
           <input
             type="checkbox"
             v-model="playbackSettings.autoResume"
             @change="savePlaybackSettings"
-            class="w-5 h-5 rounded accent-emerald-500 cursor-pointer shrink-0"
+            class="w-5 h-5 rounded cursor-pointer shrink-0"
+            :style="{ accentColor: 'var(--theme-accent)' }"
           />
         </div>
 
         <!-- 4. 开机自启动设置 -->
-        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-white break-words flex items-center gap-2">
+            <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words flex items-center gap-2">
               <span>开机自动启动客户端 (Autostart)</span>
-              <span v-if="!isDesktopApp()" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400 border border-neutral-700/60 shrink-0">仅桌面端</span>
+              <span v-if="!isDesktopApp()" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--theme-surface-solid)] text-[var(--theme-text-secondary)] border border-[var(--theme-border)] shrink-0">仅桌面端</span>
             </div>
-            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">系统开机登录后自动在后台驻留启动，随时响应全局快捷键与媒体播放</div>
+            <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">系统开机登录后自动在后台驻留启动，随时响应全局快捷键与媒体播放</div>
           </div>
           <div v-if="isDesktopApp()" class="shrink-0 flex items-center">
             <input
@@ -828,25 +831,26 @@ onUnmounted(() => {
               v-model="autostartEnabled"
               :disabled="autostartLoading"
               @change="handleToggleAutostart"
-              class="w-5 h-5 rounded accent-emerald-500 cursor-pointer shrink-0 disabled:opacity-50"
+              class="w-5 h-5 rounded cursor-pointer shrink-0 disabled:opacity-50"
+              :style="{ accentColor: 'var(--theme-accent)' }"
             />
           </div>
-          <span v-else class="text-xs text-neutral-500 shrink-0 whitespace-nowrap">
+          <span v-else class="text-xs text-[var(--theme-text-muted)] shrink-0 whitespace-nowrap">
             仅桌面端支持
           </span>
         </div>
 
         <!-- 5. 主界面浮动歌词显示行数 -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-white break-words">主界面浮动歌词显示模式</div>
-            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">主界面播放条上方胶囊歌词的行数（单行聚焦 / 双行连贯展示）</div>
+            <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">主界面浮动歌词显示模式</div>
+            <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">主界面播放条上方胶囊歌词的行数（单行聚焦 / 双行连贯展示）</div>
           </div>
-          <div class="flex items-center self-start sm:self-center bg-neutral-900 border border-neutral-800 rounded-xl p-1 gap-1 shrink-0">
+          <div class="flex items-center self-start sm:self-center bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] rounded-xl p-1 gap-1 shrink-0">
             <button
               type="button"
               class="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap"
-              :class="playerStore.lyricDisplayLines === 1 ? 'bg-emerald-500 text-neutral-950 font-bold shadow-sm' : 'text-neutral-400 hover:text-white'"
+              :class="playerStore.lyricDisplayLines === 1 ? 'bg-[var(--theme-accent)] text-neutral-950 font-bold shadow-sm' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-surface-hover)]'"
               @click="playerStore.setLyricDisplayLines(1)"
             >
               单行歌词
@@ -854,7 +858,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap"
-              :class="playerStore.lyricDisplayLines === 2 ? 'bg-emerald-500 text-neutral-950 font-bold shadow-sm' : 'text-neutral-400 hover:text-white'"
+              :class="playerStore.lyricDisplayLines === 2 ? 'bg-[var(--theme-accent)] text-neutral-950 font-bold shadow-sm' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-surface-hover)]'"
               @click="playerStore.setLyricDisplayLines(2)"
             >
               双行歌词
@@ -863,16 +867,16 @@ onUnmounted(() => {
         </div>
 
         <!-- 6. 均衡器快捷入口 -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)]">
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-white break-words">专业 10 段图形均衡器 (10-Band EQ)</div>
-            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">支持流行、摇滚、爵士、古典、低音增强等多种专业音效预设</div>
+            <div class="text-sm font-semibold text-[var(--theme-text-primary)] break-words">专业 10 段图形均衡器 (10-Band EQ)</div>
+            <div class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">支持流行、摇滚、爵士、古典、低音增强等多种专业音效预设</div>
           </div>
           <button
-            class="self-start sm:self-center px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+            class="self-start sm:self-center px-4 py-2 rounded-xl bg-[var(--theme-surface-solid)] hover:bg-[var(--theme-surface-hover)] text-[var(--theme-text-primary)] border border-[var(--theme-border)] font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-sm"
             @click="playerStore.showEQModal = true"
           >
-            <Sliders class="w-3.5 h-3.5 text-emerald-400" />
+            <Sliders class="w-3.5 h-3.5 text-[var(--theme-accent)]" />
             <span>配置音效</span>
           </button>
         </div>
@@ -881,38 +885,38 @@ onUnmounted(() => {
 
     <!-- 栏目 3：缓存与存储空间 -->
     <div v-else-if="currentTab === 'cache'" class="space-y-5 sm:space-y-6 animate-fade-in">
-      <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 sm:space-y-5 shadow-xl">
-        <div class="border-b border-neutral-800 pb-3">
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <Database class="w-4 h-4 text-emerald-400 shrink-0" /> 离线缓存与存储占用
+      <div class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 sm:space-y-5 shadow-xl" :style="{ backgroundColor: 'var(--theme-surface)' }">
+        <div class="border-b border-[var(--theme-border)] pb-3">
+          <h2 class="text-base font-bold text-[var(--theme-text-primary)] flex items-center gap-2">
+            <Database class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 离线缓存与存储占用
           </h2>
-          <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">基于浏览器/客户端本地 IndexedDB 存储，断网无信号时亦可尽情畅听</p>
+          <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 leading-relaxed break-words">基于浏览器/客户端本地 IndexedDB 存储，断网无信号时亦可尽情畅听</p>
         </div>
 
         <!-- 缓存容量概览卡片 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div class="p-4 rounded-xl bg-neutral-950/50 border border-neutral-800/80 space-y-1">
-            <span class="text-xs text-neutral-400 flex items-center gap-1.5">
-              <Music2 class="w-4 h-4 text-emerald-400 shrink-0" /> 已离线下载曲目
+          <div class="p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)] space-y-1">
+            <span class="text-xs text-[var(--theme-text-secondary)] flex items-center gap-1.5">
+              <Music2 class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 已离线下载曲目
             </span>
-            <div class="text-2xl font-black text-white font-mono">
-              {{ cachedTracksCount }} <span class="text-xs font-normal text-neutral-400">首</span>
+            <div class="text-2xl font-black text-[var(--theme-text-primary)] font-mono">
+              {{ cachedTracksCount }} <span class="text-xs font-normal text-[var(--theme-text-muted)]">首</span>
             </div>
           </div>
 
-          <div class="p-4 rounded-xl bg-neutral-950/50 border border-neutral-800/80 space-y-1">
-            <span class="text-xs text-neutral-400 flex items-center gap-1.5">
-              <HardDrive class="w-4 h-4 text-teal-400 shrink-0" /> 本地占用磁盘空间
+          <div class="p-4 rounded-xl bg-[var(--theme-surface-solid)]/50 border border-[var(--theme-border)] space-y-1">
+            <span class="text-xs text-[var(--theme-text-secondary)] flex items-center gap-1.5">
+              <HardDrive class="w-4 h-4 text-[var(--theme-accent-secondary)] shrink-0" /> 本地占用磁盘空间
             </span>
-            <div class="text-2xl font-black text-emerald-400 font-mono">
-              {{ totalCacheSizeMb }} <span class="text-xs font-normal text-neutral-400">MB</span>
+            <div class="text-2xl font-black text-[var(--theme-accent)] font-mono">
+              {{ totalCacheSizeMb }} <span class="text-xs font-normal text-[var(--theme-text-muted)]">MB</span>
             </div>
           </div>
         </div>
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
           <button
-            class="px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap"
+            class="px-4 py-2.5 rounded-xl bg-[var(--theme-surface-solid)] hover:bg-[var(--theme-surface-hover)] text-[var(--theme-text-primary)] border border-[var(--theme-border)] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap shadow-sm"
             @click="router.push('/downloaded')"
           >
             <DownloadCloud class="w-3.5 h-3.5" /> 查看离线曲目列表
@@ -935,36 +939,37 @@ onUnmounted(() => {
       <div
         v-for="cat in shortcutCategories"
         :key="cat.id"
-        class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl"
+        class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 shadow-xl"
+        :style="{ backgroundColor: 'var(--theme-surface)' }"
       >
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--theme-border)] pb-3">
           <div>
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <h2 class="text-base font-bold text-[var(--theme-text-primary)] flex items-center gap-2">
               <component
                 :is="cat.isGlobal ? Globe : AppWindow"
                 class="w-4 h-4 text-[var(--theme-accent)] shrink-0"
               />
               <span>{{ cat.title }}</span>
             </h2>
-            <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">{{ cat.subtitle }}</p>
+            <p class="text-xs text-[var(--theme-text-secondary)] mt-0.5 leading-relaxed break-words">{{ cat.subtitle }}</p>
           </div>
           <span
             class="text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold self-start sm:self-center shrink-0 whitespace-nowrap"
-            :class="cat.isGlobal ? 'bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30' : 'bg-neutral-800 text-neutral-300 border border-neutral-700/60'"
+            :class="cat.isGlobal ? 'bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30' : 'bg-[var(--theme-surface-solid)] text-[var(--theme-text-secondary)] border border-[var(--theme-border)]'"
           >
             {{ cat.badge }}
           </span>
         </div>
 
-        <div class="divide-y divide-neutral-800/80">
+        <div class="divide-y divide-[var(--theme-border)]">
           <div
             v-for="(item, idx) in cat.shortcuts"
             :key="idx"
             class="flex flex-col sm:flex-row sm:items-center justify-between py-2.5 sm:py-3 text-xs gap-1.5 sm:gap-4"
           >
-            <span class="text-neutral-200 font-medium text-sm">{{ item.name }}</span>
+            <span class="text-[var(--theme-text-primary)] font-medium text-sm">{{ item.name }}</span>
             <div class="flex items-center self-start sm:self-center shrink-0">
-              <span class="px-2.5 py-1 rounded-lg bg-neutral-950/80 border border-neutral-800 font-mono text-[var(--theme-accent)] font-bold tracking-wide shadow-inner text-xs whitespace-nowrap">
+              <span class="px-2.5 py-1 rounded-lg bg-[var(--theme-surface-solid)] border border-[var(--theme-border)] font-mono text-[var(--theme-accent)] font-bold tracking-wide shadow-inner text-xs whitespace-nowrap">
                 {{ item.key }}
               </span>
             </div>
@@ -975,20 +980,20 @@ onUnmounted(() => {
 
     <!-- 栏目 5：关于与版本信息 -->
     <div v-else-if="currentTab === 'about'" class="space-y-5 sm:space-y-6 animate-fade-in">
-      <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 sm:space-y-5 shadow-xl">
+      <div class="p-4 sm:p-6 rounded-2xl border border-[var(--theme-border)] space-y-4 sm:space-y-5 shadow-xl" :style="{ backgroundColor: 'var(--theme-surface)' }">
         <!-- 软件标志与介绍 -->
-        <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 border-b border-neutral-800 pb-4 sm:pb-5">
-          <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.35)] shrink-0 border border-white/10">
+        <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 border-b border-[var(--theme-border)] pb-4 sm:pb-5">
+          <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-[0_0_20px_var(--theme-glow)] shrink-0 border border-[var(--theme-border)]">
             <img src="/favicon.svg" class="w-full h-full object-cover" alt="AuraMusic" />
           </div>
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-              <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">AuraMusic · 极光私有音乐</h2>
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 whitespace-nowrap">
+              <h2 class="text-lg sm:text-xl font-black text-[var(--theme-text-primary)] tracking-tight">AuraMusic · 极光私有音乐</h2>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30 shrink-0 whitespace-nowrap">
                 v1.0.12
               </span>
             </div>
-            <p class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">
+            <p class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">
               基于 Tauri v2 + Vue 3 的全平台极速私有云 Hi-Fi 无损音乐播放器
             </p>
           </div>
@@ -997,12 +1002,12 @@ onUnmounted(() => {
         <!-- 软件版本与自动更新模块（仅客户端原生环境支持） -->
         <div v-if="isTauriApp()" class="space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 text-white font-bold text-sm">
-              <Sparkles class="w-4 h-4 text-emerald-400 shrink-0" /> 软件版本与自动更新
+            <div class="flex items-center gap-2 text-[var(--theme-text-primary)] font-bold text-sm">
+              <Sparkles class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 软件版本与自动更新
             </div>
             <button
               :disabled="checkingUpdate || installingUpdate"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-neutral-200 text-xs font-semibold transition cursor-pointer shrink-0 whitespace-nowrap"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--theme-surface-solid)] hover:bg-[var(--theme-surface-hover)] disabled:opacity-50 text-[var(--theme-text-primary)] border border-[var(--theme-border)] text-xs font-semibold transition cursor-pointer shrink-0 whitespace-nowrap shadow-sm"
               @click="handleCheckUpdate"
             >
               <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': checkingUpdate }" />
@@ -1011,30 +1016,30 @@ onUnmounted(() => {
           </div>
 
           <!-- 发现新版本提示卡片 -->
-          <div v-if="updateInfo?.available" class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
+          <div v-if="updateInfo?.available" class="p-4 rounded-xl bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/30 space-y-3">
             <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+              <div class="flex items-center gap-2 text-[var(--theme-accent)] font-semibold text-sm">
                 <Sparkles class="w-4 h-4 shrink-0" />
                 <span>发现新版本: v{{ updateInfo.version }}</span>
               </div>
-              <span v-if="updateInfo.date" class="text-[11px] text-neutral-400 font-mono shrink-0 whitespace-nowrap">
+              <span v-if="updateInfo.date" class="text-[11px] text-[var(--theme-text-secondary)] font-mono shrink-0 whitespace-nowrap">
                 {{ new Date(updateInfo.date).toLocaleDateString() }}
               </span>
             </div>
 
-            <div v-if="updateInfo.body" class="text-xs text-neutral-300 bg-black/30 p-2.5 rounded-lg whitespace-pre-wrap font-sans max-h-32 overflow-y-auto border border-white/5 break-words">
+            <div v-if="updateInfo.body" class="text-xs text-[var(--theme-text-primary)] bg-[var(--theme-surface-solid)]/70 p-2.5 rounded-lg whitespace-pre-wrap font-sans max-h-32 overflow-y-auto border border-[var(--theme-border)] break-words">
               {{ updateInfo.body }}
             </div>
 
             <!-- 下载进度条 -->
             <div v-if="installingUpdate" class="space-y-1.5">
-              <div class="flex justify-between text-xs text-emerald-400 font-medium">
+              <div class="flex justify-between text-xs text-[var(--theme-accent)] font-medium">
                 <span>正在下载并安装更新...</span>
                 <span>{{ downloadProgress }}%</span>
               </div>
-              <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+              <div class="w-full h-1.5 bg-[var(--theme-surface-solid)] rounded-full overflow-hidden border border-[var(--theme-border)]">
                 <div
-                  class="h-full bg-emerald-500 transition-all duration-300"
+                  class="h-full bg-[var(--theme-accent)] transition-all duration-300"
                   :style="{ width: `${downloadProgress}%` }"
                 />
               </div>
@@ -1042,15 +1047,15 @@ onUnmounted(() => {
 
             <button
               v-else
-              class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+              class="w-full py-2.5 rounded-xl bg-[var(--theme-accent)] hover:opacity-90 text-neutral-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg cursor-pointer"
               @click="handleInstallUpdate"
             >
               <DownloadCloud class="w-4 h-4" /> 立即更新并重启应用
             </button>
           </div>
 
-          <div v-else-if="updateChecked && !checkingUpdate" class="text-xs text-neutral-400 flex items-center gap-1.5 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800/40">
-            <CheckCircle2 class="w-4 h-4 text-emerald-400 shrink-0" />
+          <div v-else-if="updateChecked && !checkingUpdate" class="text-xs text-[var(--theme-text-secondary)] flex items-center gap-1.5 bg-[var(--theme-surface-solid)]/40 p-3 rounded-xl border border-[var(--theme-border)]">
+            <CheckCircle2 class="w-4 h-4 text-[var(--theme-accent)] shrink-0" />
             <span>当前已是最新版本，无需更新。</span>
           </div>
 
@@ -1061,7 +1066,7 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center justify-between pt-1 border-t border-rose-500/20 text-[11px] gap-2 flex-wrap">
               <button
-                class="text-neutral-300 hover:text-white underline cursor-pointer"
+                class="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] underline cursor-pointer"
                 @click="handleInstallUpdate"
               >
                 重试下载
@@ -1069,7 +1074,7 @@ onUnmounted(() => {
               <a
                 href="https://github.com/ht176/nas-music-player/releases/latest"
                 target="_blank"
-                class="text-emerald-400 hover:underline"
+                class="text-[var(--theme-accent)] hover:underline"
               >
                 前往 GitHub 浏览器下载 &rarr;
               </a>
@@ -1078,18 +1083,18 @@ onUnmounted(() => {
         </div>
 
         <!-- 技术栈与开源信息 -->
-        <div class="pt-3 border-t border-neutral-800 space-y-2.5 text-xs text-neutral-400">
+        <div class="pt-3 border-t border-[var(--theme-border)] space-y-2.5 text-xs text-[var(--theme-text-secondary)]">
           <div class="flex items-center justify-between gap-2">
             <span class="whitespace-nowrap">Subsonic / Navidrome 协议</span>
-            <span class="text-neutral-200 font-mono shrink-0 whitespace-nowrap">Open API v1.16.1</span>
+            <span class="text-[var(--theme-text-primary)] font-mono shrink-0 whitespace-nowrap">Open API v1.16.1</span>
           </div>
           <div class="flex items-center justify-between gap-2">
             <span class="whitespace-nowrap">底层运行时环境</span>
-            <span class="text-neutral-200 font-mono shrink-0 whitespace-nowrap">{{ isTauriApp() ? 'Tauri Native Engine' : 'Web Browser PWA' }}</span>
+            <span class="text-[var(--theme-text-primary)] font-mono shrink-0 whitespace-nowrap">{{ isTauriApp() ? 'Tauri Native Engine' : 'Web Browser PWA' }}</span>
           </div>
           <div class="flex items-center justify-between gap-2">
             <span class="whitespace-nowrap">开源许可协议</span>
-            <span class="text-neutral-200 font-mono shrink-0 whitespace-nowrap">MIT License</span>
+            <span class="text-[var(--theme-text-primary)] font-mono shrink-0 whitespace-nowrap">MIT License</span>
           </div>
         </div>
       </div>

@@ -82,7 +82,7 @@ export async function listenWindowResize(cb: () => void): Promise<(() => void) |
 
 export const DEFAULT_WINDOW_WIDTH = 1100
 export const DEFAULT_WINDOW_HEIGHT = 720
-export const MINI_WINDOW_WIDTH = 340
+export const MINI_WINDOW_WIDTH = 360
 export const MINI_WINDOW_HEIGHT = 102
 export const MINI_EXPANDED_HEIGHT = 380
 
