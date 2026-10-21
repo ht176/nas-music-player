@@ -6,7 +6,7 @@ import { usePlayerStore } from '../stores/player'
 import { useThemeStore, type ThemePreset } from '../stores/theme'
 import { SubsonicClient } from '../api/client'
 import { checkAppUpdate, installAppUpdate, type UpdateInfo } from '../services/updater'
-import { isTauriApp } from '../services/desktop'
+import { isTauriApp, isDesktopApp, getAutostartStatus, setAutostartStatus } from '../services/desktop'
 import { cacheService } from '../services/cache'
 import { toastService } from '../services/toast'
 import gsap from 'gsap'
@@ -188,6 +188,39 @@ function savePlaybackSettings() {
   } catch {}
 }
 
+// 2.2 桌面开机自启动设置
+const autostartEnabled = ref(false)
+const autostartLoading = ref(false)
+
+async function loadAutostartSetting() {
+  if (isDesktopApp()) {
+    try {
+      autostartLoading.value = true
+      autostartEnabled.value = await getAutostartStatus()
+    } catch {
+      // 容错
+    } finally {
+      autostartLoading.value = false
+    }
+  }
+}
+
+async function handleToggleAutostart() {
+  if (!isDesktopApp() || autostartLoading.value) return
+  try {
+    autostartLoading.value = true
+    const targetState = autostartEnabled.value
+    const newState = await setAutostartStatus(targetState)
+    autostartEnabled.value = newState
+    toastService.success(newState ? '已开启开机自启动' : '已关闭开机自启动')
+  } catch (err: any) {
+    toastService.error(`设置开机自启失败: ${err?.message || err}`)
+    autostartEnabled.value = !autostartEnabled.value
+  } finally {
+    autostartLoading.value = false
+  }
+}
+
 // 3. 缓存与存储状态
 const cachedTracksCount = ref(0)
 const totalCacheSizeMb = ref('0.00')
@@ -280,6 +313,9 @@ async function handleInstallUpdate() {
 onMounted(() => {
   loadPlaybackSettings()
   refreshCacheStats()
+  if (isDesktopApp()) {
+    loadAutostartSetting()
+  }
   if (isTauriApp()) {
     handleCheckUpdate()
   }
@@ -757,7 +793,30 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- 4. 主界面浮动歌词显示行数 -->
+        <!-- 4. 开机自启动设置 -->
+        <div class="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-semibold text-white break-words flex items-center gap-2">
+              <span>开机自动启动客户端 (Autostart)</span>
+              <span v-if="!isDesktopApp()" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400 border border-neutral-700/60 shrink-0">仅桌面端</span>
+            </div>
+            <div class="text-xs text-neutral-400 mt-1 leading-relaxed break-words">系统开机登录后自动在后台驻留启动，随时响应全局快捷键与媒体播放</div>
+          </div>
+          <div v-if="isDesktopApp()" class="shrink-0 flex items-center">
+            <input
+              type="checkbox"
+              v-model="autostartEnabled"
+              :disabled="autostartLoading"
+              @change="handleToggleAutostart"
+              class="w-5 h-5 rounded accent-emerald-500 cursor-pointer shrink-0 disabled:opacity-50"
+            />
+          </div>
+          <span v-else class="text-xs text-neutral-500 shrink-0 whitespace-nowrap">
+            仅桌面端支持
+          </span>
+        </div>
+
+        <!-- 5. 主界面浮动歌词显示行数 -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
           <div class="min-w-0 flex-1">
             <div class="text-sm font-semibold text-white break-words">主界面浮动歌词显示模式</div>
@@ -783,7 +842,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- 5. 均衡器快捷入口 -->
+        <!-- 6. 均衡器快捷入口 -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-950/40 border border-neutral-800/60">
           <div class="min-w-0 flex-1">
             <div class="text-sm font-semibold text-white break-words">专业 10 段图形均衡器 (10-Band EQ)</div>

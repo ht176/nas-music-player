@@ -153,3 +153,31 @@ export async function listenTrayActions(handler: (action: string) => void): Prom
   }
 }
 
+export async function getAutostartStatus(): Promise<boolean> {
+  if (!isDesktopApp()) return false
+  try {
+    const { isEnabled } = await import('@tauri-apps/plugin-autostart')
+    return await isEnabled()
+  } catch (err) {
+    console.warn('Failed to get autostart status', err)
+    return false
+  }
+}
+
+export async function setAutostartStatus(enableAutostart: boolean): Promise<boolean> {
+  if (!isDesktopApp()) return false
+  try {
+    const { enable, disable, isEnabled } = await import('@tauri-apps/plugin-autostart')
+    if (enableAutostart) {
+      await enable()
+    } else {
+      await disable()
+    }
+    return await isEnabled()
+  } catch (err) {
+    console.error('Failed to set autostart status', err)
+    throw err
+  }
+}
+
+

@@ -145,10 +145,10 @@ async function toggleMiniPlayer() {
             </div>
           </div>
           <div class="min-w-0 flex-1">
-            <div class="text-[13px] font-semibold text-white truncate leading-tight">
+            <div class="text-[13px] font-semibold text-[var(--theme-text-primary)] truncate leading-tight">
               {{ playerStore.currentTrack.title }}
             </div>
-            <div class="text-[11px] text-neutral-400 truncate mt-0.5 leading-tight">
+            <div class="text-[11px] text-[var(--theme-text-muted)] truncate mt-0.5 leading-tight">
               {{ playerStore.currentTrack.artist || '未知艺术家' }}
             </div>
           </div>
@@ -157,8 +157,8 @@ async function toggleMiniPlayer() {
         <!-- 右侧：快捷触控操作 (收藏、播放/暂停、下一首、队列) -->
         <div class="flex items-center gap-1 shrink-0">
           <button
-            class="p-2 text-neutral-400 active:scale-90 transition-transform cursor-pointer"
-            :class="{ 'text-rose-500': playerStore.currentTrack.starred }"
+            class="p-2 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] active:scale-90 transition-transform cursor-pointer"
+            :class="{ 'text-rose-500 hover:text-rose-400': playerStore.currentTrack.starred }"
             @click.stop="handleToggleStar"
             title="收藏"
           >
@@ -179,7 +179,7 @@ async function toggleMiniPlayer() {
           </button>
 
           <button
-            class="p-2 text-neutral-300 active:scale-90 transition-transform cursor-pointer"
+            class="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] active:scale-90 transition-transform cursor-pointer"
             @click.stop="handleNext"
             title="下一首"
           >
@@ -187,7 +187,7 @@ async function toggleMiniPlayer() {
           </button>
 
           <button
-            class="p-2 text-neutral-400 active:scale-90 transition-transform cursor-pointer"
+            class="p-2 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] active:scale-90 transition-transform cursor-pointer"
             @click.stop="playerStore.showQueueDrawer = true"
             title="播放队列"
           >
@@ -197,7 +197,7 @@ async function toggleMiniPlayer() {
       </div>
 
       <!-- 胶囊底部超细进度光条 -->
-      <div class="h-[2px] w-full bg-white/10 relative">
+      <div class="h-[2px] w-full bg-[var(--theme-border)] relative">
         <div
           class="h-full transition-all duration-200"
           :style="{
