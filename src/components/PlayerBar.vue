@@ -4,6 +4,7 @@ import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
 import { isDesktopApp, enterMiniMode, exitMiniMode } from '../services/desktop'
 import TrackInfoModal from './TrackInfoModal.vue'
+import LyricTicker from './LyricTicker.vue'
 import gsap from 'gsap'
 import {
   Play,
@@ -57,14 +58,6 @@ const progressPercent = computed(() => {
 const currentLyricText = computed(() => {
   if (playerStore.lyrics.length && playerStore.currentLyricIndex >= 0) {
     return playerStore.lyrics[playerStore.currentLyricIndex]?.text || ''
-  }
-  return ''
-})
-
-const nextLyricText = computed(() => {
-  if (playerStore.lyricDisplayLines === 2 && playerStore.lyrics.length && playerStore.currentLyricIndex >= 0) {
-    const nextLine = playerStore.lyrics[playerStore.currentLyricIndex + 1]
-    return nextLine?.text || ''
   }
   return ''
 })
@@ -222,7 +215,7 @@ async function toggleMiniPlayer() {
       <div
         v-if="currentLyricText"
         class="absolute left-1/2 -translate-x-1/2 rounded-full bg-[var(--theme-surface-solid)] border border-[var(--theme-border-highlight)] backdrop-blur-md shadow-lg flex items-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 max-w-[88vw] group overflow-hidden"
-        :class="playerStore.lyricDisplayLines === 2 ? '-top-22 px-5 py-2' : '-top-15 px-5 py-2'"
+        :class="playerStore.lyricDisplayLines === 2 ? '-top-22 px-5 py-2.5' : '-top-15 px-5 py-2'"
         :style="{
           boxShadow: '0 8px 24px -4px var(--theme-glow)',
           minWidth: '180px'
@@ -242,27 +235,15 @@ async function toggleMiniPlayer() {
           :style="{ background: 'var(--theme-accent)', opacity: 0.7 }"
         ></span>
 
-        <div class="relative overflow-hidden flex flex-col justify-center max-w-[72vw] text-left">
-          <!-- 当前行歌词（平滑无缝滚动置换） -->
-          <div class="h-6 relative flex items-center overflow-hidden min-w-[120px]">
-            <Transition name="lyric-scroll">
-              <span
-                :key="currentLyricText"
-                class="truncate tracking-wide block select-none text-sm sm:text-base font-bold whitespace-nowrap"
-                :style="{ color: 'var(--theme-accent)' }"
-              >
-                {{ currentLyricText }}
-              </span>
-            </Transition>
-          </div>
-          <!-- 双行模式下的下一句微透明预览歌词 -->
-          <div v-if="playerStore.lyricDisplayLines === 2" class="h-5 relative flex items-center overflow-hidden mt-0.5 min-w-[120px]">
-            <Transition name="lyric-scroll">
-              <span :key="nextLyricText" class="truncate tracking-wide block select-none text-xs sm:text-sm text-[var(--theme-text-secondary)] font-medium whitespace-nowrap">
-                {{ nextLyricText || '⋯' }}
-              </span>
-            </Transition>
-          </div>
+        <!-- 丝滑连续滚动歌词组件 -->
+        <div class="relative overflow-hidden flex flex-col justify-center max-w-[72vw] text-left min-w-[140px]">
+          <LyricTicker
+            :lyrics="playerStore.lyrics"
+            :active-index="playerStore.currentLyricIndex"
+            :display-lines="playerStore.lyricDisplayLines"
+            :fallback-text="playerStore.currentTrack?.title || '享受纯粹私有音乐'"
+            size="md"
+          />
         </div>
       </div>
 
@@ -431,30 +412,4 @@ async function toggleMiniPlayer() {
   </template>
 </template>
 
-<style scoped>
-.lyric-scroll-enter-active {
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease, filter 0.32s ease;
-}
 
-.lyric-scroll-leave-active {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, filter 0.28s ease;
-  pointer-events: none;
-}
-
-.lyric-scroll-enter-from {
-  opacity: 0;
-  transform: translateY(12px);
-  filter: blur(2px);
-}
-
-.lyric-scroll-leave-to {
-  opacity: 0;
-  transform: translateY(-12px);
-  filter: blur(2px);
-}
-</style>

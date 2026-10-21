@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useServerStore } from '../stores/server'
 import {
@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next'
 import { isDesktopApp, exitMiniMode, expandMiniWindow, collapseMiniWindow } from '../services/desktop'
 import AddToPlaylistModal from './AddToPlaylistModal.vue'
+import LyricTicker from './LyricTicker.vue'
 import gsap from 'gsap'
 
 const props = defineProps<{
@@ -26,32 +27,12 @@ const serverStore = useServerStore()
 const showAddToPlaylist = ref(false)
 
 const miniPlayerRoot = ref<HTMLElement | null>(null)
-const lyricEl = ref<HTMLElement | null>(null)
 const heartBtnRef = ref<HTMLElement | null>(null)
 const playBtnRef = ref<HTMLElement | null>(null)
 let ctx: gsap.Context | undefined
 
 const coverUrl = computed(() => {
   return serverStore.client?.getCoverArtUrl(playerStore.currentTrack?.coverArtId, 160) || ''
-})
-
-const currentLyric = computed(() => {
-  if (playerStore.lyrics.length && playerStore.currentLyricIndex >= 0) {
-    return playerStore.lyrics[playerStore.currentLyricIndex]?.text || ''
-  }
-  return playerStore.currentTrack?.artist || '享受纯粹私有音乐'
-})
-
-// 当歌词文本更新时，触发平滑上浮动画 (GSAP)
-watch(currentLyric, async () => {
-  await nextTick()
-  if (lyricEl.value) {
-    gsap.fromTo(
-      lyricEl.value,
-      { y: 5, autoAlpha: 0.3 },
-      { y: 0, autoAlpha: 1, duration: 0.35, ease: 'power2.out' }
-    )
-  }
 })
 
 // 收藏按钮点击爆弹回弹触觉反馈 (GSAP)
@@ -198,13 +179,15 @@ function handleOpenAddToPlaylist() {
             <span class="w-0.5 rounded-full bg-[var(--theme-accent)] wave-bar-4" />
           </div>
         </div>
-        <!-- 动态悬浮歌词 -->
-        <div
-          ref="lyricEl"
-          class="text-[11px] truncate mt-0.5 font-medium leading-tight lyric-text"
-          :style="{ color: 'var(--theme-accent)' }"
-        >
-          {{ currentLyric }}
+        <!-- 动态连续平滑滚动歌词 (支持单/双行) -->
+        <div class="mt-0.5 overflow-hidden">
+          <LyricTicker
+            :lyrics="playerStore.lyrics"
+            :active-index="playerStore.currentLyricIndex"
+            :display-lines="playerStore.lyricDisplayLines"
+            :fallback-text="playerStore.currentTrack?.artist || '享受纯粹私有音乐'"
+            size="sm"
+          />
         </div>
       </div>
 
