@@ -31,6 +31,8 @@ import {
   Palette,
   Activity,
   Layers,
+  Globe,
+  AppWindow,
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -257,19 +259,37 @@ async function handleClearAllCache() {
   }
 }
 
-// 4. 快捷键清单
-const shortcutList = [
-  { key: 'MediaPlayPause / ⌘+Alt+Space', desc: '播放 / 暂停', scope: '系统全局', isGlobal: true },
-  { key: 'MediaTrackNext / ⌘+Alt+→', desc: '下一首曲目', scope: '系统全局', isGlobal: true },
-  { key: 'MediaTrackPrevious / ⌘+Alt+←', desc: '上一首曲目', scope: '系统全局', isGlobal: true },
-  { key: 'Ctrl / ⌘ + Alt + ↑', desc: '全局音量增加 5%', scope: '系统全局', isGlobal: true },
-  { key: 'Ctrl / ⌘ + Alt + ↓', desc: '全局音量减小 5%', scope: '系统全局', isGlobal: true },
-  { key: 'Space (空格键)', desc: '播放 / 暂停', scope: '窗口内', isGlobal: false },
-  { key: 'Ctrl / ⌘ + K', desc: '快速呼出全局搜索弹窗', scope: '窗口内', isGlobal: false },
-  { key: 'Ctrl / ⌘ + →', desc: '切换到下一首曲目', scope: '窗口内', isGlobal: false },
-  { key: 'Ctrl / ⌘ + ←', desc: '切换到上一首曲目', scope: '窗口内', isGlobal: false },
-  { key: 'Ctrl / ⌘ + ↑', desc: '音量增加 5%', scope: '窗口内', isGlobal: false },
-  { key: 'Ctrl / ⌘ + ↓', desc: '音量减小 5%', scope: '窗口内', isGlobal: false },
+// 4. 快捷键分类清单
+const shortcutCategories = [
+  {
+    id: 'global',
+    title: '系统全局快捷键',
+    subtitle: '在任何第三方软件、系统后台或桌面迷你窗下均可随时响应',
+    badge: '后台常驻',
+    isGlobal: true,
+    shortcuts: [
+      { name: '播放 / 暂停', key: 'MediaPlayPause / ⌘+Alt+Space' },
+      { name: '下一首曲目', key: 'MediaTrackNext / ⌘+Alt+→' },
+      { name: '上一首曲目', key: 'MediaTrackPrevious / ⌘+Alt+←' },
+      { name: '全局音量增加 5%', key: 'Ctrl / ⌘ + Alt + ↑' },
+      { name: '全局音量减小 5%', key: 'Ctrl / ⌘ + Alt + ↓' },
+    ],
+  },
+  {
+    id: 'inapp',
+    title: '应用窗口内快捷键',
+    subtitle: '仅当音乐播放器主窗口处于前台激活聚焦状态时生效',
+    badge: '窗口聚焦',
+    isGlobal: false,
+    shortcuts: [
+      { name: '播放 / 暂停', key: 'Space (空格键)' },
+      { name: '快速唤起全局搜索', key: 'Ctrl / ⌘ + K' },
+      { name: '切换到下一首曲目', key: 'Ctrl / ⌘ + →' },
+      { name: '切换到上一首曲目', key: 'Ctrl / ⌘ + ←' },
+      { name: '窗口音量增加 5%', key: 'Ctrl / ⌘ + ↑' },
+      { name: '窗口音量减小 5%', key: 'Ctrl / ⌘ + ↓' },
+    ],
+  },
 ]
 
 // 5. 版本检查与更新状态
@@ -912,29 +932,37 @@ onUnmounted(() => {
 
     <!-- 栏目 4：快捷键指南与设置 -->
     <div v-else-if="currentTab === 'shortcuts'" class="space-y-5 sm:space-y-6 animate-fade-in">
-      <div class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl">
-        <div class="border-b border-neutral-800 pb-3">
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <Keyboard class="w-4 h-4 text-[var(--theme-accent)] shrink-0" /> 键盘快捷键指南
-          </h2>
-          <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">系统全局快捷键支持在任何第三方应用、失焦或迷你窗下随心操控</p>
+      <div
+        v-for="cat in shortcutCategories"
+        :key="cat.id"
+        class="bg-neutral-900/60 p-4 sm:p-6 rounded-2xl border border-neutral-800/80 space-y-4 shadow-xl"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <component
+                :is="cat.isGlobal ? Globe : AppWindow"
+                class="w-4 h-4 text-[var(--theme-accent)] shrink-0"
+              />
+              <span>{{ cat.title }}</span>
+            </h2>
+            <p class="text-xs text-neutral-400 mt-0.5 leading-relaxed break-words">{{ cat.subtitle }}</p>
+          </div>
+          <span
+            class="text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold self-start sm:self-center shrink-0 whitespace-nowrap"
+            :class="cat.isGlobal ? 'bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30' : 'bg-neutral-800 text-neutral-300 border border-neutral-700/60'"
+          >
+            {{ cat.badge }}
+          </span>
         </div>
 
         <div class="divide-y divide-neutral-800/80">
           <div
-            v-for="(item, idx) in shortcutList"
+            v-for="(item, idx) in cat.shortcuts"
             :key="idx"
-            class="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:py-3.5 text-xs gap-2 sm:gap-4"
+            class="flex flex-col sm:flex-row sm:items-center justify-between py-2.5 sm:py-3 text-xs gap-1.5 sm:gap-4"
           >
-            <div class="flex items-center gap-2 min-w-0 flex-wrap">
-              <span class="text-neutral-200 font-semibold text-sm">{{ item.desc }}</span>
-              <span
-                class="px-2 py-0.5 rounded text-[10px] font-medium shrink-0 whitespace-nowrap"
-                :class="item.isGlobal ? 'bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60'"
-              >
-                {{ item.scope }}
-              </span>
-            </div>
+            <span class="text-neutral-200 font-medium text-sm">{{ item.name }}</span>
             <div class="flex items-center self-start sm:self-center shrink-0">
               <span class="px-2.5 py-1 rounded-lg bg-neutral-950/80 border border-neutral-800 font-mono text-[var(--theme-accent)] font-bold tracking-wide shadow-inner text-xs whitespace-nowrap">
                 {{ item.key }}
