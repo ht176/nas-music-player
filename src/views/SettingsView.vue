@@ -990,7 +990,7 @@ onUnmounted(() => {
             <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
               <h2 class="text-lg sm:text-xl font-black text-[var(--theme-text-primary)] tracking-tight">AuraMusic · 极光私有音乐</h2>
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--theme-accent)]/15 text-[var(--theme-accent)] border border-[var(--theme-accent)]/30 shrink-0 whitespace-nowrap">
-                v1.0.12
+                v1.0.13
               </span>
             </div>
             <p class="text-xs text-[var(--theme-text-secondary)] mt-1 leading-relaxed break-words">
