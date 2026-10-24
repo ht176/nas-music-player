@@ -9,11 +9,13 @@ import { MediaSessionService } from '../services/media-session'
 import { useServerStore } from './server'
 import { toastService } from '../services/toast'
 import confetti from 'canvas-confetti'
+import { isMobileDevice } from '../services/desktop'
 
 const STORAGE_PLAYER_STATE_KEY = 'aura_music_player_state'
 
 export const usePlayerStore = defineStore('player', () => {
   const serverStore = useServerStore()
+  const isMobile = isMobileDevice() || (typeof window !== 'undefined' && Boolean((window as any).AndroidMediaBridge))
 
   // 读取持久化播放记录
   let savedState: any = null
@@ -29,7 +31,10 @@ export const usePlayerStore = defineStore('player', () => {
   const isPlaying = ref<boolean>(false)
   const currentTime = ref<number>(savedState?.currentTime || 0)
   const duration = ref<number>(savedState?.duration || 0)
-  const volume = ref<number>(savedState?.volume ?? 0.8)
+  // 移动端/安卓端界面不显示音量滑块，强制将应用内音量设为 1.0 (最大音量输出)，由手机物理按键/车载系统独立掌控
+  const volume = ref<number>(isMobile ? 1.0 : (savedState?.volume ?? 0.8))
+  audioService.setVolume(volume.value)
+
   const playMode = ref<PlayMode>(savedState?.playMode || 'loop')
   const lyricDisplayLines = ref<number>(savedState?.lyricDisplayLines === 2 ? 2 : 1)
   const lyrics = ref<LyricLine[]>([])
@@ -47,7 +52,7 @@ export const usePlayerStore = defineStore('player', () => {
         currentIndex: currentIndex.value,
         currentTime: Math.floor(currentTime.value),
         duration: duration.value,
-        volume: volume.value,
+        volume: isMobile ? 1.0 : volume.value,
         playMode: playMode.value,
         lyricDisplayLines: lyricDisplayLines.value,
       }))
@@ -79,6 +84,11 @@ export const usePlayerStore = defineStore('player', () => {
 
   // 恢复持久化播放状态
   function initRestoredState() {
+    if (isMobile) {
+      volume.value = 1.0
+      audioService.setVolume(1.0)
+    }
+
     if (currentTrack.value && serverStore.client) {
       const tr = currentTrack.value
       const streamUrl = serverStore.client.getStreamUrl(tr.id, tr.suffix)
@@ -457,6 +467,7 @@ export const usePlayerStore = defineStore('player', () => {
   function setVolume(val: number) {
     volume.value = val
     audioService.setVolume(val)
+    savePlayerState()
   }
 
   function togglePlayMode() {

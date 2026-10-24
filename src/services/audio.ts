@@ -1,3 +1,5 @@
+import { isMobileDevice } from './desktop'
+
 /**
  * 专业 10 段图形均衡器频点定义 (Hz)
  */
@@ -26,10 +28,11 @@ export class AudioPlayerService {
 
   // 交叉淡入淡出定时器
   private fadeInterval?: any
-  private currentVolume = 0.8
+  // 移动端/安卓端不显示软件音量滑块，直接拉满至 1.0 (100% 最大音量输出)，由物理按键/车载音响独立控制系统音量
+  private currentVolume = (isMobileDevice() || (typeof window !== 'undefined' && Boolean((window as any).AndroidMediaBridge))) ? 1.0 : 0.8
   private crossfadeDuration = 1.5
   private isDucked = false
-  private preDuckVolume = 0.8
+  private preDuckVolume = (isMobileDevice() || (typeof window !== 'undefined' && Boolean((window as any).AndroidMediaBridge))) ? 1.0 : 0.8
 
   private onTimeUpdateCallback?: (currentTime: number, duration: number) => void
   private onEndedCallback?: () => void
@@ -39,9 +42,11 @@ export class AudioPlayerService {
   constructor() {
     this.audio = new Audio()
     this.audio.crossOrigin = 'anonymous'
+    this.audio.volume = this.currentVolume
     this.preloadAudio = new Audio()
     this.preloadAudio.crossOrigin = 'anonymous'
     this.preloadAudio.preload = 'auto'
+    this.preloadAudio.volume = this.currentVolume
     this.initListeners()
   }
 
