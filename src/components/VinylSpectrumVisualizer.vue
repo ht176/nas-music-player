@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { audioService } from '../services/audio'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animId: number | null = null
+let isRunning = false
 
-// 环形律动采样点数（与博文案例一致采用 80~100 根环绕辐射光柱）
+// 环形律动采样点数
 const barCount = 84
 const smoothedData = new Float32Array(barCount)
 const peakData = new Float32Array(barCount)
 
-// 随机索引映射表（如同博客中的 randomData 排序算法，打破单调阶梯感，让高低起伏更加错落有致、生动绚丽）
+// 随机索引映射表（打破单调阶梯感，让高低起伏更加错落有致）
 const freqIndexMap: number[] = []
 for (let i = 0; i < barCount; i++) {
   freqIndexMap.push(i)
 }
-// 使用可控伪随机打乱相邻高低音分布，保证环绕圆周时视觉丰富
 for (let i = freqIndexMap.length - 1; i > 0; i--) {
   const j = Math.floor(Math.sin(i * 12.9898 + 78.233) * 43758.5453) % (i + 1)
   const positiveJ = Math.abs(j)
@@ -28,18 +30,32 @@ for (let i = freqIndexMap.length - 1; i > 0; i--) {
 
 let rotationAngle = 0
 
-function getThemeColors() {
-  if (typeof document === 'undefined') {
-    return { accent: '#10b981', accentSec: '#06b6d4', glow: 'rgba(16, 185, 129, 0.4)' }
-  }
+// 缓存主题颜色，避免每帧触发强制重排 (layout thrashing)
+let cachedColors = { accent: '#10b981', accentSec: '#06b6d4', glow: 'rgba(16, 185, 129, 0.4)' }
+
+function updateCachedThemeColors() {
+  if (typeof document === 'undefined') return
   const rootStyle = getComputedStyle(document.documentElement)
-  const accent = rootStyle.getPropertyValue('--theme-accent').trim() || '#10b981'
-  const accentSec = rootStyle.getPropertyValue('--theme-accent-secondary').trim() || '#06b6d4'
-  const glow = rootStyle.getPropertyValue('--theme-glow').trim() || 'rgba(16, 185, 129, 0.4)'
-  return { accent, accentSec, glow }
+  cachedColors = {
+    accent: rootStyle.getPropertyValue('--theme-accent').trim() || '#10b981',
+    accentSec: rootStyle.getPropertyValue('--theme-accent-secondary').trim() || '#06b6d4',
+    glow: rootStyle.getPropertyValue('--theme-glow').trim() || 'rgba(16, 185, 129, 0.4)',
+  }
 }
 
+watch(() => themeStore.currentThemeId, () => {
+  updateCachedThemeColors()
+})
+
+watch(() => playerStore.isPlaying, (playing) => {
+  if (playing) {
+    startAnimation()
+  }
+})
+
 function render() {
+  if (!isRunning) return
+
   const canvas = canvasRef.value
   if (!canvas) return
   const ctx = canvas.getContext('2d')
@@ -64,14 +80,11 @@ function render() {
     let target = 0
     if (isPlaying && volumeFactor > 0.01) {
       if (isWebAudioLive && realData) {
-        // 使用映射索引采样前 120 个有效音频能量频段
         const sampleIdx = Math.floor((freqIndexMap[i] / barCount) * Math.min(realData.length, 120))
         const val = realData[sampleIdx] || 0
         const normalized = val / 255
-        // 强化低频与节拍爆发
         target = Math.pow(normalized, 1.2) * 55 * volumeFactor
       } else {
-        // 离线/降级仿真呼吸波浪
         const t = (playerStore.currentTime || 0) * 4 + i * 0.25
         const wave = Math.sin(t) * 0.5 + Math.cos(t * 1.5 + i * 0.1) * 0.5
         target = (Math.abs(wave) * 35 + 4) * volumeFactor
@@ -95,29 +108,30 @@ function render() {
     }
   }
 
-  // 2. 绘制环绕唱片的径向脉冲柱 (按当前主题配色辐射发散)
+  // 2. 绘制环绕唱片的径向脉冲柱
   const cx = width / 2
   const cy = height / 2
   const baseRadius = 145
   const angleStep = (Math.PI * 2) / barCount
-  const { accent, accentSec } = getThemeColors()
+  const { accent, accentSec } = cachedColors
+
+  // 单一共享渐变：避免在 84 次子循环中重复构造 84 个 CanvasGradient 对象
+  const sharedGrad = ctx.createLinearGradient(0, baseRadius, 0, baseRadius + 45)
+  sharedGrad.addColorStop(0, accent)
+  sharedGrad.addColorStop(0.6, accentSec)
+  sharedGrad.addColorStop(1, '#ffffff')
 
   ctx.save()
   ctx.translate(cx, cy)
   ctx.rotate(rotationAngle)
+
+  ctx.fillStyle = sharedGrad
 
   for (let i = 0; i < barCount; i++) {
     const val = Math.max(2, smoothedData[i])
     ctx.save()
     ctx.rotate(angleStep * i)
 
-    // 渐变光柱 (从贴近唱片的主题主色过渡到外圈副色与白亮高光)
-    const barGrad = ctx.createLinearGradient(0, baseRadius, 0, baseRadius + val)
-    barGrad.addColorStop(0, accent)
-    barGrad.addColorStop(0.6, accentSec)
-    barGrad.addColorStop(1, '#ffffff')
-
-    ctx.fillStyle = barGrad
     ctx.beginPath()
     // 柱宽 3.5px，圆角
     ctx.roundRect(-1.75, baseRadius, 3.5, val, [1.75])
@@ -132,6 +146,7 @@ function render() {
       ctx.shadowBlur = 6
       ctx.fill()
       ctx.shadowBlur = 0
+      ctx.fillStyle = sharedGrad
     }
 
     ctx.restore()
@@ -139,15 +154,56 @@ function render() {
 
   ctx.restore()
 
+  // 当处于暂停且能量完全释放时，暂停 rAF 循环，节约电量与计算资源
+  if (!isPlaying) {
+    let hasEnergy = false
+    for (let i = 0; i < barCount; i++) {
+      if (smoothedData[i] > 1) {
+        hasEnergy = true
+        break
+      }
+    }
+    if (!hasEnergy) {
+      stopAnimation()
+      return
+    }
+  }
+
   animId = requestAnimationFrame(render)
 }
 
+function startAnimation() {
+  if (isRunning) return
+  if (typeof document !== 'undefined' && document.hidden) return
+  isRunning = true
+  animId = requestAnimationFrame(render)
+}
+
+function stopAnimation() {
+  isRunning = false
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {
+    stopAnimation()
+  } else if (playerStore.isPlaying) {
+    startAnimation()
+  }
+}
+
 onMounted(() => {
-  render()
+  updateCachedThemeColors()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  startAnimation()
 })
 
 onUnmounted(() => {
-  if (animId) cancelAnimationFrame(animId)
+  stopAnimation()
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 

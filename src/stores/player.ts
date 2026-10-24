@@ -119,6 +119,7 @@ export const usePlayerStore = defineStore('player', () => {
   })
 
   // 监听音频生命周期
+  let lastSavedSecond = -1
   audioService.onTimeUpdate((time, dur) => {
     currentTime.value = time
     if (dur && !isNaN(dur) && isFinite(dur) && dur > 0) {
@@ -134,8 +135,10 @@ export const usePlayerStore = defineStore('player', () => {
       MediaSessionService.setPositionState(duration.value, time)
     }
 
-    // 每 5 秒轻量持久化一次当前播放进度
-    if (Math.floor(time) % 5 === 0) {
+    // 每 5 秒轻量持久化一次当前播放进度 (防抖限流，确保每个 5 秒周期仅执行一次 JSON 序列化)
+    const curSec = Math.floor(time)
+    if (curSec !== lastSavedSecond && curSec % 5 === 0) {
+      lastSavedSecond = curSec
       savePlayerState()
     }
 

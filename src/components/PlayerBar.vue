@@ -132,7 +132,7 @@ async function toggleMiniPlayer() {
           @click="playerStore.showFullscreen = true"
         >
           <div class="w-10 h-10 rounded-xl overflow-hidden bg-neutral-800 shrink-0 border border-white/10 shadow-md relative">
-            <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover" />
+            <img v-if="coverUrl" :src="coverUrl" decoding="async" class="w-full h-full object-cover" />
             <div v-else class="w-full h-full flex items-center justify-center bg-neutral-900 text-neutral-600">
               <ListMusic class="w-5 h-5" />
             </div>
@@ -252,7 +252,7 @@ async function toggleMiniPlayer() {
           class="h-12 w-12 rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-800 shrink-0 cursor-pointer shadow-md group relative border border-[var(--theme-border)] transition-transform duration-300 hover:scale-105"
           @click="playerStore.showFullscreen = true"
         >
-          <img v-if="coverUrl" :src="coverUrl" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+          <img v-if="coverUrl" :src="coverUrl" decoding="async" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-xs">
             <Maximize2 class="w-4 h-4 text-white drop-shadow" />
           </div>

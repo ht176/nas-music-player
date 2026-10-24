@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { audioService } from '../services/audio'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 
 export type VisualizerMode =
   | 'neon-light-floor' // 案例四：赛博透视地坪垂直光柱与倒影 (默认)
@@ -18,8 +19,10 @@ const props = withDefaults(
 )
 
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animId: number | null = null
+let isRunning = false
 
 // 采样点数
 const barCount = 48
@@ -47,16 +50,28 @@ for (let i = 0; i < 40; i++) {
 
 let flowPhase = 0
 
-function getThemeColors() {
-  if (typeof document === 'undefined') {
-    return { accent: '#10b981', accentSec: '#06b6d4', glow: 'rgba(16, 185, 129, 0.4)' }
-  }
+// 缓存主题颜色，杜绝每帧 getComputedStyle 引发的强制重排与渲染卡顿
+let cachedColors = { accent: '#10b981', accentSec: '#06b6d4', glow: 'rgba(16, 185, 129, 0.4)' }
+
+function updateCachedThemeColors() {
+  if (typeof document === 'undefined') return
   const rootStyle = getComputedStyle(document.documentElement)
-  const accent = rootStyle.getPropertyValue('--theme-accent').trim() || '#10b981'
-  const accentSec = rootStyle.getPropertyValue('--theme-accent-secondary').trim() || '#06b6d4'
-  const glow = rootStyle.getPropertyValue('--theme-glow').trim() || 'rgba(16, 185, 129, 0.4)'
-  return { accent, accentSec, glow }
+  cachedColors = {
+    accent: rootStyle.getPropertyValue('--theme-accent').trim() || '#10b981',
+    accentSec: rootStyle.getPropertyValue('--theme-accent-secondary').trim() || '#06b6d4',
+    glow: rootStyle.getPropertyValue('--theme-glow').trim() || 'rgba(16, 185, 129, 0.4)',
+  }
 }
+
+watch(() => themeStore.currentThemeId, () => {
+  updateCachedThemeColors()
+})
+
+watch(() => playerStore.isPlaying, (playing) => {
+  if (playing) {
+    startAnimation()
+  }
+})
 
 function render() {
   const canvas = canvasRef.value
@@ -138,6 +153,22 @@ function render() {
     renderNeonLightFloor(ctx, width, height)
   }
 
+  // 检查暂停或停止出声时的空闲状态，完全回落至 0 后停止 rAF 循环，节约 GPU/CPU
+  if (!playerStore.isPlaying) {
+    let hasEnergy = false
+    for (let i = 0; i < barCount; i++) {
+      if (smoothedHeights[i] > 1.2) {
+        hasEnergy = true
+        break
+      }
+    }
+    if (!hasEnergy) {
+      ctx.clearRect(0, 0, width, height)
+      stopAnimation()
+      return
+    }
+  }
+
   animId = requestAnimationFrame(render)
 }
 
@@ -153,7 +184,7 @@ function renderNeonLightFloor(
   const baseLineY = height * 0.65
   const stepX = width / barCount
   const barWidth = stepX * 0.48
-  const { accent, accentSec } = getThemeColors()
+  const { accent, accentSec } = cachedColors
 
   // 1. 地坪流星扩散线
   for (let i = 0; i < sparks.length; i++) {
@@ -234,7 +265,7 @@ function renderNeonGlowLine(
 ) {
   const stepX = width / barCount
   const barWidth = stepX * 0.45
-  const { accent, accentSec } = getThemeColors()
+  const { accent, accentSec } = cachedColors
 
   // 1. 底层密集频柱
   for (let i = 0; i < barCount; i++) {
@@ -297,7 +328,7 @@ function renderAuroraMirror(
   const totalBarWidthRatio = 0.65
   const barWidth = (width / barCount) * totalBarWidthRatio
   const gap = (width / barCount) * (1 - totalBarWidthRatio)
-  const { accent, accentSec } = getThemeColors()
+  const { accent, accentSec } = cachedColors
 
   for (let i = 0; i < barCount; i++) {
     const val = Math.max(2.0, smoothedHeights[i])
@@ -327,12 +358,38 @@ function renderAuroraMirror(
   }
 }
 
+function startAnimation() {
+  if (isRunning) return
+  if (typeof document !== 'undefined' && document.hidden) return
+  isRunning = true
+  animId = requestAnimationFrame(render)
+}
+
+function stopAnimation() {
+  isRunning = false
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {
+    stopAnimation()
+  } else if (playerStore.isPlaying) {
+    startAnimation()
+  }
+}
+
 onMounted(() => {
-  render()
+  updateCachedThemeColors()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  startAnimation()
 })
 
 onUnmounted(() => {
-  if (animId) cancelAnimationFrame(animId)
+  stopAnimation()
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 

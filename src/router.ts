@@ -1,29 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ExploreView from './views/ExploreView.vue'
-import AlbumDetailView from './views/AlbumDetailView.vue'
-import FavoritesView from './views/FavoritesView.vue'
-import ArtistsView from './views/ArtistsView.vue'
-import ArtistDetailView from './views/ArtistDetailView.vue'
-import PlaylistsView from './views/PlaylistsView.vue'
-import PlaylistDetailView from './views/PlaylistDetailView.vue'
-import DownloadedView from './views/DownloadedView.vue'
-import StatsView from './views/StatsView.vue'
-import SettingsView from './views/SettingsView.vue'
-import AllSongsView from './views/AllSongsView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: ExploreView },
-    { path: '/album/:id', component: AlbumDetailView },
-    { path: '/favorites', component: FavoritesView },
-    { path: '/songs', component: AllSongsView },
-    { path: '/downloaded', component: DownloadedView },
-    { path: '/stats', component: StatsView },
-    { path: '/artists', component: ArtistsView },
-    { path: '/artist/:id', component: ArtistDetailView },
-    { path: '/playlists', component: PlaylistsView },
-    { path: '/playlist/:id', component: PlaylistDetailView },
-    { path: '/settings', component: SettingsView },
+    { path: '/album/:id', component: () => import('./views/AlbumDetailView.vue') },
+    { path: '/favorites', component: () => import('./views/FavoritesView.vue') },
+    { path: '/songs', component: () => import('./views/AllSongsView.vue') },
+    { path: '/downloaded', component: () => import('./views/DownloadedView.vue') },
+    { path: '/stats', component: () => import('./views/StatsView.vue') },
+    { path: '/artists', component: () => import('./views/ArtistsView.vue') },
+    { path: '/artist/:id', component: () => import('./views/ArtistDetailView.vue') },
+    { path: '/playlists', component: () => import('./views/PlaylistsView.vue') },
+    { path: '/playlist/:id', component: () => import('./views/PlaylistDetailView.vue') },
+    { path: '/settings', component: () => import('./views/SettingsView.vue') },
   ],
 })

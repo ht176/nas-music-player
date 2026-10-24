@@ -3,15 +3,18 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { audioService } from '../services/audio'
 import { usePlayerStore } from '../stores/player'
 import { useThemeStore } from '../stores/theme'
+import { isMobileDevice } from '../services/desktop'
 
 const props = withDefaults(
   defineProps<{
     interactive?: boolean
     density?: number
+    isFullscreenLayer?: boolean
   }>(),
   {
     interactive: true,
     density: 55,
+    isFullscreenLayer: false,
   }
 )
 
@@ -19,6 +22,8 @@ const playerStore = usePlayerStore()
 const themeStore = useThemeStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animId: number | null = null
+let isRunning = false
+let resizePending = false
 
 interface Particle {
   x: number
@@ -40,6 +45,17 @@ watch(() => themeStore.currentThemeId, () => {
   }
 })
 
+// 当全屏播放器打开时，非全屏层的背景粒子自动休眠，避免多重后台重绘消耗 CPU/GPU
+watch(() => playerStore.showFullscreen, (isFullscreen) => {
+  if (!props.isFullscreenLayer) {
+    if (isFullscreen) {
+      stopAnimation()
+    } else {
+      startAnimation()
+    }
+  }
+})
+
 let mouse = { x: -1000, y: -1000 }
 
 function handleMouseMove(e: MouseEvent) {
@@ -55,7 +71,11 @@ function handleMouseLeave() {
 
 function initParticles(width: number, height: number) {
   particles.length = 0
-  const count = Math.min(90, Math.floor((width * height) / 22000) * (props.density / 40))
+  const isMobile = isMobileDevice()
+  const maxCap = isMobile ? 24 : 80
+  const count = Math.max(8, Math.min(maxCap, Math.floor((width * height) / 24000) * (props.density / 40)))
+
+  const colors = themeStore.currentTheme?.colors?.particles || ['rgba(16, 185, 129,']
 
   for (let i = 0; i < count; i++) {
     const baseRadius = Math.random() * 2.2 + 0.8
@@ -67,24 +87,31 @@ function initParticles(width: number, height: number) {
       vx: (Math.random() - 0.5) * 0.45,
       vy: (Math.random() - 0.5) * 0.45,
       alpha: Math.random() * 0.45 + 0.15,
-      color: themeStore.currentTheme.colors.particles[Math.floor(Math.random() * themeStore.currentTheme.colors.particles.length)],
+      color: colors[Math.floor(Math.random() * colors.length)],
       pulsePhase: Math.random() * Math.PI * 2,
     })
   }
 }
 
 function resize() {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const parent = canvas.parentElement
-  if (!parent) return
-  const rect = parent.getBoundingClientRect()
-  canvas.width = rect.width || window.innerWidth
-  canvas.height = rect.height || window.innerHeight
-  initParticles(canvas.width, canvas.height)
+  if (resizePending) return
+  resizePending = true
+  requestAnimationFrame(() => {
+    resizePending = false
+    const canvas = canvasRef.value
+    if (!canvas) return
+    const parent = canvas.parentElement
+    if (!parent) return
+    const rect = parent.getBoundingClientRect()
+    canvas.width = rect.width || window.innerWidth
+    canvas.height = rect.height || window.innerHeight
+    initParticles(canvas.width, canvas.height)
+  })
 }
 
 function render() {
+  if (!isRunning) return
+
   const canvas = canvasRef.value
   if (!canvas) return
   const ctx = canvas.getContext('2d')
@@ -132,8 +159,9 @@ function render() {
     // 鼠标排斥/牵引
     const dx = mouse.x - p.x
     const dy = mouse.y - p.y
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    if (dist < 130 && dist > 0) {
+    const distSq = dx * dx + dy * dy
+    if (distSq < 16900 && distSq > 0) { // 130 * 130 = 16900
+      const dist = Math.sqrt(distSq)
       const force = (130 - dist) / 130
       p.x -= (dx / dist) * force * 2.5
       p.y -= (dy / dist) * force * 2.5
@@ -147,17 +175,19 @@ function render() {
     ctx.fill()
   }
 
-  // 2. 绘制粒子之间的近邻能量连线 (Constellation 效果)
+  // 2. 绘制粒子之间的近邻能量连线 (优先平方距离筛选，规避大量无效开方运算)
   const maxConnDist = 95
+  const maxConnDistSq = maxConnDist * maxConnDist
   for (let i = 0; i < particles.length; i++) {
+    const p1 = particles[i]
     for (let j = i + 1; j < particles.length; j++) {
-      const p1 = particles[i]
       const p2 = particles[j]
       const dx = p1.x - p2.x
       const dy = p1.y - p2.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
+      const distSq = dx * dx + dy * dy
 
-      if (dist < maxConnDist) {
+      if (distSq < maxConnDistSq) {
+        const dist = Math.sqrt(distSq)
         const lineAlpha = (1 - dist / maxConnDist) * 0.16 * energyMultiplier
         ctx.beginPath()
         ctx.strokeStyle = `rgba(16, 185, 129, ${Math.min(0.3, lineAlpha)})`
@@ -172,19 +202,45 @@ function render() {
   animId = requestAnimationFrame(render)
 }
 
+function startAnimation() {
+  if (isRunning) return
+  if (typeof document !== 'undefined' && document.hidden) return
+  if (!props.isFullscreenLayer && playerStore.showFullscreen) return
+  isRunning = true
+  animId = requestAnimationFrame(render)
+}
+
+function stopAnimation() {
+  isRunning = false
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {
+    stopAnimation()
+  } else {
+    startAnimation()
+  }
+}
+
 onMounted(() => {
   resize()
-  window.addEventListener('resize', resize)
+  window.addEventListener('resize', resize, { passive: true })
+  document.addEventListener('visibilitychange', handleVisibilityChange)
   if (props.interactive) {
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseleave', handleMouseLeave)
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
+    window.addEventListener('mouseleave', handleMouseLeave, { passive: true })
   }
-  render()
+  startAnimation()
 })
 
 onUnmounted(() => {
-  if (animId) cancelAnimationFrame(animId)
+  stopAnimation()
   window.removeEventListener('resize', resize)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('mouseleave', handleMouseLeave)
 })

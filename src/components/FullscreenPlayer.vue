@@ -199,7 +199,7 @@ watch(
               backgroundColor: themeStore.isLight ? 'rgba(255, 255, 255, 0.76)' : 'rgba(7, 9, 15, 0.82)'
             }"
           />
-          <ParticleBackground :density="45" />
+          <ParticleBackground :density="45" :is-fullscreen-layer="true" />
         </div>
 
         <!-- 顶部导航与功能栏 -->
@@ -418,7 +418,7 @@ watch(
 
                 <!-- 唱片中心圆形封面 -->
                 <div class="w-[50%] h-[50%] rounded-full overflow-hidden shadow-2xl relative border-2 border-neutral-900 z-10">
-                  <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover select-none" />
+                  <img v-if="coverUrl" :src="coverUrl" decoding="async" class="w-full h-full object-cover select-none" />
                   <div class="absolute inset-0 m-auto w-4 h-4 rounded-full bg-neutral-950 border-2 border-neutral-700 shadow-inner flex items-center justify-center">
                     <div class="w-1 h-1 rounded-full bg-white/40"></div>
                   </div>
@@ -524,7 +524,7 @@ watch(
                   style="background: conic-gradient(from 45deg, transparent 0deg, rgba(255,255,255,0.2) 60deg, transparent 120deg, rgba(255,255,255,0.2) 240deg, transparent 300deg);"
                 />
                 <div class="w-[50%] h-[50%] rounded-full overflow-hidden shadow-2xl relative border-2 border-neutral-900 z-10">
-                  <img v-if="coverUrl" :src="coverUrl" class="w-full h-full object-cover select-none" />
+                  <img v-if="coverUrl" :src="coverUrl" decoding="async" class="w-full h-full object-cover select-none" />
                   <div class="absolute inset-0 m-auto w-5 h-5 rounded-full bg-neutral-950 border-2 border-neutral-700/80 shadow-inner flex items-center justify-center">
                     <div class="w-1 h-1 rounded-full bg-white/40"></div>
                   </div>

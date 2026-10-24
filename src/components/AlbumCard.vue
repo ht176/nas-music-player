@@ -31,6 +31,7 @@ const coverUrl = computed(() => {
         :alt="props.album.name"
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"
         loading="lazy"
+        decoding="async"
       />
       <div v-else class="flex h-full w-full items-center justify-center text-neutral-600 bg-neutral-900/80">
         <Disc3 class="w-12 h-12 stroke-[1.2]" />

@@ -226,8 +226,9 @@ onMounted(async () => {
       <span class="w-11 text-right font-mono text-[var(--theme-text-secondary)]">{{ formattedDuration }}</span>
     </div>
 
-    <!-- 歌单添加弹窗 -->
+    <!-- 歌单添加弹窗：按需延迟挂载，大幅降低虚拟 DOM 节点与内存开销 -->
     <AddToPlaylistModal
+      v-if="showAddToPlaylist"
       v-model="showAddToPlaylist"
       :track="props.track"
     />
