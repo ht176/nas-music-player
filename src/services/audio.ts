@@ -28,6 +28,8 @@ export class AudioPlayerService {
   private fadeInterval?: any
   private currentVolume = 0.8
   private crossfadeDuration = 1.5
+  private isDucked = false
+  private preDuckVolume = 0.8
 
   private onTimeUpdateCallback?: (currentTime: number, duration: number) => void
   private onEndedCallback?: () => void
@@ -261,7 +263,23 @@ export class AudioPlayerService {
 
   setVolume(vol: number) {
     this.currentVolume = Math.max(0, Math.min(1, vol))
-    this.audio.volume = this.currentVolume
+    if (!this.isDucked) {
+      this.audio.volume = this.currentVolume
+    }
+  }
+
+  setDucked(ducked: boolean) {
+    if (this.isDucked === ducked) return
+    this.isDucked = ducked
+    if (ducked) {
+      this.preDuckVolume = this.currentVolume
+      // 导航播报中，压低音乐音量至 20%
+      const duckedVol = Math.max(0.05, this.preDuckVolume * 0.2)
+      this.audio.volume = duckedVol
+    } else {
+      // 导航播报结束，恢复原有音乐音量
+      this.audio.volume = this.currentVolume
+    }
   }
 
   onTimeUpdate(cb: (currentTime: number, duration: number) => void) {

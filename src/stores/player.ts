@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { LyricLine, PlayMode, Track } from '../api/types'
 import { audioService, EQ_PRESETS } from '../services/audio'
 import { cacheService } from '../services/cache'
@@ -86,6 +86,10 @@ export const usePlayerStore = defineStore('player', () => {
       if (savedState?.currentTime) {
         audioService.seek(savedState.currentTime)
       }
+      const coverUrl = serverStore.client.getCoverArtUrl(tr.coverArtId, 300)
+      MediaSessionService.updateMetadata(tr, coverUrl)
+      MediaSessionService.setPositionState(duration.value, savedState?.currentTime || 0)
+
       serverStore.client.getLyrics(tr.id, tr.artist, tr.title).then((res) => {
         lyrics.value = res.lines || []
         if (lyrics.value.length > 0) {
@@ -94,6 +98,15 @@ export const usePlayerStore = defineStore('player', () => {
       }).catch(() => {})
     }
   }
+
+  // 监听当前歌词变动，实时推送到车载大屏
+  watch(currentLyricIndex, (newIdx) => {
+    if (newIdx >= 0 && lyrics.value[newIdx]) {
+      MediaSessionService.updateLyric(lyrics.value[newIdx].text)
+    } else if (newIdx === -1) {
+      MediaSessionService.updateLyric('')
+    }
+  })
 
   // 监听音频生命周期
   audioService.onTimeUpdate((time, dur) => {
@@ -105,6 +118,10 @@ export const usePlayerStore = defineStore('player', () => {
     }
     if (lyrics.value.length) {
       currentLyricIndex.value = LyricsService.findActiveIndex(lyrics.value, time)
+    }
+
+    if (duration.value > 0) {
+      MediaSessionService.setPositionState(duration.value, time)
     }
 
     // 每 5 秒轻量持久化一次当前播放进度
@@ -129,22 +146,21 @@ export const usePlayerStore = defineStore('player', () => {
 
   audioService.onStatusChange((status) => {
     isPlaying.value = status
+    MediaSessionService.setPlaybackState(status, currentTime.value)
   })
 
   audioService.onEnded(() => {
     handleTrackEnded()
   })
 
-  MediaSessionService.setActionHandlers({
+  MediaSessionService.initGlobalBridge({
     play: () => play(),
     pause: () => pause(),
-    previoustrack: () => prev(),
-    nexttrack: () => next(),
-    seekto: (details) => {
-      if (details.seekTime !== undefined) {
-        seek(details.seekTime)
-      }
-    },
+    toggle: () => togglePlay(),
+    next: () => next(),
+    prev: () => prev(),
+    seek: (sec) => seek(sec),
+    duck: (isDucked) => audioService.setDucked(isDucked),
   })
 
   async function loadTrack(track: Track) {
@@ -291,6 +307,8 @@ export const usePlayerStore = defineStore('player', () => {
     isPlaying.value = false
     lyrics.value = []
     currentLyricIndex.value = -1
+    MediaSessionService.updateLyric('')
+    MediaSessionService.setPlaybackState(false, 0)
     toastService.info('已清空当前播放队列')
   }
 
@@ -433,6 +451,7 @@ export const usePlayerStore = defineStore('player', () => {
   function seek(seconds: number) {
     currentTime.value = seconds
     audioService.seek(seconds)
+    MediaSessionService.setPositionState(duration.value, seconds)
   }
 
   function setVolume(val: number) {
