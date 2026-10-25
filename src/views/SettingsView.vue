@@ -318,6 +318,10 @@ async function handleCheckUpdate() {
 }
 
 async function handleInstallUpdate() {
+  if (updateInfo.value?.isMobile) {
+    await installAppUpdate()
+    return
+  }
   installingUpdate.value = true
   downloadProgress.value = 0
   try {
@@ -1050,7 +1054,7 @@ onUnmounted(() => {
               class="w-full py-2.5 rounded-xl bg-[var(--theme-accent)] hover:opacity-90 text-neutral-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg cursor-pointer"
               @click="handleInstallUpdate"
             >
-              <DownloadCloud class="w-4 h-4" /> 立即更新并重启应用
+              <DownloadCloud class="w-4 h-4" /> {{ updateInfo?.isMobile ? '前往下载最新 Android APK' : '立即更新并重启应用' }}
             </button>
           </div>
 

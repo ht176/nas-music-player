@@ -13,6 +13,11 @@ const progress = ref(0)
 const error = ref('')
 
 async function handleInstall() {
+  if (props.updateInfo.isMobile) {
+    await installAppUpdate()
+    visible.value = false
+    return
+  }
   installing.value = true
   progress.value = 0
   error.value = ''
@@ -82,7 +87,7 @@ async function handleInstall() {
         class="px-3.5 py-1.5 rounded-lg text-xs bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold transition flex items-center gap-1.5 shadow-lg cursor-pointer"
         @click="handleInstall"
       >
-        <DownloadCloud class="w-3.5 h-3.5" /> 立即更新并重启
+        <DownloadCloud class="w-3.5 h-3.5" /> {{ updateInfo.isMobile ? '下载最新 APK' : '立即更新并重启' }}
       </button>
     </div>
 

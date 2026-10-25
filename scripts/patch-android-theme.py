@@ -41,6 +41,7 @@ import android.media.AudioManager
 import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
+import android.net.Uri
 import android.os.Build
 import android.view.KeyEvent
 import android.view.View
@@ -431,6 +432,19 @@ class AndroidMediaBridge(private val activity: MainActivity) {
   @JavascriptInterface
   fun updateLyric(lyric: String?) {
     activity.updateNativeLyric(lyric)
+  }
+
+  @JavascriptInterface
+  fun openUrl(url: String?) {
+    if (!url.isNullOrEmpty()) {
+      try {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        activity.startActivity(intent)
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
   }
 }
 """
