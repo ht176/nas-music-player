@@ -185,9 +185,9 @@ jobs:
               repo: context.repo.repo,
               per_page: 20,
             });
-            const draft = releases.data.find(r => r.draft && (!tag || r.tag_name === tag || r.name.includes(tag))) || releases.data.find(r => r.draft);
-            if (!draft) {
-              console.log('No draft release found to attach APKs.');
+            const targetRelease = releases.data.find(r => r.tag_name === tag || (tag && r.name && r.name.includes(tag))) || releases.data.find(r => r.draft);
+            if (!targetRelease) {
+              console.log('No matching release found to attach APKs.');
               return;
             }
             const apkDir = path.resolve('android-apks');
@@ -203,7 +203,7 @@ jobs:
                   await github.rest.repos.uploadReleaseAsset({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    release_id: draft.id,
+                    release_id: targetRelease.id,
                     name: `NAS-Music-Player-${cleanName}`,
                     data: fileData,
                   });

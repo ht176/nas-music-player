@@ -5,11 +5,12 @@ patch-android-theme.py
 1. 修复全面屏手势导航栏呈白色的问题，统一设为 #060609 深色背景并开启白色手势线。
 2. 消除冷启动白屏，设置窗口原生背景为 #060609。
 3. 注入 AndroidManifest 权限 (WAKE_LOCK, FOREGROUND_SERVICE) 与 MEDIA_BUTTON 意图过滤器。
-4. 注入 MainActivity.kt：
+4. 增强 MainActivity.kt：
+   - 保持原生类声明 (WryActivity/TauriActivity/AppCompatActivity) 不变，无损注入 MediaSession。
    - 实例化原生 android.media.session.MediaSession，向车载蓝牙 (AVRCP) 广播歌曲名称、歌手、专辑名、持续时间、专辑封面与当前滚动歌词。
    - 监听车载方向盘/蓝牙按键 (Next, Prev, Play, Pause, Stop, Seek) 并通过 WebView 回调给 Web 前端。
    - 接入 AudioManager AudioFocus，当高德/百度/腾讯等导航语音播报时自动触发 Transient Ducking 避让降音至 20%，播报完毕即刻无缝恢复。
-   - 注册 AndroidMediaBridge JavascriptInterface 供前端直接交互。
+   - 动态获取并注册 AndroidMediaBridge JavascriptInterface 供前端直接交互。
 """
 
 import glob
@@ -28,6 +29,412 @@ DARK_THEME_ITEMS = """
         <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
 """
 
+EXTRA_IMPORTS = """
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Color
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
+import android.media.MediaMetadata
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
+import android.os.Build
+import android.view.KeyEvent
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import androidx.core.view.WindowCompat
+import java.net.HttpURLConnection
+import java.net.URL
+"""
+
+ON_CREATE_SNIPPET = """
+    try {
+      window.statusBarColor = Color.parseColor("#060609")
+      window.navigationBarColor = Color.parseColor("#060609")
+      WindowCompat.getInsetsController(window, window.decorView)?.let {
+        it.isAppearanceLightStatusBars = false
+        it.isAppearanceLightNavigationBars = false
+      }
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
+    initAudioService()
+    initMediaSession()
+    setupWebViewBridge()
+"""
+
+ACTIVITY_METHODS = """
+  private var webViewInstance: WebView? = null
+  private var mediaSession: MediaSession? = null
+  private var audioManager: AudioManager? = null
+  private var audioFocusRequest: AudioFocusRequest? = null
+  private var audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
+  private var hasAudioFocus = false
+  private var currentMetadataBuilder: MediaMetadata.Builder? = null
+  private var lastCoverUrl: String = ""
+  private var lastCoverBitmap: Bitmap? = null
+
+  private fun setupWebViewBridge(retryCount: Int = 0) {
+    try {
+      window.decorView.post {
+        try {
+          val webView = findWebView(window.decorView)
+          if (webView != null) {
+            webViewInstance = webView
+            webView.settings.mediaPlaybackRequiresUserGesture = false
+            webView.addJavascriptInterface(AndroidMediaBridge(this@MainActivity), "AndroidMediaBridge")
+          } else if (retryCount < 5) {
+            window.decorView.postDelayed({ setupWebViewBridge(retryCount + 1) }, 500)
+          }
+        } catch (e: Exception) {
+          e.printStackTrace()
+        }
+      }
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
+  }
+
+  private fun findWebView(view: View): WebView? {
+    if (view is WebView) return view
+    if (view is ViewGroup) {
+      for (i in 0 until view.childCount) {
+        val child = findWebView(view.getChildAt(i))
+        if (child != null) return child
+      }
+    }
+    return null
+  }
+
+  private fun initAudioService() {
+    try {
+      audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+      audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        handleAudioFocusChange(focusChange)
+      }
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
+  }
+
+  private fun initMediaSession() {
+    try {
+      mediaSession = MediaSession(this, "AuraNASMusicPlayer").apply {
+        setFlags(
+          MediaSession.FLAG_HANDLES_MEDIA_BUTTONS or
+          MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS
+        )
+        setCallback(object : MediaSession.Callback() {
+          override fun onPlay() {
+            runOnUiThread {
+              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('play');", null)
+            }
+          }
+
+          override fun onPause() {
+            runOnUiThread {
+              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
+            }
+          }
+
+          override fun onSkipToNext() {
+            runOnUiThread {
+              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('next');", null)
+            }
+          }
+
+          override fun onSkipToPrevious() {
+            runOnUiThread {
+              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('prev');", null)
+            }
+          }
+
+          override fun onStop() {
+            runOnUiThread {
+              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
+            }
+          }
+
+          override fun onSeekTo(pos: Long) {
+            runOnUiThread {
+              webViewInstance?.evaluateJavascript("window.__AURA_ON_SEEK_TO__ && window.__AURA_ON_SEEK_TO__($pos);", null)
+            }
+          }
+
+          override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
+            val keyEvent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+              mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
+            } else {
+              @Suppress("DEPRECATION")
+              mediaButtonIntent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+            }
+            if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {
+              when (keyEvent.keyCode) {
+                KeyEvent.KEYCODE_MEDIA_PLAY -> onPlay()
+                KeyEvent.KEYCODE_MEDIA_PAUSE -> onPause()
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+                KeyEvent.KEYCODE_HEADSETHOOK -> {
+                  runOnUiThread {
+                    webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('toggle');", null)
+                  }
+                }
+                KeyEvent.KEYCODE_MEDIA_NEXT -> onSkipToNext()
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS -> onSkipToPrevious()
+                KeyEvent.KEYCODE_MEDIA_STOP -> onStop()
+              }
+              return true
+            }
+            return super.onMediaButtonEvent(mediaButtonIntent)
+          }
+        })
+        isActive = true
+      }
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
+  }
+
+  fun requestAudioFocus() {
+    if (hasAudioFocus) return
+    val am = audioManager ?: return
+    val listener = audioFocusChangeListener ?: return
+    try {
+      val res = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val attrs = AudioAttributes.Builder()
+          .setUsage(AudioAttributes.USAGE_MEDIA)
+          .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+          .build()
+        val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+          .setAudioAttributes(attrs)
+          .setAcceptsDelayedFocusGain(true)
+          .setWillPauseWhenDucked(false)
+          .setOnAudioFocusChangeListener(listener)
+          .build()
+        audioFocusRequest = req
+        am.requestAudioFocus(req)
+      } else {
+        @Suppress("DEPRECATION")
+        am.requestAudioFocus(listener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+      }
+      hasAudioFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
+  }
+
+  fun abandonAudioFocus() {
+    if (!hasAudioFocus) return
+    val am = audioManager ?: return
+    try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        audioFocusRequest?.let { am.abandonAudioFocusRequest(it) }
+      } else {
+        audioFocusChangeListener?.let {
+          @Suppress("DEPRECATION")
+          am.abandonAudioFocus(it)
+        }
+      }
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
+    hasAudioFocus = false
+  }
+
+  private fun handleAudioFocusChange(focusChange: Int) {
+    runOnUiThread {
+      when (focusChange) {
+        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+          // 导航播报中，临时调低音量 (避让降音至 20%)
+          webViewInstance?.evaluateJavascript("window.__AURA_ON_DUCK__ && window.__AURA_ON_DUCK__(true);", null)
+        }
+        AudioManager.AUDIOFOCUS_GAIN -> {
+          // 导航播报结束，恢复音量
+          webViewInstance?.evaluateJavascript("window.__AURA_ON_DUCK__ && window.__AURA_ON_DUCK__(false);", null)
+        }
+        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+          // 来电等暂时丢失焦点，暂停播放
+          webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
+        }
+        AudioManager.AUDIOFOCUS_LOSS -> {
+          // 永久丢失音频焦点（如其他音乐 App 开始出声），暂停并放弃焦点
+          webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
+          abandonAudioFocus()
+        }
+      }
+    }
+  }
+
+  fun updateNativeMetadata(title: String?, artist: String?, album: String?, durationSec: Double, coverUrl: String?, lyric: String?) {
+    runOnUiThread {
+      try {
+        val durMs = (durationSec * 1000).toLong()
+        val builder = MediaMetadata.Builder()
+          .putString(MediaMetadata.METADATA_KEY_TITLE, title ?: "")
+          .putString(MediaMetadata.METADATA_KEY_ARTIST, artist ?: "")
+          .putString(MediaMetadata.METADATA_KEY_ALBUM, album ?: "")
+          .putString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST, artist ?: "")
+          .putLong(MediaMetadata.METADATA_KEY_DURATION, durMs)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title ?: "")
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, lyric ?: (artist ?: ""))
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, lyric ?: "")
+
+        if (lastCoverBitmap != null && coverUrl == lastCoverUrl) {
+          builder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, lastCoverBitmap)
+          builder.putBitmap(MediaMetadata.METADATA_KEY_ART, lastCoverBitmap)
+        }
+
+        currentMetadataBuilder = builder
+        mediaSession?.setMetadata(builder.build())
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
+
+    if (!coverUrl.isNullOrEmpty() && coverUrl != lastCoverUrl) {
+      lastCoverUrl = coverUrl
+      Thread {
+        try {
+          val url = URL(coverUrl)
+          val conn = url.openConnection() as HttpURLConnection
+          conn.connectTimeout = 4000
+          conn.readTimeout = 4000
+          conn.doInput = true
+          conn.connect()
+          val stream = conn.inputStream
+          val bitmap = BitmapFactory.decodeStream(stream)
+          stream.close()
+          conn.disconnect()
+          if (bitmap != null) {
+            lastCoverBitmap = bitmap
+            runOnUiThread {
+              currentMetadataBuilder?.let { b ->
+                b.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
+                b.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
+                mediaSession?.setMetadata(b.build())
+              }
+            }
+          }
+        } catch (e: Exception) {
+          // 封面图片加载失败时容错静默
+        }
+      }.start()
+    }
+  }
+
+  fun updateNativePlaybackState(isPlaying: Boolean, positionSec: Double) {
+    runOnUiThread {
+      try {
+        if (isPlaying) {
+          requestAudioFocus()
+          mediaSession?.isActive = true
+        }
+        val actions = PlaybackState.ACTION_PLAY or
+          PlaybackState.ACTION_PAUSE or
+          PlaybackState.ACTION_PLAY_PAUSE or
+          PlaybackState.ACTION_STOP or
+          PlaybackState.ACTION_SKIP_TO_NEXT or
+          PlaybackState.ACTION_SKIP_TO_PREVIOUS or
+          PlaybackState.ACTION_SEEK_TO
+
+        val state = if (isPlaying) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED
+        val posMs = (positionSec * 1000).toLong()
+        val pbState = PlaybackState.Builder()
+          .setActions(actions)
+          .setState(state, posMs, 1.0f)
+          .build()
+        mediaSession?.setPlaybackState(pbState)
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
+  }
+
+  fun updateNativeLyric(lyric: String?) {
+    runOnUiThread {
+      try {
+        val text = lyric ?: ""
+        currentMetadataBuilder?.let { b ->
+          b.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, text)
+          b.putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, text)
+          mediaSession?.setMetadata(b.build())
+        }
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
+  }
+
+  override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    if (event?.action == KeyEvent.ACTION_DOWN) {
+      when (keyCode) {
+        KeyEvent.KEYCODE_MEDIA_PLAY -> {
+          mediaSession?.controller?.transportControls?.play()
+          return true
+        }
+        KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+          mediaSession?.controller?.transportControls?.pause()
+          return true
+        }
+        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+        KeyEvent.KEYCODE_HEADSETHOOK -> {
+          runOnUiThread {
+            webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('toggle');", null)
+          }
+          return true
+        }
+        KeyEvent.KEYCODE_MEDIA_NEXT -> {
+          mediaSession?.controller?.transportControls?.skipToNext()
+          return true
+        }
+        KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+          mediaSession?.controller?.transportControls?.skipToPrevious()
+          return true
+        }
+        KeyEvent.KEYCODE_MEDIA_STOP -> {
+          mediaSession?.controller?.transportControls?.stop()
+          return true
+        }
+      }
+    }
+    return super.onKeyDown(keyCode, event)
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    try {
+      abandonAudioFocus()
+      mediaSession?.isActive = false
+      mediaSession?.release()
+    } catch (e: Exception) {
+      // ignore
+    }
+  }
+"""
+
+BRIDGE_CLASS = """
+class AndroidMediaBridge(private val activity: MainActivity) {
+  @JavascriptInterface
+  fun updateMetadata(title: String?, artist: String?, album: String?, durationSec: Double, coverUrl: String?, lyric: String?) {
+    activity.updateNativeMetadata(title, artist, album, durationSec, coverUrl, lyric)
+  }
+
+  @JavascriptInterface
+  fun setPlaybackState(isPlaying: Boolean, positionSec: Double) {
+    activity.updateNativePlaybackState(isPlaying, positionSec)
+  }
+
+  @JavascriptInterface
+  fun updateLyric(lyric: String?) {
+    activity.updateNativeLyric(lyric)
+  }
+}
+"""
+
 def patch_themes_xml():
     theme_files = glob.glob("src-tauri/gen/android/app/src/main/res/values*/themes.xml")
     if not theme_files:
@@ -39,11 +446,9 @@ def patch_themes_xml():
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 确保 tools 命名空间存在
         if 'xmlns:tools="http://schemas.android.com/tools"' not in content:
             content = content.replace("<resources>", '<resources xmlns:tools="http://schemas.android.com/tools">')
 
-        # 避免重复注入
         if "android:navigationBarColor" not in content:
             pattern = re.compile(r'(<style\s+name=["\']Theme\.[^"\']+["\']\s+parent=["\'][^"\']+["\']\s*>)')
             if pattern.search(content):
@@ -115,394 +520,32 @@ def patch_main_activity():
             print(f"[INFO] Already patched AndroidMediaBridge in {file_path}, skipping.")
             continue
 
-        pkg_match = re.search(r'package\s+([\w\.]+)', content)
-        package_name = pkg_match.group(1) if pkg_match else "com.nas.music.player"
+        # 1. 注入 imports (保留原本 package 及已有 imports)
+        pkg_match = re.search(r'(package\s+[\w\.]+)', content)
+        if pkg_match:
+            pkg_end = pkg_match.end()
+            content = content[:pkg_end] + "\n" + EXTRA_IMPORTS + content[pkg_end:]
+        else:
+            content = EXTRA_IMPORTS + "\n" + content
 
-        new_activity_content = f"""package {package_name}
+        # 2. 在 super.onCreate 后注入初始化代码
+        if "super.onCreate(savedInstanceState)" in content:
+            content = content.replace(
+                "super.onCreate(savedInstanceState)",
+                "super.onCreate(savedInstanceState)\n" + ON_CREATE_SNIPPET
+            )
+        else:
+            print(f"[WARN] super.onCreate not found in {file_path}")
 
-import android.content.Context
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.media.AudioAttributes
-import android.media.AudioFocusRequest
-import android.media.AudioManager
-import android.media.MediaMetadata
-import android.media.session.MediaSession
-import android.media.session.PlaybackState
-import android.os.Build
-import android.os.Bundle
-import android.view.KeyEvent
-import android.webkit.JavascriptInterface
-import android.webkit.WebView
-import androidx.core.view.WindowCompat
-import java.net.HttpURLConnection
-import java.net.URL
+        # 3. 在 MainActivity 类末尾 (最后一个 '}') 之前注入辅助方法，保持原有 class MainActivity 声明完全不变
+        last_brace = content.rfind("}")
+        if last_brace != -1:
+            content = content[:last_brace] + "\n" + ACTIVITY_METHODS + "\n}\n" + BRIDGE_CLASS
+        else:
+            print(f"[WARN] Closing brace not found in {file_path}")
 
-class MainActivity : app.tauri.TauriActivity() {{
-  private var webViewInstance: WebView? = null
-  private var mediaSession: MediaSession? = null
-  private var audioManager: AudioManager? = null
-  private var audioFocusRequest: AudioFocusRequest? = null
-  private var audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
-  private var hasAudioFocus = false
-  private var currentMetadataBuilder: MediaMetadata.Builder? = null
-  private var lastCoverUrl: String = ""
-  private var lastCoverBitmap: Bitmap? = null
-
-  override fun onCreate(savedInstanceState: Bundle?) {{
-    super.onCreate(savedInstanceState)
-    try {{
-      window.statusBarColor = Color.parseColor("#060609")
-      window.navigationBarColor = Color.parseColor("#060609")
-      WindowCompat.getInsetsController(window, window.decorView)?.let {{
-        it.isAppearanceLightStatusBars = false
-        it.isAppearanceLightNavigationBars = false
-      }}
-    }} catch (e: Exception) {{
-      e.printStackTrace()
-    }}
-
-    initAudioService()
-    initMediaSession()
-  }}
-
-  override fun onWebViewCreate(webView: WebView) {{
-    super.onWebViewCreate(webView)
-    webViewInstance = webView
-    try {{
-      webView.settings.mediaPlaybackRequiresUserGesture = false
-    }} catch (e: Exception) {{
-      e.printStackTrace()
-    }}
-    webView.addJavascriptInterface(AndroidMediaBridge(this), "AndroidMediaBridge")
-  }}
-
-  private fun initAudioService() {{
-    try {{
-      audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-      audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener {{ focusChange ->
-        handleAudioFocusChange(focusChange)
-      }}
-    }} catch (e: Exception) {{
-      e.printStackTrace()
-    }}
-  }}
-
-  private fun initMediaSession() {{
-    try {{
-      mediaSession = MediaSession(this, "AuraNASMusicPlayer").apply {{
-        setFlags(
-          MediaSession.FLAG_HANDLES_MEDIA_BUTTONS or
-          MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS
-        )
-        setCallback(object : MediaSession.Callback() {{
-          override fun onPlay() {{
-            runOnUiThread {{
-              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('play');", null)
-            }}
-          }}
-
-          override fun onPause() {{
-            runOnUiThread {{
-              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
-            }}
-          }}
-
-          override fun onSkipToNext() {{
-            runOnUiThread {{
-              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('next');", null)
-            }}
-          }}
-
-          override fun onSkipToPrevious() {{
-            runOnUiThread {{
-              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('prev');", null)
-            }}
-          }}
-
-          override fun onStop() {{
-            runOnUiThread {{
-              webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
-            }}
-          }}
-
-          override fun onSeekTo(pos: Long) {{
-            runOnUiThread {{
-              webViewInstance?.evaluateJavascript("window.__AURA_ON_SEEK_TO__ && window.__AURA_ON_SEEK_TO__($pos);", null)
-            }}
-          }}
-
-          override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {{
-            val keyEvent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {{
-              mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
-            }} else {{
-              @Suppress("DEPRECATION")
-              mediaButtonIntent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
-            }}
-            if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {{
-              when (keyEvent.keyCode) {{
-                KeyEvent.KEYCODE_MEDIA_PLAY -> onPlay()
-                KeyEvent.KEYCODE_MEDIA_PAUSE -> onPause()
-                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
-                KeyEvent.KEYCODE_HEADSETHOOK -> {{
-                  runOnUiThread {{
-                    webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('toggle');", null)
-                  }}
-                }}
-                KeyEvent.KEYCODE_MEDIA_NEXT -> onSkipToNext()
-                KeyEvent.KEYCODE_MEDIA_PREVIOUS -> onSkipToPrevious()
-                KeyEvent.KEYCODE_MEDIA_STOP -> onStop()
-              }}
-              return true
-            }}
-            return super.onMediaButtonEvent(mediaButtonIntent)
-          }}
-        }})
-        isActive = true
-      }}
-    }} catch (e: Exception) {{
-      e.printStackTrace()
-    }}
-  }}
-
-  fun requestAudioFocus() {{
-    if (hasAudioFocus) return
-    val am = audioManager ?: return
-    val listener = audioFocusChangeListener ?: return
-    try {{
-      val res = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {{
-        val attrs = AudioAttributes.Builder()
-          .setUsage(AudioAttributes.USAGE_MEDIA)
-          .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-          .build()
-        val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-          .setAudioAttributes(attrs)
-          .setAcceptsDelayedFocusGain(true)
-          .setWillPauseWhenDucked(false)
-          .setOnAudioFocusChangeListener(listener)
-          .build()
-        audioFocusRequest = req
-        am.requestAudioFocus(req)
-      }} else {{
-        @Suppress("DEPRECATION")
-        am.requestAudioFocus(listener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
-      }}
-      hasAudioFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
-    }} catch (e: Exception) {{
-      e.printStackTrace()
-    }}
-  }}
-
-  fun abandonAudioFocus() {{
-    if (!hasAudioFocus) return
-    val am = audioManager ?: return
-    try {{
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {{
-        audioFocusRequest?.let {{ am.abandonAudioFocusRequest(it) }}
-      }} else {{
-        audioFocusChangeListener?.let {{
-          @Suppress("DEPRECATION")
-          am.abandonAudioFocus(it)
-        }}
-      }}
-    }} catch (e: Exception) {{
-      e.printStackTrace()
-    }}
-    hasAudioFocus = false
-  }}
-
-  private fun handleAudioFocusChange(focusChange: Int) {{
-    runOnUiThread {{
-      when (focusChange) {{
-        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {{
-          // 导航播报中，临时调低音量 (避让降音至 20%)
-          webViewInstance?.evaluateJavascript("window.__AURA_ON_DUCK__ && window.__AURA_ON_DUCK__(true);", null)
-        }}
-        AudioManager.AUDIOFOCUS_GAIN -> {{
-          // 导航播报结束，恢复音量
-          webViewInstance?.evaluateJavascript("window.__AURA_ON_DUCK__ && window.__AURA_ON_DUCK__(false);", null)
-        }}
-        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {{
-          // 来电等暂时丢失焦点，暂停播放
-          webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
-        }}
-        AudioManager.AUDIOFOCUS_LOSS -> {{
-          // 永久丢失音频焦点（如其他音乐 App 开始出声），暂停并放弃焦点
-          webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('pause');", null)
-          abandonAudioFocus()
-        }}
-      }}
-    }}
-  }}
-
-  fun updateNativeMetadata(title: String?, artist: String?, album: String?, durationSec: Double, coverUrl: String?, lyric: String?) {{
-    runOnUiThread {{
-      try {{
-        val durMs = (durationSec * 1000).toLong()
-        val builder = MediaMetadata.Builder()
-          .putString(MediaMetadata.METADATA_KEY_TITLE, title ?: "")
-          .putString(MediaMetadata.METADATA_KEY_ARTIST, artist ?: "")
-          .putString(MediaMetadata.METADATA_KEY_ALBUM, album ?: "")
-          .putString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST, artist ?: "")
-          .putLong(MediaMetadata.METADATA_KEY_DURATION, durMs)
-          .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title ?: "")
-          .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, lyric ?: (artist ?: ""))
-          .putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, lyric ?: "")
-
-        if (lastCoverBitmap != null && coverUrl == lastCoverUrl) {{
-          builder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, lastCoverBitmap)
-          builder.putBitmap(MediaMetadata.METADATA_KEY_ART, lastCoverBitmap)
-        }}
-
-        currentMetadataBuilder = builder
-        mediaSession?.setMetadata(builder.build())
-      }} catch (e: Exception) {{
-        e.printStackTrace()
-      }}
-    }}
-
-    if (!coverUrl.isNullOrEmpty() && coverUrl != lastCoverUrl) {{
-      lastCoverUrl = coverUrl
-      Thread {{
-        try {{
-          val url = URL(coverUrl)
-          val conn = url.openConnection() as HttpURLConnection
-          conn.connectTimeout = 4000
-          conn.readTimeout = 4000
-          conn.doInput = true
-          conn.connect()
-          val stream = conn.inputStream
-          val bitmap = BitmapFactory.decodeStream(stream)
-          stream.close()
-          conn.disconnect()
-          if (bitmap != null) {{
-            lastCoverBitmap = bitmap
-            runOnUiThread {{
-              currentMetadataBuilder?.let {{ b ->
-                b.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
-                b.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
-                mediaSession?.setMetadata(b.build())
-              }}
-            }}
-          }}
-        }} catch (e: Exception) {{
-          // 封面图片加载失败时容错静默
-        }}
-      }}.start()
-    }}
-  }}
-
-  fun updateNativePlaybackState(isPlaying: Boolean, positionSec: Double) {{
-    runOnUiThread {{
-      try {{
-        if (isPlaying) {{
-          requestAudioFocus()
-          mediaSession?.isActive = true
-        }}
-        val actions = PlaybackState.ACTION_PLAY or
-          PlaybackState.ACTION_PAUSE or
-          PlaybackState.ACTION_PLAY_PAUSE or
-          PlaybackState.ACTION_STOP or
-          PlaybackState.ACTION_SKIP_TO_NEXT or
-          PlaybackState.ACTION_SKIP_TO_PREVIOUS or
-          PlaybackState.ACTION_SEEK_TO
-
-        val state = if (isPlaying) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED
-        val posMs = (positionSec * 1000).toLong()
-        val pbState = PlaybackState.Builder()
-          .setActions(actions)
-          .setState(state, posMs, 1.0f)
-          .build()
-        mediaSession?.setPlaybackState(pbState)
-      }} catch (e: Exception) {{
-        e.printStackTrace()
-      }}
-    }}
-  }}
-
-  fun updateNativeLyric(lyric: String?) {{
-    runOnUiThread {{
-      try {{
-        val text = lyric ?: ""
-        currentMetadataBuilder?.let {{ b ->
-          b.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, text)
-          b.putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, text)
-          mediaSession?.setMetadata(b.build())
-        }}
-      }} catch (e: Exception) {{
-        e.printStackTrace()
-      }}
-    }}
-  }}
-
-  override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {{
-    if (event?.action == KeyEvent.ACTION_DOWN) {{
-      when (keyCode) {{
-        KeyEvent.KEYCODE_MEDIA_PLAY -> {{
-          mediaSession?.controller?.transportControls?.play()
-          return true
-        }}
-        KeyEvent.KEYCODE_MEDIA_PAUSE -> {{
-          mediaSession?.controller?.transportControls?.pause()
-          return true
-        }}
-        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
-        KeyEvent.KEYCODE_HEADSETHOOK -> {{
-          runOnUiThread {{
-            webViewInstance?.evaluateJavascript("window.__AURA_ON_MEDIA_ACTION__ && window.__AURA_ON_MEDIA_ACTION__('toggle');", null)
-          }}
-          return true
-        }}
-        KeyEvent.KEYCODE_MEDIA_NEXT -> {{
-          mediaSession?.controller?.transportControls?.skipToNext()
-          return true
-        }}
-        KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {{
-          mediaSession?.controller?.transportControls?.skipToPrevious()
-          return true
-        }}
-        KeyEvent.KEYCODE_MEDIA_STOP -> {{
-          mediaSession?.controller?.transportControls?.stop()
-          return true
-        }}
-      }}
-    }}
-    return super.onKeyDown(keyCode, event)
-  }}
-
-  override fun onDestroy() {{
-    super.onDestroy()
-    try {{
-      abandonAudioFocus()
-      mediaSession?.isActive = false
-      mediaSession?.release()
-    }} catch (e: Exception) {{
-      // ignore
-    }}
-  }}
-}}
-
-class AndroidMediaBridge(private val activity: MainActivity) {{
-  @JavascriptInterface
-  fun updateMetadata(title: String?, artist: String?, album: String?, durationSec: Double, coverUrl: String?, lyric: String?) {{
-    activity.updateNativeMetadata(title, artist, album, durationSec, coverUrl, lyric)
-  }}
-
-  @JavascriptInterface
-  fun setPlaybackState(isPlaying: Boolean, positionSec: Double) {{
-    activity.updateNativePlaybackState(isPlaying, positionSec)
-  }}
-
-  @JavascriptInterface
-  fun updateLyric(lyric: String?) {{
-    activity.updateNativeLyric(lyric)
-  }}
-}}
-"""
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(new_activity_content)
+            f.write(content)
         print(f"[SUCCESS] Successfully patched {file_path}")
 
     return True
