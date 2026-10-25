@@ -192,6 +192,14 @@ jobs:
             }
             const apkDir = path.resolve('android-apks');
             if (fs.existsSync(apkDir)) {
+              // 获取已有资产，如已存在同名资产则先删除以支持覆盖发布
+              const existingAssets = await github.rest.repos.listReleaseAssets({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: targetRelease.id,
+                per_page: 50,
+              });
+
               const files = fs.readdirSync(apkDir);
               for (const file of files) {
                 if (file.endsWith('.apk')) {
@@ -199,12 +207,28 @@ jobs:
                   const fileData = fs.readFileSync(filePath);
                   // 净化文件名便于用户识别
                   const cleanName = file.replace('-unsigned', '').replace('-aligned-debugSigned', '').replace('-aligned-signed', '');
-                  console.log(`Uploading ${cleanName} (${fileData.length} bytes)...`);
+                  const assetName = `NAS-Music-Player-${cleanName}`;
+                  
+                  const existingAsset = existingAssets.data.find(a => a.name === assetName);
+                  if (existingAsset) {
+                    console.log(`Deleting existing asset ${assetName} (id: ${existingAsset.id})...`);
+                    try {
+                      await github.rest.repos.deleteReleaseAsset({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        asset_id: existingAsset.id,
+                      });
+                    } catch (delErr) {
+                      console.warn(`Failed to delete existing asset ${assetName}:`, delErr.message);
+                    }
+                  }
+
+                  console.log(`Uploading ${assetName} (${fileData.length} bytes)...`);
                   await github.rest.repos.uploadReleaseAsset({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     release_id: targetRelease.id,
-                    name: `NAS-Music-Player-${cleanName}`,
+                    name: assetName,
                     data: fileData,
                   });
                 }
