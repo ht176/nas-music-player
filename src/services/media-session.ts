@@ -1,17 +1,13 @@
 import type { Track } from '../api/types'
 
 export class MediaSessionService {
-  private static currentLyric = ''
   private static currentDuration = 0
   private static currentPosition = 0
 
   /**
    * 更新当前播放曲目的多媒体元数据（用于车载蓝牙屏幕、手机锁屏、通知中心与桌面系统）
    */
-  static updateMetadata(track: Track, coverUrl: string, lyric?: string) {
-    if (lyric !== undefined) {
-      this.currentLyric = lyric
-    }
+  static updateMetadata(track: Track, coverUrl: string) {
     this.currentDuration = track.duration || 0
 
     const absoluteCoverUrl = coverUrl
@@ -41,7 +37,7 @@ export class MediaSessionService {
       }
     }
 
-    // 2. 安卓原生 MediaSession 桥接 (专供车载蓝牙 AVRCP 协议传输歌名、歌手、专辑与动态歌词)
+    // 2. 安卓原生 MediaSession 桥接 (专供车载蓝牙 AVRCP 协议传输歌名、歌手、专辑与封面)
     const bridge = (window as any).AndroidMediaBridge
     if (bridge && typeof bridge.updateMetadata === 'function') {
       try {
@@ -51,7 +47,7 @@ export class MediaSessionService {
           track.album || '',
           track.duration || 0,
           absoluteCoverUrl,
-          this.currentLyric || ''
+          ''
         )
       } catch (e) {
         console.warn('[MediaSession] Android bridge updateMetadata error:', e)
@@ -108,18 +104,10 @@ export class MediaSessionService {
   }
 
   /**
-   * 实时推送当前正在唱的这行歌词（部分高级车载大屏支持在副标题/描述中滚动显示实时歌词）
+   * 实时记录当前歌词状态
    */
-  static updateLyric(lyric: string) {
-    this.currentLyric = lyric
-    const bridge = (window as any).AndroidMediaBridge
-    if (bridge && typeof bridge.updateLyric === 'function') {
-      try {
-        bridge.updateLyric(lyric)
-      } catch (e) {
-        // ignore
-      }
-    }
+  static updateLyric(_lyric: string) {
+    // 车载蓝牙 AVRCP 规范不支持逐行高频刷新歌词 (高频更新 setMetadata 会触发车机连续重新缓冲导致播放中断)，故在此静默
   }
 
   /**
