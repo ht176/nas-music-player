@@ -182,8 +182,8 @@ export const usePlayerStore = defineStore('player', () => {
       return
     }
 
-    // 若当前正在出声，执行快速平滑淡出
-    if (isPlaying.value) {
+    // 若当前正在出声，执行快速平滑淡出 (移动端跳过以防锁屏/后台下音量置 0 无法恢复)
+    if (isPlaying.value && !isMobile) {
       await audioService.fadeOut(400)
     }
 

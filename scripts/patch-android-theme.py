@@ -71,6 +71,12 @@ ACTIVITY_METHODS = """
   private var currentMetadataBuilder: MediaMetadata.Builder? = null
   private var lastCoverUrl: String = ""
   private var lastCoverBitmap: Bitmap? = null
+  private var currentTitle: String = ""
+  private var currentArtist: String = ""
+  private var currentAlbum: String = ""
+  private var currentDurationMs: Long = 0L
+  private var lastLyric: String = ""
+  private var lastLyricUpdateTime: Long = 0L
 
   private fun setupWebViewBridge(retryCount: Int = 0) {
     try {
@@ -184,16 +190,21 @@ ACTIVITY_METHODS = """
   fun updateNativeMetadata(title: String?, artist: String?, album: String?, durationSec: Double, coverUrl: String?, lyric: String?) {
     runOnUiThread {
       try {
-        val durMs = (durationSec * 1000).toLong()
+        currentTitle = title ?: ""
+        currentArtist = artist ?: ""
+        currentAlbum = album ?: ""
+        currentDurationMs = (durationSec * 1000).toLong()
+        lastLyric = ""
+
         val builder = MediaMetadata.Builder()
-          .putString(MediaMetadata.METADATA_KEY_TITLE, title ?: "")
-          .putString(MediaMetadata.METADATA_KEY_ARTIST, artist ?: "")
-          .putString(MediaMetadata.METADATA_KEY_ALBUM, album ?: "")
-          .putString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST, artist ?: "")
-          .putLong(MediaMetadata.METADATA_KEY_DURATION, if (durMs > 0) durMs else -1L)
-          .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title ?: "")
-          .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, artist ?: "")
-          .putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, album ?: "")
+          .putString(MediaMetadata.METADATA_KEY_TITLE, currentTitle)
+          .putString(MediaMetadata.METADATA_KEY_ARTIST, currentArtist)
+          .putString(MediaMetadata.METADATA_KEY_ALBUM, currentAlbum)
+          .putString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST, currentArtist)
+          .putLong(MediaMetadata.METADATA_KEY_DURATION, if (currentDurationMs > 0) currentDurationMs else -1L)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, currentTitle)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, currentArtist)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, currentAlbum)
 
         if (lastCoverBitmap != null && coverUrl == lastCoverUrl) {
           builder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, lastCoverBitmap)
@@ -270,7 +281,43 @@ ACTIVITY_METHODS = """
   }
 
   fun updateNativeLyric(lyric: String?) {
-    // 保持静默，车载蓝牙 AVRCP 规范不支持逐行高频刷新歌词 (高频 setMetadata 会导致车机重置曲目状态而中断播放)
+    val cleanLyric = lyric?.trim() ?: ""
+    if (cleanLyric == lastLyric) return
+    val now = System.currentTimeMillis()
+    // 防抖限流：歌词刷新至少间隔 400ms，避免蓝牙通道被过于密集的指令拥塞
+    if (now - lastLyricUpdateTime < 400) return
+    lastLyric = cleanLyric
+    lastLyricUpdateTime = now
+
+    runOnUiThread {
+      try {
+        if (currentTitle.isEmpty()) return@runOnUiThread
+        // 车载蓝牙屏幕全面适配方案 (业界通用标准)：
+        // 1. 对于仅支持显示 Title 字段的车机，将歌词拼接在歌名后展示：“歌名 - 当前歌词”
+        // 2. 对于支持副标题/描述的高级车机屏幕，在 SUBTITLE / DESCRIPTION 中同步展示实时歌词
+        val displayTitle = if (cleanLyric.isNotEmpty()) "$currentTitle - $cleanLyric" else currentTitle
+
+        val builder = MediaMetadata.Builder()
+          .putString(MediaMetadata.METADATA_KEY_TITLE, displayTitle)
+          .putString(MediaMetadata.METADATA_KEY_ARTIST, currentArtist)
+          .putString(MediaMetadata.METADATA_KEY_ALBUM, currentAlbum)
+          .putString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST, currentArtist)
+          .putLong(MediaMetadata.METADATA_KEY_DURATION, if (currentDurationMs > 0) currentDurationMs else -1L)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, displayTitle)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, if (cleanLyric.isNotEmpty()) cleanLyric else currentArtist)
+          .putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, if (cleanLyric.isNotEmpty()) cleanLyric else currentAlbum)
+
+        lastCoverBitmap?.let {
+          builder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, it)
+          builder.putBitmap(MediaMetadata.METADATA_KEY_ART, it)
+        }
+
+        currentMetadataBuilder = builder
+        mediaSession?.setMetadata(builder.build())
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
   }
 
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

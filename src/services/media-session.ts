@@ -104,10 +104,17 @@ export class MediaSessionService {
   }
 
   /**
-   * 实时记录当前歌词状态
+   * 实时推送当前歌词至车载大屏与系统锁屏
    */
-  static updateLyric(_lyric: string) {
-    // 车载蓝牙 AVRCP 规范不支持逐行高频刷新歌词 (高频更新 setMetadata 会触发车机连续重新缓冲导致播放中断)，故在此静默
+  static updateLyric(lyric: string) {
+    const bridge = (window as any).AndroidMediaBridge
+    if (bridge && typeof bridge.updateLyric === 'function') {
+      try {
+        bridge.updateLyric(lyric)
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   /**

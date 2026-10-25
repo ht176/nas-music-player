@@ -26,6 +26,10 @@ export class AudioPlayerService {
   private analyserNode?: AnalyserNode
   private isConnectedToWebAudio = false
 
+  private get isMobile(): boolean {
+    return isMobileDevice() || (typeof window !== 'undefined' && Boolean((window as any).AndroidMediaBridge))
+  }
+
   // 交叉淡入淡出定时器
   private fadeInterval?: any
   // 移动端/安卓端不显示软件音量滑块，直接拉满至 1.0 (100% 最大音量输出)，由物理按键/车载音响独立控制系统音量
@@ -41,17 +45,24 @@ export class AudioPlayerService {
 
   constructor() {
     this.audio = new Audio()
-    this.audio.crossOrigin = 'anonymous'
+    if (!this.isMobile) {
+      this.audio.crossOrigin = 'anonymous'
+    }
     this.audio.volume = this.currentVolume
+    this.audio.preload = 'auto'
+
     this.preloadAudio = new Audio()
-    this.preloadAudio.crossOrigin = 'anonymous'
-    this.preloadAudio.preload = 'auto'
-    this.preloadAudio.volume = this.currentVolume
+    if (!this.isMobile) {
+      this.preloadAudio.crossOrigin = 'anonymous'
+      this.preloadAudio.preload = 'auto'
+      this.preloadAudio.volume = this.currentVolume
+    }
     this.initListeners()
   }
 
   private async tryInitAudioContext() {
-    if (this.isConnectedToWebAudio) return
+    // 移动端/车载模式直通底层播放，避免后台切歌因浏览器 WebAudio 策略被静音挂起
+    if (this.isMobile || this.isConnectedToWebAudio) return
 
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
@@ -126,7 +137,8 @@ export class AudioPlayerService {
 
   fadeOut(durationMs = 800): Promise<void> {
     this.clearFade()
-    if (durationMs <= 0 || this.audio.paused) {
+    // 移动端跳过淡出，防止后台切歌时音量置 0 无法恢复
+    if (this.isMobile || durationMs <= 0 || this.audio.paused) {
       return Promise.resolve()
     }
 
@@ -150,8 +162,9 @@ export class AudioPlayerService {
 
   fadeIn(targetVolume = this.currentVolume, durationMs = 800) {
     this.clearFade()
-    if (durationMs <= 0) {
-      this.audio.volume = targetVolume
+    // 移动端直通最大音量，避免锁屏/切后台时因浏览器 JS 定时器挂起导致音量卡死在 0
+    if (this.isMobile || durationMs <= 0) {
+      this.audio.volume = this.isMobile ? 1.0 : targetVolume
       return
     }
 
@@ -199,14 +212,31 @@ export class AudioPlayerService {
       const code = this.audio.error?.code
       const msg = this.audio.error?.message
       console.error(`[AudioPlayer] 播放失败: code=${code}, message=${msg}, src=${this.audio.src}`, e)
+
+      // 遇到网络瞬断或解码卡顿，延迟 600ms 尝试自动恢复一次
+      if (this.audio.src) {
+        setTimeout(async () => {
+          try {
+            console.log('[AudioPlayer] 正在尝试自动恢复播放...')
+            await this.audio.play()
+          } catch {
+            // ignore
+          }
+        }, 600)
+      }
+
       this.onErrorCallback?.(e)
     })
   }
 
   setSource(url: string) {
-    this.audio.crossOrigin = 'anonymous'
+    if (!this.isMobile) {
+      this.audio.crossOrigin = 'anonymous'
+    } else {
+      this.audio.removeAttribute('crossorigin')
+      this.audio.volume = 1.0
+    }
     this.audio.src = url
-    this.audio.load()
   }
 
   /**
@@ -214,24 +244,29 @@ export class AudioPlayerService {
    * 在当前歌曲播放快结束时提前在后台拉取下一首头部数据
    */
   preloadNextTrack(url: string) {
-    if (!url || this.preloadAudio.src === url) return
+    // 移动端避免同时启动多个 Audio 解码器防止底层硬件资源争用
+    if (this.isMobile || !url || this.preloadAudio.src === url) return
     console.log('[AudioPlayer] 正在后台预缓冲下一首音频流:', url)
     this.preloadAudio.src = url
     this.preloadAudio.load()
   }
 
   async play(withFadeIn = true) {
-    await this.tryInitAudioContext()
-    if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      try {
-        await this.audioCtx.resume()
-      } catch (e) {
-        console.warn('Resume audioCtx failed:', e)
+    if (!this.isMobile) {
+      await this.tryInitAudioContext()
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        try {
+          await this.audioCtx.resume()
+        } catch (e) {
+          console.warn('Resume audioCtx failed:', e)
+        }
       }
     }
 
     try {
-      if (withFadeIn && this.crossfadeDuration > 0) {
+      if (this.isMobile) {
+        this.audio.volume = 1.0
+      } else if (withFadeIn && this.crossfadeDuration > 0) {
         this.audio.volume = 0
       } else {
         this.audio.volume = this.currentVolume
@@ -239,16 +274,20 @@ export class AudioPlayerService {
 
       await this.audio.play()
 
-      if (withFadeIn && this.crossfadeDuration > 0) {
+      if (!this.isMobile && withFadeIn && this.crossfadeDuration > 0) {
         this.fadeIn(this.currentVolume, this.crossfadeDuration * 1000)
       }
     } catch (e: any) {
       console.error('[AudioPlayer] 播放异常:', e)
-      if (this.audio.crossOrigin) {
-        console.warn('[AudioPlayer] 检测到可能的 CORS 跨域拦截，正在尝试降级直通播放...')
-        this.audio.removeAttribute('crossorigin')
-        this.audio.load()
+      // 容错降级重试：确保音量拉满并直通播放
+      try {
+        this.audio.volume = 1.0
+        if (this.audio.crossOrigin) {
+          this.audio.removeAttribute('crossorigin')
+        }
         await this.audio.play()
+      } catch (retryErr) {
+        console.error('[AudioPlayer] 降级重试依然失败:', retryErr)
       }
     }
   }
